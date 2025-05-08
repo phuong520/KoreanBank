@@ -240,7 +240,6 @@ namespace KEB.WebApp.Controllers
         // [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AddSingleQuestionRequest request)
         {
-            //await LoadDropdownData();
             if (ModelState.IsValid)
             {
                 try

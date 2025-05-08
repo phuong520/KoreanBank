@@ -1,68 +1,100 @@
 ﻿@model IEnumerable<KEB.Application.DTOs.ImportQuestionTaskDTO.TaskGeneralDisplayDTO>
 
 @{
-    ViewData["Title"] = "Nhiệm Vụ Câu Hỏi";
-    int index = 1;
+    ViewData["Title"] = "Danh sách nhiệm vụ";
 }
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<div class="container-fluid">
+    <h2 class="mb-4">Danh sách nhiệm vụ</h2>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold">Nhiệm Vụ Câu Hỏi</h4>
-            <a class="btn btn-primary" href="/Task/Create">Tạo Mới</a>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+    }
 
-        <input type="text" class="form-control mb-3" placeholder="Tìm kiếm..." />
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-        <table class="table table-bordered table-hover text-center align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>STT</th>
-                    <th>Nhiệm Vụ</th>
-                    <th>Người Thực Hiện</th>
-                    <th>Hạn</th>
-                    <th>Số Câu Hỏi</th>
-                    <th>Số Câu Đã Nhập</th>
-                    <th>Trạng Thái</th>
-                    <th>Hoạt Động</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var task in Model)
-                {
-                    var isCompleted = task.NumberOfAddedQuestions >= task.NumberOfQuestions;
-                    var statusColor = isCompleted ? "text-success" : "text-danger";
-                    var statusText = isCompleted ? "Hoàn Thành" : "Chưa Hoàn Thành";
-
-                    <tr>
-                        <td>@(index++)</td>
-                        <td>@task.TaskName</td>
-                        <td>@task.AssigneeName</td>
-                        <td>@task.Deadline.ToString("dd/MM/yyyy")</td>
-                        <td>@task.NumberOfQuestions</td>
-                        <td>@task.NumberOfAddedQuestions</td>
-                        <td class="@statusColor fw-bold">@statusText</td>
-                        <td>
-                            <a href="/Task/Details/@task.Id" class="btn btn-sm btn-info me-1" title="Chi tiết">
-                                <i class="bi bi-info-circle"></i>
-                            </a>
-                            <a href="/Task/Delete/@task.Id" class="btn btn-sm btn-danger" title="Xóa">
-                                <i class="bi bi-trash"></i>
-                            </a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-center">
-                <li class="page-item disabled"><a class="page-link">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-            </ul>
-        </nav>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Nhiệm vụ nhập câu hỏi</h5>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tạo nhiệm vụ mới
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Tên nhiệm vụ</th>
+                            <th>Người tạo</th>
+                            <th>DeadLine</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var task in Model)
+                            {
+                                <tr>
+                                    <td>@task.TaskName</td>
+                                    <td>@task.AssigneeName</td>
+                                    <td>@task.Deadline</td>
+                                    <td>
+                                        <span>
+                                            @task.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@task.Id" 
+                                               class="btn btn-info btn-sm">
+                                                <i class="fas fa-eye"></i> Chi tiết
+                                            </a>
+                                            <form asp-action="Delete" asp-route-id="@task.Id" method="post" 
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?');" 
+                                                  style="display: inline;">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                    <i class="fas fa-trash"></i> Xóa
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center">Không có nhiệm vụ nào</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Auto-hide alerts after 5 seconds
+        $(document).ready(function() {
+            setTimeout(function() {
+                $(".alert").alert('close');
+            }, 5000);
+        });
+    </script>
+}

@@ -1,0 +1,123 @@
+@* @model KEB.Application.DTOs.ImportQuestionTaskDTO.TaskFullDisplayDTO *@
+
+@* @{ *@
+@*     ViewData["Title"] = "Chi tiết nhiệm vụ"; *@
+@* } *@
+
+@* <div class="container-fluid"> *@
+@*     <div class="row"> *@
+@*         <div class="col-md-8 offset-md-2"> *@
+@*             <div class="card"> *@
+@*                 <div class="card-header d-flex justify-content-between align-items-center"> *@
+@*                     <h3 class="card-title mb-0">Chi tiết nhiệm vụ</h3> *@
+@*                     <a asp-action="Index" class="btn btn-secondary"> *@
+@*                         <i class="fas fa-arrow-left"></i> Quay lại *@
+@*                     </a> *@
+@*                 </div> *@
+@*                 <div class="card-body"> *@
+@*                     @if (TempData["Error"] != null) *@
+@*                     { *@
+@*                         <div class="alert alert-danger alert-dismissible fade show" role="alert"> *@
+@*                             @TempData["Error"] *@
+@*                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> *@
+@*                         </div> *@
+@*                     } *@
+
+@*                     <div class="row mb-4"> *@
+@*                         <div class="col-md-6"> *@
+@*                             <h5>Thông tin cơ bản</h5> *@
+@*                             <dl class="row"> *@
+@*                                 <dt class="col-sm-4">Tên nhiệm vụ:</dt> *@
+@*                                 <dd class="col-sm-8">@Model.TaskName</dd> *@
+
+@*                                 <dt class="col-sm-4">Người tạo:</dt> *@
+@*                                 <dd class="col-sm-8">@Model.AssigneeName</dd> *@
+
+@*                                 <dt class="col-sm-4">Hạn chót:</dt> *@
+@*                                 <dd class="col-sm-8">@Model.Deadline.ToString("dd/MM/yyyy HH:mm")</dd> *@
+
+@*                                 <dt class="col-sm-4">Trạng thái:</dt> *@
+@*                                 <dd class="col-sm-8"> *@
+@*                                     <span class="badge @(Model.Status == "Completed" ? "bg-success" :  *@
+@*                                                   Model.Status == "InProgress" ? "bg-warning" : "bg-secondary")"> *@
+@*                                         @Model.Status *@
+@*                                     </span> *@
+@*                                 </dd> *@
+@*                             </dl> *@
+@*                         </div> *@
+@*                         <div class="col-md-6"> *@
+@*                             <h5>Thông tin chi tiết</h5> *@
+@*                             <dl class="row"> *@
+@*                                 <dt class="col-sm-4">Người thực hiện:</dt> *@
+@*                                 <dd class="col-sm-8">@Model.AssigneeName</dd> *@
+
+@*                                 <dt class="col-sm-4">Hạn hoàn thành:</dt> *@
+@*                                 <dd class="col-sm-8">@Model.Deadline.ToString("dd/MM/yyyy HH:mm")</dd> *@
+
+@*                                 <dt class="col-sm-4">Độ ưu tiên:</dt> *@
+@*                                 <dd class="col-sm-8"> *@
+@*                                     <span class="badge @(Model.Priority == "High" ? "bg-danger" :  *@
+@*                                                   Model.Priority == "Medium" ? "bg-warning" : "bg-info")"> *@
+@*                                         @Model.Priority *@
+@*                                     </span> *@
+@*                                 </dd> *@
+
+@*                                 <dt class="col-sm-4">Tiến độ:</dt> *@
+@*                                 <dd class="col-sm-8"> *@
+@*                                     <div class="progress"> *@
+@*                                         @{ *@
+@*                                             var progress = Model.NumberOfQuestions > 0  *@
+@*                                                 ? (Model.NumberOfAddedQuestions * 100 / Model.NumberOfQuestions)  *@
+@*                                                 : 0; *@
+@*                                         } *@
+@*                                         <div class="progress-bar" role="progressbar"  *@
+@*                                              style="width: @progress%;"  *@
+@*                                              aria-valuenow="@progress"  *@
+@*                                              aria-valuemin="0"  *@
+@*                                              aria-valuemax="100"> *@
+@*                                             @progress% *@
+@*                                         </div> *@
+@*                                     </div> *@
+@*                                     <small class="text-muted"> *@
+@*                                         @Model.NumberOfAddedQuestions / @Model.NumberOfQuestions câu hỏi *@
+@*                                     </small> *@
+@*                                 </dd> *@
+@*                             </dl> *@
+@*                         </div> *@
+@*                     </div> *@
+
+@*                     <div class="mb-4"> *@
+@*                         <h5>Mô tả</h5> *@
+@*                         <div class="card"> *@
+@*                             <div class="card-body"> *@
+@*                                 @(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description) *@
+@*                             </div> *@
+@*                         </div> *@
+@*                     </div> *@
+
+@*                     <div class="d-flex justify-content-end"> *@
+@*                         <form asp-action="Delete" asp-route-id="@Model.Id" method="post"  *@
+@*                               onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?');"  *@
+@*                               style="display: inline;"> *@
+@*                             @Html.AntiForgeryToken() *@
+@*                             <button type="submit" class="btn btn-danger"> *@
+@*                                 <i class="fas fa-trash"></i> Xóa nhiệm vụ *@
+@*                             </button> *@
+@*                         </form> *@
+@*                     </div> *@
+@*                 </div> *@
+@*             </div> *@
+@*         </div> *@
+@*     </div> *@
+@* </div> *@
+
+@* @section Scripts { *@
+@*     <script> *@
+@*         // Auto-hide alerts after 5 seconds *@
+@*         $(document).ready(function() { *@
+@*             setTimeout(function() { *@
+@*                 $(".alert").alert('close'); *@
+@*             }, 5000); *@
+@*         }); *@
+@*     </script> *@
+@* }  *@

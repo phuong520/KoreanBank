@@ -1,0 +1,166 @@
+@using KEB.Domain.Enums
+@model KEB.Application.DTOs.ImportQuestionTaskDTO.AssignTaskRequest
+
+@{
+    ViewData["Title"] = "Giao nhiệm vụ";
+    var difficulties = Enum.GetValues(typeof(Difficulty)).Cast<Difficulty>().ToList();
+
+    var levelList = ViewBag.Levels as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
+    var typeList = ViewBag.QuestionTypes as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
+    var userList = ViewBag.Users as SelectList ?? new SelectList(Enumerable.Empty<SelectListItem>());
+    
+}
+
+<h2>Giao nhiệm vụ</h2>
+
+<form asp-action="Create" method="post">
+    <div class="form-group">
+        <label for="AssigneeId">Giao cho</label>
+        <select class="form-select" asp-for="AssigneeId" asp-items="userList">
+            <option value="">-- Chọn người thực hiện --</option>
+        </select>
+    </div>
+
+    <hr />
+    <h4>Danh sách nhiệm vụ</h4>
+    <div id="tasks-container">
+        <div class="task-item border rounded p-3 mb-3">
+            <!-- Trình độ-->
+            <div class="form-group">
+                <label>Cấp độ</label>
+                <select class="form-select" name="TasksList[0].LevelId" id="levelSelect">
+                    <option value="">-- Chọn cấp độ --</option>
+                    @foreach (var level in levelList)
+                    {
+                        <option value="@level.Value">@level.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Dạng câu hỏi</label>
+                <select class="form-select" name="TasksList[0].QuestionTypeId">
+                    <option value="">-- Chọn dạng câu hỏi --</option>
+                    @foreach (var type in typeList)
+                    {
+                        <option value="@type.Value">@type.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Độ khó</label>
+                <select name="TasksList[0].Difficulty" class="form-control">
+                    <option value="">-- Chọn độ khó --</option>
+                    @foreach (var diff in difficulties)
+                    {
+                        <option value="@((int)diff)">@diff</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Số lượng câu hỏi</label>
+                <input type="number" name="TasksList[0].NumberOfQuestions" class="form-control" />
+            </div>
+            <!-- topic -->
+            <div class="form-group mb-3">
+                <label name="TasksList[0].LevelDetailId" class="form-label">Chủ đề</label>
+                <select name="TasksList[0].LevelDetailId" class="form-select" id="topicSelect">
+                    <option value="">-- Chọn chủ đề --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hạn chót</label>
+                <input type="date" name="TasksList[0].Deadline" class="form-control" />
+            </div>
+
+            <div class="form-group form-check">
+                <input type="checkbox" name="TasksList[0].ForMultipleChoice" class="form-check-input" value="true" />
+                <label class="form-check-label">Dành cho trắc nghiệm</label>
+            </div>
+
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea name="TasksList[0].Message" class="form-control"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-outline-secondary mt-2" id="add-task-btn">+ Thêm nhiệm vụ</button>
+
+    <br /><br />
+    <button type="submit" class="btn btn-primary">Giao nhiệm vụ</button>
+</form>
+
+@section Scripts {
+    <script>
+        let taskIndex = 1;
+
+        document.getElementById("add-task-btn").addEventListener("click", function () {
+            const container = document.getElementById("tasks-container");
+            const lastTask = container.querySelector(".task-item");
+            const newTask = lastTask.cloneNode(true);
+
+            newTask.setAttribute("data-index", taskIndex);
+
+            newTask.querySelectorAll("input, select, textarea").forEach(el => {
+                if (el.name) {
+                    el.name = el.name.replace(/\d+/, taskIndex);
+                }
+                if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+                    if (el.type === "checkbox") {
+                        el.checked = false;
+                    } else {
+                        el.value = "";
+                    }
+                }
+                if (el.tagName === "SELECT") {
+                    el.selectedIndex = 0;
+                }
+            });
+
+            container.appendChild(newTask);
+            taskIndex++;
+        });
+        //xu ly topic
+                document.getElementById('levelSelect').addEventListener('change', function () {
+            const levelId = this.value;
+            const topicSelect = document.getElementById('topicSelect');
+            topicSelect.innerHTML = '<option value="">-- Đang tải chủ đề... --</option>';
+
+            if (!levelId) {
+                topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+                return;
+            }
+
+            fetch(`/Question/GetTopic?levelId=${levelId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Không lấy được dữ liệu");
+                }
+                return response.json();
+            })
+            .then(data => {
+                topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+                const topics = data.result ?? data; // Lấy dữ liệu trả về
+                topics.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.detailId;
+                    option.text = item.topicName;
+                    topicSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Lỗi:", error);
+                topicSelect.innerHTML = '<option value="">-- Không có chủ đề --</option>';
+            });
+        });
+    </script>
+    
+}
