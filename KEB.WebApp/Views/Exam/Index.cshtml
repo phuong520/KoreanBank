@@ -1,0 +1,44 @@
+﻿@model List<KEB.Application.DTOs.ExamDTO.ExamGeneralDisplayDTO>
+
+@{
+    ViewData["Title"] = "Danh sách bài thi";
+}
+
+<h2 class="text-xl font-semibold mb-4">Danh sách kỳ thi</h2>
+<div>
+    <a href="@Url.Action("Create", "Exam")" class="btn btn-primary action-btn view-btn">Thêm kỳ thi</a>
+</div>
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+else if (!Model.Any())
+{
+    <p>Không có bài thi nào được tìm thấy.</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Tên bài thi</th>
+                <th>Loại</th>
+                <th>Cấp độ</th>
+                <th>Người tạo</th>
+                <th>Ngày tạo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var exam in Model)
+            {
+                <tr>
+                    <td>@exam.Examname</td>
+                    <td>@exam.ExamTypeName</td>
+                    <td>@exam.LevelName</td>
+                    <td>@exam.Occured</td>
+                    <td>@exam.CreatedTime.ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

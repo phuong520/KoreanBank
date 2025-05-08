@@ -1,0 +1,44 @@
+﻿@model IEnumerable<KEB.Application.DTOs.QuestionTypeDTO.QuestionTypeDisplayDto>
+
+@{
+    ViewData["Title"] = "Danh sách loại câu hỏi";
+}
+
+<h2 class="mb-4">Danh sách loại câu hỏi</h2>
+<div>
+    <a href="@Url.Action("Create", "QuestionType")" class="btn btn-primary action-btn view-btn">Thêm loại câu hỏi</a>
+</div>
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>#</th>
+            <th>Tên loại câu hỏi</th>
+            <th>Mô tả</th>
+            <th>Kỹ năng</th>
+            <th>Số lượng câu hỏi</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="5" class="text-center text-danger">Không có dữ liệu</td>
+            </tr>
+        }
+        else
+        {
+            int index = 1;
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@index</td>
+                    <td>@item.QuestionTypeName</td>
+                    <td>@item.QuestionTypeContent</td>
+                    <td>@item.Skill</td>
+                    <td>@item.NumOfQuestions</td>
+                </tr>
+                index++;
+            }
+        }
+    </tbody>
+</table>

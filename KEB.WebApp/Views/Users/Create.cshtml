@@ -1,0 +1,112 @@
+﻿@model KEB.Application.DTOs.UserDTO.UserCreateDTO
+
+@{
+    ViewData["Title"] = "Tạo Người Dùng Mới";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                <div class="card-header">
+                    <h3 class="text-center font-weight-bold my-4">Tạo Người Dùng Mới</h3>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input class="form-control" asp-for="Email" type="email" placeholder="name@example.com" required />
+                                    <label asp-for="Email">Email <span class="text-danger">*</span></label>
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input class="form-control" asp-for="FullName" type="text" placeholder="Nguyễn Văn A" />
+                                    <label asp-for="FullName">Họ và Tên</label>
+                                    <span asp-validation-for="FullName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input class="form-control" asp-for="DateOfBirth" type="date" />
+                                    <label asp-for="DateOfBirth">Ngày sinh</label>
+                                    <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label d-block">Giới tính</label>
+                                    <div class="btn-group" role="group">
+                                        <input type="radio" class="btn-check" asp-for="Gender" value="true" id="Male" autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="Male">Nam</label>
+
+                                        <input type="radio" class="btn-check" asp-for="Gender" value="false" id="Female" autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="Female">Nữ</label>
+                                    </div>
+                                    <span asp-validation-for="Gender" class="text-danger d-block"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" asp-for="RoleId" aria-label="Chọn vai trò">
+                                        <option value="">Chọn vai trò</option>
+                                        <option value="f089198c-ed4c-4294-9e62-ac9a09880000">Quản trị viên</option>
+                                        <option value="f089198c-ed4c-4294-9e62-ac9a09880001">Giảng viên</option>
+                                        <option value="f089198c-ed4c-4294-9e62-ac9a09880002">Quản lý</option>
+                                    </select>
+                                    <label asp-for="RoleId">Vai trò</label>
+                                    <span asp-validation-for="RoleId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Ảnh đại diện</label>
+                                    <input type="file" class="form-control" asp-for="ImageFile" accept="image/*" />
+                                    <span asp-validation-for="ImageFile" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+                            <a class="btn btn-secondary" asp-action="Index">Quay lại</a>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-user-plus me-1"></i>
+                                Tạo Người Dùng
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function () {
+            // Preview image before upload
+            $("#ImageFile").change(function () {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#imagePreview').attr('src', e.target.result);
+                        $('#imagePreview').show();
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        });
+    </script>
+}

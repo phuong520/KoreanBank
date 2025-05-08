@@ -1,0 +1,55 @@
+﻿using KEB.Application.DTOs.Common;
+using KEB.Application.DTOs.ReferenceDTO;
+using KEB.Application.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+
+namespace KEB.WebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class ReferencesController : ControllerBase
+    {
+        private readonly IUnitOfService _unitOfService;
+
+        public ReferencesController(IUnitOfService unitOfService)
+        {
+            _unitOfService = unitOfService;
+        }
+        [HttpGet]
+        [Route("get-all-references")]
+        //[Authorize(Roles = "R2,R3")]
+        public async Task<IActionResult> GetAllReferences()
+        {
+            var response = await _unitOfService.ReferenceService.GetAllReferences();
+            return Ok(response);
+        }
+        [HttpPost]
+        //[Authorize(Roles = "R2")]
+        public async Task<IActionResult> AddNewReference(AddReferenceDto request)
+        {
+            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var response = await _unitOfService.ReferenceService.AddNewReference(request);
+            return Ok(response);
+        }
+        [HttpPut]
+        [Route("update-reference")]
+        //[Authorize(Roles = "R2")]
+        public async Task<IActionResult> UpdateReference(UpdateReference request)
+        {
+            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var response = await _unitOfService.ReferenceService.UpdateReference(request);
+            return Ok(response);
+        }
+        [HttpDelete]
+        [Route("delete-reference")]
+        //[Authorize(Roles = "R2")]
+        public async Task<IActionResult> DeleteReference(Delete request)
+        {
+            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var response = await _unitOfService.ReferenceService.DeleteReference(request);
+            return Ok(response);
+        }
+    }
+}

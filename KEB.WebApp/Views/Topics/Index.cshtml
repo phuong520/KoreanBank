@@ -1,0 +1,49 @@
+﻿@model List<KEB.Application.DTOs.TopicDTO.TopicDisplayDto>
+
+@{
+    ViewData["Title"] = "Danh sách chủ đề";
+}
+<div>
+    <a href="@Url.Action("Create", "Topics")" class="btn btn-primary action-btn view-btn">Thêm chủ đề</a>
+</div>
+<h1>@ViewData["Title"]</h1>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table ">
+        <thead class="table-dark">
+            <tr>
+               
+                <th>Tên chủ đề</th>
+                <th>Mô tả</th>
+                <th>Số câu nghe</th>
+                <th>Số câu đọc</th>
+                <th>Số câu viết</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var topic in Model)
+            {
+                <tr>
+                    
+                    <td>@topic.TopicName</td>
+                    <td>@topic.Description</td>
+                    <td>@topic.NumOfQuestions.NumOfListeningQuestions</td>
+                    <td>@topic.NumOfQuestions.NumOfReadingQuestions</td>
+                    <td>@topic.NumOfQuestions.NumOfWritingQuestions</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Không có chủ đề nào để hiển thị.</p>
+}
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}

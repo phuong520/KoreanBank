@@ -1,0 +1,50 @@
+﻿@model List<KEB.Application.DTOs.LevelDTO.LevelDisplayBriefDTO>
+
+@{
+    ViewData["Title"] = "Level List";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Danh sách Levels</h2>
+    <div>
+        <a href="@Url.Action("Create", "Level")" class="btn btn-primary action-btn view-btn">Thêm cấp độ</a>
+    </div>
+    @if (Model != null && Model.Any())
+    {
+        <table class="table table-bordered table-striped shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tên Level</th>
+                    <th>Số chủ đề</th>
+                    <th>Số câu nghe</th>
+                    <th>Số câu đọc</th>
+                    <th>Số câu viết</th>
+                    <th class="text-center">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var level in Model)
+                {
+                    <tr>
+                        <td>@level.LevelName</td>
+                        <td>@level.NumOfRelatedTopics</td>
+                        <td>@level.NumOfQuestions.NumOfListeningQuestions</td>
+                        <td>@level.NumOfQuestions.NumOfReadingQuestions</td>
+                        <td>@level.NumOfQuestions.NumOfWritingQuestions</td>
+                        <td class="text-center">
+                            <a class="btn btn-sm btn-info" href="@Url.Action("Details", "Levels", new { id = level.LevelId })">Chi tiết</a>
+                            <a class="btn btn-sm btn-warning" href="@Url.Action("Edit", "Levels", new { id = level.LevelId })">Sửa</a>
+                            <a class="btn btn-sm btn-danger" href="@Url.Action("Delete", "Levels", new { id = level.LevelId })">Xóa</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center">
+            Không có level nào để hiển thị.
+        </div>
+    }
+</div>

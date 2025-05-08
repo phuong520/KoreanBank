@@ -1,0 +1,207 @@
+﻿@model KEB.Application.DTOs.QuestionAddDTO.AddSingleQuestionRequest
+@{
+    ViewBag.Title = "Nhập Câu Hỏi";
+    Layout = "_Layout";
+}
+
+<div class="container mt-4">
+    <h2>Nhập Câu Hỏi</h2>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">
+            <div asp-validation-summary="All" class="text-danger"></div>
+        </div>
+    }
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Cấp độ -->
+                <div class="form-group mb-3">
+                    <label  class="form-label">Cấp độ</label>
+                    <select class="form-select" asp-items="ViewBag.Levels" id="levelSelect">
+                        <option value="">-- Chọn cấp độ --</option>
+                    </select>
+                    <span asp-validation-for="LevelDetailId" class="text-danger"></span>
+                </div>
+
+                <!-- Nguồn tham khảo -->
+                <div class="form-group mb-3">
+                    <label asp-for="ReferenceId" class="form-label">Nguồn Tham Khảo</label>
+                    <select asp-for="ReferenceId" class="form-select" asp-items="ViewBag.References">
+                        <option value="">-- Chọn nguồn --</option>
+                    </select>
+                    <span asp-validation-for="ReferenceId" class="text-danger"></span>
+                </div>
+
+                <!-- Nhiệm vụ -->
+                <div class="form-group mb-3">
+                    <label asp-for="TaskId" class="form-label">Nhiệm Vụ</label>
+                    <select asp-for="TaskId" class="form-select" asp-items="ViewBag.Tasks">
+                        <option value="">-- Chọn nhiệm vụ --</option>
+                    </select>
+                </div>
+
+                <!-- Câu hỏi -->
+                <div class="form-group mb-3">
+                    <label asp-for="QuestionContent" class="form-label">Câu hỏi</label>
+                    <textarea asp-for="QuestionContent" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="QuestionContent" class="text-danger"></span>
+                </div>
+
+                <!-- Đáp án -->
+                <div class="form-group mb-3">
+                    <label class="form-label">Đáp án:</label>
+                    <div id="answers">
+                        <div class="form-group mb-2 d-flex align-items-center">
+                            <input asp-for="Answers[0].Content" class="form-control me-2" placeholder="Đáp án 1" required />
+                            @* <input type="hidden" name="Answers[0].IsCorrect" value="false" /> *@
+                            <input type="checkbox" name="Answers[0].IsCorrect" class="form-check-input" value="true" />
+                            <label class="ms-1">Đúng</label>
+                        </div>
+                        <div class="form-group mb-2 d-flex align-items-center">
+                            <input asp-for="Answers[1].Content" class="form-control me-2" placeholder="Đáp án 2" required />
+                            @* <input type="hidden" name="Answers[1].IsCorrect" value="false" /> *@
+                            <input type="checkbox" name="Answers[1].IsCorrect" class="form-check-input" value="true" />
+                            <label class="ms-1">Đúng</label>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addAnswer()" class="btn btn-sm btn-success mt-2">Thêm Đáp Án</button>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Dạng câu hỏi -->
+                <div class="form-group mb-3">
+                    <label asp-for="QuestionTypeId" class="form-label">Dạng câu hỏi</label>
+                    <select asp-for="QuestionTypeId" class="form-select" asp-items="ViewBag.QuestionTypes">
+                        <option value="">-- Chọn dạng câu hỏi --</option>
+                    </select>
+                    <span asp-validation-for="QuestionTypeId" class="text-danger"></span>
+                </div>
+
+                <!-- topic -->
+                <div class="form-group mb-3">
+                    <label asp-for="LevelDetailId" class="form-label">Chủ đề</label>
+                    <select asp-for="LevelDetailId" class="form-select" id="topicSelect" name="LevelDetailId">
+                        <option value="">-- Chọn chủ đề --</option>
+                    </select>
+                    <span asp-validation-for="LevelDetailId" class="text-danger"></span>
+                </div>
+
+                <!-- Mức độ -->
+                <div class="form-group mb-3">
+                    <label asp-for="Difficulty" class="form-label">Mức độ</label>
+                    <select asp-for="Difficulty" class="form-select">
+                        <option value="3">Dễ</option>
+                        <option value="5">Trung bình</option>
+                        <option value="7">Khó</option>
+                    </select>
+                    <span asp-validation-for="Difficulty" class="text-danger"></span>
+                </div>
+
+                <!-- Loại câu hỏi -->
+                <div class="form-group mb-3">
+                    <label asp-for="IsMultipleChoice" class="form-label">Loại câu hỏi</label>
+                    <select asp-for="IsMultipleChoice" id="IsMultipleChoice" class="form-select" onchange="toggleAnswerType()">
+                        <option value="true">Trắc nghiệm</option>
+                        <option value="false">Tự luận</option>
+                    </select>
+                </div>
+
+                <!-- Upload File -->
+                <div class="form-group mb-3">
+                    <label asp-for="AttachmentFile" class="form-label">File Âm Thanh</label>
+                    <input asp-for="AttachmentFile" type="file" class="form-control" accept="audio/*" />
+                    <span asp-validation-for="AttachmentFile" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group mt-4">
+            <button type="submit" class="btn btn-primary">Lưu câu hỏi</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let answerIndex = 2;
+
+        function addAnswer() {
+            const container = document.getElementById('answers');
+            const div = document.createElement('div');
+            div.classList.add('form-group', 'mb-2', 'd-flex', 'align-items-center');
+                    div.innerHTML = `
+            <input name="Answers[${answerIndex}].Content" class="form-control me-2" placeholder="Đáp án ${answerIndex + 1}" required />
+            
+            <input type="checkbox" name="Answers[${answerIndex}].IsCorrect" class="form-check-input" value="true" />
+            <label class="ms-1">Đúng</label>
+        `;
+            container.appendChild(div);
+            answerIndex++;
+        }
+
+        function toggleAnswerType() {
+            const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
+            const answersContainer = document.getElementById('answers');
+            const addButton = document.querySelector('button[onclick="addAnswer()"]');
+
+            if (!isMultipleChoice) {
+                // Nếu là tự luận: giữ lại 1 đáp án
+                while (answersContainer.children.length > 1) {
+                    answersContainer.removeChild(answersContainer.lastChild);
+                }
+                addButton.style.display = 'none';
+            } else {
+                addButton.style.display = 'inline-block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleAnswerType();
+        });
+    </script>
+    <script>
+        document.getElementById('levelSelect').addEventListener('change', function () {
+            const levelId = this.value;
+            const topicSelect = document.getElementById('topicSelect');
+            topicSelect.innerHTML = '<option value="">-- Đang tải chủ đề... --</option>';
+
+            if (!levelId) {
+                topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+                return;
+            }
+            console.log(levelId);
+            fetch(`/Question/GetTopic?levelId=${levelId}`,{
+                 method: "POST",
+                 headers: {
+            "Content-Type": "application/json"
+        }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        console.log("Goi api that bai");
+                        throw new Error("Không lấy được dữ liệu");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+                     const topics = data.result ?? data;
+                    topics.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.detailId;
+                option.text = item.topicName;
+                topicSelect.appendChild(option);
+            });
+                })
+                .catch(error => {
+                    console.error("Lỗi:", error);
+                    topicSelect.innerHTML = '<option value="">-- Không có chủ đề --</option>';
+                });
+        });
+    </script>
+}

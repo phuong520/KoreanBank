@@ -1,0 +1,58 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f5f7fb;
+}
+
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background-color: #024b94;
+    position: fixed;
+    top: 0;
+    left: 0;
+    color: #fff;
+    padding: 20px;
+}
+
+    .sidebar a {
+        color: #fff;
+        text-decoration: none;
+        display: block;
+        padding: 8px 10px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #0366d6;
+        }
+
+.main-content {
+    margin-left: 260px;
+    padding: 20px;
+}
+
+.user-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 10px;
+    padding: 10px 15px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .user-panel img {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+
+.dropdown-menu {
+    min-width: 200px;
+}

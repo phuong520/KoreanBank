@@ -1,0 +1,48 @@
+﻿@model List<KEB.Application.DTOs.ReferenceDTO.ReferenceDisplayDto>
+
+@{
+    ViewData["Title"] = "Reference List";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Reference List</h2>
+    <div class="card">
+        
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <table class="table table-bordered table-striped shadow-sm">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Tên tài liệu</th>
+                            <th>Tác giả</th>
+                            <th>Năm xuất bản</th>
+                            <th>Số câu hỏi</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var reference in Model)
+                        {
+                            <tr>
+                                <td>@reference.ReferenceName</td>
+                                <td>@reference.ReferenceAuthor</td>
+                                <td>@reference.PublishedYear</td>
+                                <td>@reference.NumOfQuestions</td>
+                                <td>
+                                    <a href="@Url.Action("Details", "References", new { id = reference.Id })" class="btn btn-info btn-sm">View</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-warning" role="alert">
+                    No references found.
+                </div>
+            }
+        </div>
+    </div>
+</div>

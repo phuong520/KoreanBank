@@ -1,0 +1,84 @@
+﻿@model List<KEB.Application.DTOs.UserDTO.UserDisplayDTO>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách tài khoản</title>
+    <style>
+       
+        th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+        }
+
+        th {
+        background-color: #f2f2f2;
+        }
+
+        .active-badge {
+        background-color: #28a745;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        }
+
+        .action-btn {
+        padding: 5px 10px;
+        margin-right: 5px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        }
+
+        .view-btn {
+        background-color: #17a2b8;
+        color: white;
+        }
+
+        .edit-btn {
+        background-color: #ffc107;
+        color: black;
+        }
+
+        .delete-btn {
+        background-color: #dc3545;
+        color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Danh sách tài khoản</h1>
+    <div>
+        <a href="@Url.Action("Create", "Users")" class="btn btn-primary action-btn view-btn">Thêm tài khoản</a>
+    </div>
+    
+    <div class="card">
+
+        <div class="card-body">
+    <table class="table table-bordered table-striped shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Họ và tên</th>
+                <th>Tên tài khoản</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        @foreach (var user in Model)
+        {
+            <tbody>
+                <tr>
+                <td>@user.FullName</td>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                <td>@user.RoleName</td>
+                <td><span class="active-badge">@(user.IsActive ? "Hoạt động" :"Không hoạt động") </span></td>
+                
+            </tr>
+        </tbody>}
+    </table>
+    </div>
+    </div>
+</body>

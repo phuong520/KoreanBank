@@ -1,0 +1,6 @@
+@KEB.WebAPI_HostAddress = http://localhost:5180
+
+GET {{KEB.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
