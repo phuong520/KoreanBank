@@ -298,21 +298,15 @@ namespace KEB.WebApp.Controllers
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                var response = await _httpClient.GetAsync($"{BaseApiUrl}/Questions/get-questions");
-                if (!response.IsSuccessStatusCode)
+                var response = await _httpClient.PostAsJsonAsync($"{BaseApiUrl}/Questions/get-questions", request);
+                if (response.IsSuccessStatusCode)
                 {
-                    TempData["Error"] = "Không tìm thấy câu hỏi";
-                    return RedirectToAction(nameof(Index));
+                    var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<QuestionDisplayDto>>();
+                    return View(apiResponse.Result);
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<APIResponse<ChangeStatusResultDTO>>();
-                if (result?.IsSuccess != true || result.Result == null)
-                {
-                    TempData["Error"] = "Không tìm thấy thông tin câu hỏi";
-                    return RedirectToAction(nameof(Index));
-                }
+                return RedirectToAction(nameof(Index));
 
-                return View(result.Result);
             }
             catch (Exception ex)
             {
@@ -322,7 +316,7 @@ namespace KEB.WebApp.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+       // [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReviewQuestion(ChangeQuestionStatusRequest request)
         {
             try
@@ -334,21 +328,34 @@ namespace KEB.WebApp.Controllers
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
 
+                var userId = Guid.Empty;
+                if (jsonToken != null)
+                {
+                    var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                    if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                    {
+                        userId = parsedGuid;
+                    }
+                }
+                request.RequestedUserId = userId;
                 var jsonContent = JsonSerializer.Serialize(request);
                 var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync($"{ApiUrl}/lead-change-question-status", content);
-                var resultString = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<APIResponse<ChangeStatusResultDTO>>(resultString);
+                //var resultString = await response.Content.ReadAsStringAsync();
+                //var result = JsonSerializer.Deserialize<APIResponse<ChangeStatusResultDTO>>(resultString);
 
-                if (response.IsSuccessStatusCode && result?.IsSuccess == true)
+                if (response.IsSuccessStatusCode )
                 {
                     TempData["Success"] = "Duyệt câu hỏi thành công!";
                 }
                 else
                 {
-                    TempData["Error"] = $"Duyệt câu hỏi thất bại: {result?.Message ?? "Lỗi không xác định"}";
+                    TempData["Error"] = $"Duyệt câu hỏi thất bại";
                 }
             }
             catch (Exception ex)

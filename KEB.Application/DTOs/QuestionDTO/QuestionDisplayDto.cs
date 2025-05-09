@@ -1,4 +1,5 @@
 ﻿using KEB.Application.DTOs.AnswerDTO;
+using KEB.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace KEB.Application.DTOs.QuestionDTO
     {
         public Guid Id { get; set; }
         public string QuestionContent { get; set; } = string.Empty;
-        public string? Status { get; set; }
+        public QuestionStatus Status { get; set; }
         public string TopicName { get; set; }
         public string LevelName { get; set; }
         public string ReferenceName { get; set; }

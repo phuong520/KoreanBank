@@ -75,36 +75,6 @@ namespace KEB.WebApp.Controllers
                 }
             }
         }
-        //[HttpPost]
-        //public async Task<IActionResult> Index(GetQuestionsRequest request)
-        //{
-        //    try {
-        //        var token = HttpContext.Request.Cookies["token"];
-        //        if (string.IsNullOrEmpty(token))
-        //        {
-        //            return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("Create", "Question") });
-        //        }
-
-        //        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        //        // await LoadDropdownData();
-
-        //        var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", new GetQuestionsRequest());
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<List<QuestionDisplayDto>>>();
-
-        //            return View(apiResponse.Result);
-        //        }
-        //    }
-        //    catch(Exception ex)
-        //    {
-        //        Console.WriteLine("lỗi: " + ex.Message);
-                
-        //    }
-        //    return View(request);
-        //}
-
-
         public async Task<IActionResult> Details(Guid id)
         {
             try

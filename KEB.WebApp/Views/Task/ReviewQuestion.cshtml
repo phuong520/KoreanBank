@@ -1,7 +1,324 @@
-﻿
+﻿@model IEnumerable<KEB.Application.DTOs.QuestionDTO.QuestionDisplayDto>
+@using KEB.Domain.Enums
+@using System.ComponentModel
 @{
-    ViewData["Title"] = "ReviewQuestion";
+    var status = Enum.GetValues(typeof(QuestionStatus)).Cast<QuestionStatus>().ToList();
+    int i = 1;
 }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyệt câu hỏi</title>
+    <style>
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+        }
 
-<h1>ReviewQuestion</h1>
+        body {
+        background-color: #f8f9fa;
+        }
 
+        .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        }
+
+        .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        }
+
+        .header h1 {
+        font-size: 24px;
+        font-weight: bold;
+        }
+
+        .tabs {
+        display: flex;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        }
+
+        .tab {
+        flex: 1;
+        padding: 15px 0;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        }
+
+        .tab.active {
+        background-color: #e6f0ff;
+        color: #3498db;
+        font-weight: bold;
+        }
+
+        .tab:not(.active) {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        }
+
+        .table-header {
+        display: grid;
+        grid-template-columns: 1fr 4fr 3fr 2fr 2fr;
+        padding: 10px 0;
+        border-bottom: 1px solid #ddd;
+        font-weight: bold;
+        color: #0078d7;
+        font-size: 14px;
+        }
+
+        .question-item {
+        display: grid;
+        grid-template-columns: 1fr 4fr 3fr 2fr 2fr;
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+        align-items: center;
+        }
+
+        .chart {
+        width: 100px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        }
+        .btn {
+        padding: 8px 12px;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 14px;
+        }
+
+        .btn-accept {
+        background-color: #eefaee;
+        color: #28a745;
+        }
+
+        .btn-reject {
+        background-color: #feefef;
+        color: #dc3545;
+        }
+
+        .input-field {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        }
+
+        .info-button {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        color: #0078d7;
+        border: 1px solid #ddd;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        cursor: pointer;
+        margin: 0 auto;
+        }
+
+        .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        gap: 5px;
+        }
+
+        .page-item {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 5px;
+        cursor: pointer;
+        }
+
+        .page-item.active {
+        background-color: #212529;
+        color: white;
+        }
+
+        .page-item:not(.active) {
+        background-color: transparent;
+        color: #212529;
+        }
+
+        .chart-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        }
+
+        .chart-bar {
+        display: flex;
+        height: 40px;
+        align-items: flex-end;
+        gap: 10px;
+        }
+
+        .bar {
+        width: 20px;
+        border-radius: 2px 2px 0 0;
+        }
+
+        .bar.blue {
+        background-color: #4a86e8;
+        height: 15px;
+        }
+
+        .bar.orange {
+        background-color: #ff9900;
+        height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Duyệt câu hỏi</h1>
+            <div class="user-info">
+                <span>Giảng viên</span>
+                <div class="user-avatar"></div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            @foreach(var item in status){
+                var isActive = (int)item == 0 ? "active" : "";
+                var description = item.GetType()
+                .GetMember(item.ToString())
+                .FirstOrDefault()?
+                .GetCustomAttributes(typeof(DescriptionAttribute), false)
+                .Cast<DescriptionAttribute>()
+                .FirstOrDefault()?
+                .Description;
+
+                <div class="tab @isActive" href="" data-status="@item.ToString()">@description</div>
+               // <div class="tab @isActive" href="" data-status="@item.ToString()">@item</div>
+            }
+        </div>
+
+        <div class="table-header">
+            <div class="stt">STT</div>
+            <div>Câu Hỏi</div>
+            <div>Đáp án</div>
+            <div>Đánh Giá</div>
+            <div>Nhận xét</div>
+        </div>
+
+        <div class="question-content">
+            
+            @foreach(var question in Model){
+                
+                <div class="question-item">
+                    <div class="stt col-1">@i</div>
+                    @{
+                        i++;
+                    }
+                    <div name="QuestionContent" class="question-text col-4">
+                        <div>@question.QuestionContent</div>
+                    </div>
+                    <div class="mt-2 col-3">
+                        @if (question.Answers != null && question.Answers.Any())
+                        {
+                            int index = 0;
+                            foreach (var answer in question.Answers)
+                            {
+                                var label = ((char)('A' + index)).ToString();
+                                <div class="mb-1">
+                                    <strong>@label.</strong> @answer.Content
+                                </div>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-danger">Không có đáp án nào.</p>
+                        }
+                    </div>
+                    <div class="actions col-2">
+                        <button name="Requests.ToStatus" class="btn btn-accept " onclick="reviewQuestion(@question.Id, 'Approved')">
+                            <span>✓</span> Chấp nhận
+                        </button>
+                        <button name="Requests.ToStatus" class="btn btn-reject" onclick="reviewQuestion(@question.Id, 'Rejected')">
+                            <span>✗</span> Từ chối
+                        </button>
+                    </div>
+                    <div class=" col-2">
+                        <input name="Requests.Reason" type="text" class="input-field" data-id="@question.Id" placeholder="">
+                    </div>
+                </div>
+             }
+        <div class="pagination">
+            <div class="page-item active">1</div>
+            <div class="page-item">2</div>
+            <div class="page-item">3</div>
+            <div class="page-item">...</div>
+            <div class="page-item">67</div>
+            <div class="page-item">68</div>
+        </div>
+    </div>
+
+    <script>
+        // Add functionality for tab switching
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+                    tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const selectedStatus = tab.dataset.status;
+
+                // Gửi request để filter lại theo trạng thái
+                window.location.href = `/Task/ReviewList?status=${selectedStatus}`;
+            });
+    </script>
+        <script>
+                       async function reviewQuestion(questionId, newStatus) {
+                const input = document.querySelector(`input[name="Requests.Reason"][data-id="${questionId}"]`);
+                const reason = input ? input.value : "";
+
+                const response = await fetch('/Task/ReviewQuestion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        QuestionId: questionId,
+                        NewStatus: newStatus,
+                        Reason: reason
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert("Thành công: " + data.message);
+                } else {
+                    alert("Có lỗi xảy ra!");
+                }
+            }
+        </script>
+</body>
+</html>

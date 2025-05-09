@@ -14,9 +14,9 @@ namespace KEB.Domain.Enums
         Pending = 1,
         [Description("Trùng lặp")]
         Duplicated = 2,
-        [Description("Không chấp nhận")]
+        [Description("Từ chối")]
         Denied = 3,
-        [Description("Sẵn sàng")]
+        [Description("Đã duyệt")]
         Ok = 4
     }
     public static class EnumExtensions

@@ -105,8 +105,11 @@
 
             <button class="btn btn-primary" onclick="toggleSection('taskOptions')">Nhiệm vụ ▼</button>
             <div id="taskOptions">
-                <a asp-controller="#" asp-action="Index" class="d-block text-decoration-none text-white mb-2">
+                <a asp-controller="Task" asp-action="ReviewQuestion" class="d-block text-decoration-none text-white mb-2">
                     Duyệt câu hỏi
+                </a>
+                <a asp-controller="#" asp-action="Index" class="d-block text-decoration-none text-white mb-2">
+                    Duyệt đề thi
                 </a>
                 <a asp-controller="Task" asp-action="Index" class="d-block text-decoration-none text-white">
                     Quản lý nhiệm vụ

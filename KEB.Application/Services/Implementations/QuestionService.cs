@@ -168,14 +168,14 @@ namespace KEB.Application.Services.Implementations
             APIResponse<ChangeStatusResultDTO> response = new()
             {
                 IsSuccess = false,
-                StatusCode = System.Net.HttpStatusCode.BadRequest
+                StatusCode = HttpStatusCode.BadRequest
             };
             try
             {
                 var requestedUser = await _unitOfWork.Users.GetUserById(request.RequestedUserId);
                 if (requestedUser == null || requestedUser.RoleId.ToString() != LogicString.Role.TeamLeadRoleId)
                 {
-                    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                    response.StatusCode = HttpStatusCode.Forbidden;
                     response.Message = AppMessages.NO_PERMISSION;
                     return response;
                 }
@@ -286,8 +286,8 @@ namespace KEB.Application.Services.Implementations
                 {
                     UserId = request.NotifyTo,
                     CreatedDate = currentTime,
-                    Description = $"Team lead {requestedUser.UserName} " +
-                                  $"has approved {approved} questions and denied {denied} question of the import history on " +
+                    Description = $"Quản lý {requestedUser.UserName} " +
+                                  $"đã duyệt {approved} câu hỏi và từ chối {denied} câu hỏi" +
                                   $"{importHistory.ActionName:dd MMM yyyy}",
                 });
 
@@ -295,9 +295,9 @@ namespace KEB.Application.Services.Implementations
                 await Task.Run(() =>
                 {
                     _unitOfWork.EmailService.SendEmail(importHistory.User.Email,
-                                                "TEAM LEAD HAS MADE SOME UPDATE ON YOUR QUESTIONS",
-                                                $"Team lead {requestedUser.UserName} " +
-                                                        $"has approved {approved} questions and denied {denied} question of the import history on {importHistory.ActionName:dd MMM yyyy}",
+                                                "QUẢN LÝ ĐÃ THAY ĐỔI TRẠNG THÁI CÂU HỎI",
+                                                $"Quản lý {requestedUser.UserName} " +
+                                                        $"đã duyệt {approved} câu hỏi và từ chối {denied} câu hỏi trong {importHistory.ActionName:dd MMM yyyy}",
                                                 importHistory.User.UserName);
                 });
                 response.Message = $"{approved};{denied}";
