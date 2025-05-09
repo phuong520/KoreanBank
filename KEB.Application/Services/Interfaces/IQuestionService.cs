@@ -18,7 +18,7 @@ namespace KEB.Application.Services.Interfaces
         Task<APIResponse<ImportQuestionResultDTO>> UploadQuestionFromExcel(ImportQuestionFromExcelRequest request, string ipAddress);
         Task<APIResponse<object>> UpdateQuestion(UpdateQuestionRequest request);
         Task<APIResponse<QuestionDetailDto>> AddSingleQuestionAsync(AddSingleQuestionRequest request);
-
+     
 
     }
 }

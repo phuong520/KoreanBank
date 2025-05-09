@@ -40,7 +40,7 @@ namespace KEB.WebApp.Controllers
             _httpClient = httpClientFactory.CreateClient();
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(GetQuestionsRequest request)
         {
             try
             {
@@ -52,55 +52,63 @@ namespace KEB.WebApp.Controllers
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-                // Tạo request query
-                var request = new GetQuestionsRequest
+                await LoadDropdownData();
+                
+                    request.PaginationRequest = new Pagination { Page = 1, Size = 20 };
+                    request.SortAscending = false;
+                
+                var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", request); // request rỗng sẽ trả toàn bộ
+                if (response.IsSuccessStatusCode)
                 {
-                    PaginationRequest = new Pagination
-                    {
-                        Page = 1,
-                        Size = 20
-                    },
-                    Status = new List<QuestionStatus>
-                    {
-                        QuestionStatus.Pending,
-                        QuestionStatus.Ok
-                    }, // ví dụ lọc theo trạng thái
-                    SortAscending = false
-                };
-
-                var queryParams = new Dictionary<string, string?>
-                {
-                    ["Page"] = request.PaginationRequest?.Page.ToString(),
-                    ["Size"] = request.PaginationRequest?.Size.ToString(),
-                    ["SortAscending"] = request.SortAscending.ToString()
-                    // Thêm các param khác nếu cần
-                };
-
-                var url = QueryHelpers.AddQueryString($"{ApiUrl}/get-questions", queryParams);
-
-                var result = await _httpClient.GetFromJsonAsync<APIResponse<QuestionDisplayDto>>(url);
-
-                if (result?.IsSuccess == true)
-                {
-                    return View(result.Result);
+                    var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<QuestionDisplayDto>>();
+                    return View(apiResponse.Result);
                 }
 
-                TempData["ErrorMessage"] = result?.Message ?? "Không thể tải danh sách câu hỏi";
+                TempData["ErrorMessage"] = "Không lấy được dữ liệu câu hỏi.";
                 return View(new List<QuestionDisplayDto>());
             }
             catch (Exception ex)
             {
-                TempData["ErrorMessage"] = "Có lỗi xảy ra khi tải danh sách câu hỏi: " + ex.Message;
-                return View(new List<QuestionDisplayDto>());
+                {
+                    TempData["ErrorMessage"] = $"Lỗi: {ex.Message}";
+                    return View(new List<QuestionDisplayDto>());
+                }
             }
         }
+        //[HttpPost]
+        //public async Task<IActionResult> Index(GetQuestionsRequest request)
+        //{
+        //    try {
+        //        var token = HttpContext.Request.Cookies["token"];
+        //        if (string.IsNullOrEmpty(token))
+        //        {
+        //            return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("Create", "Question") });
+        //        }
+
+        //        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        //        // await LoadDropdownData();
+
+        //        var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", new GetQuestionsRequest());
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<List<QuestionDisplayDto>>>();
+
+        //            return View(apiResponse.Result);
+        //        }
+        //    }
+        //    catch(Exception ex)
+        //    {
+        //        Console.WriteLine("lỗi: " + ex.Message);
+                
+        //    }
+        //    return View(request);
+        //}
+
 
         public async Task<IActionResult> Details(Guid id)
         {
             try
             {
-                //SetAuthorizationHeader();
 
                 var response = await _httpClient.GetAsync($"{ApiUrl}/get-question-has-id-{id}");
                 if (response.IsSuccessStatusCode)
@@ -166,7 +174,7 @@ namespace KEB.WebApp.Controllers
             var types = await _httpClient.GetFromJsonAsync<APIResponse<QuestionTypeDisplayDto>>($"{BaseApiUrl}/QuestionTypes/get-all-questiontypes");
             var refs = await _httpClient.GetFromJsonAsync<APIResponse<ReferenceDisplayDto>>($"{BaseApiUrl}/References/get-all-references");
             var tasks = await _httpClient.GetFromJsonAsync<APIResponse<TaskGeneralDisplayDTO>>($"{BaseApiUrl}/Tasks/view-import-question-tasks");
-
+            var topiclist = await _httpClient.GetFromJsonAsync<APIResponse<TopicDisplayDto>>($"{BaseApiUrl}/Topics");
             if (!levels.IsSuccess)
             {
                 ModelState.AddModelError("", $"Không thể tải dữ liệu chủ đề: {levels.StatusCode}");
@@ -200,6 +208,7 @@ namespace KEB.WebApp.Controllers
             ViewBag.QuestionTypes = new SelectList(types.Result, "QuestionTypeId", "QuestionTypeName");
             ViewBag.References = new SelectList(refs.Result, "Id", "ReferenceName");
             ViewBag.Tasks = new SelectList(tasks.Result, "Id", "TaskName");
+            ViewBag.Topics = new SelectList(topiclist.Result, "TopicId", "TopicName");
         }
         // [Authorize]
         [HttpGet]

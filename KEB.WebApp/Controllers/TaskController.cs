@@ -2,9 +2,11 @@ using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.ImportQuestionTaskDTO;
 using KEB.Application.DTOs.LevelDTO;
 using KEB.Application.DTOs.LevelTopicDetailDTO;
+using KEB.Application.DTOs.QuestionDTO;
 using KEB.Application.DTOs.QuestionTypeDTO;
 using KEB.Application.DTOs.UserDTO;
 using KEB.Application.Services;
+using KEB.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -282,6 +284,79 @@ namespace KEB.WebApp.Controllers
             }
 
             return RedirectToAction(nameof(Details), new { id = request.TargetTaskId });
+        }
+
+        public async Task<IActionResult> ReviewQuestion(GetQuestionsRequest request)
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    return RedirectToAction("Login", "Common");
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var response = await _httpClient.GetAsync($"{BaseApiUrl}/Questions/get-questions");
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Không tìm thấy câu hỏi";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var result = await response.Content.ReadFromJsonAsync<APIResponse<ChangeStatusResultDTO>>();
+                if (result?.IsSuccess != true || result.Result == null)
+                {
+                    TempData["Error"] = "Không tìm thấy thông tin câu hỏi";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                return View(result.Result);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Có lỗi xảy ra: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReviewQuestion(ChangeQuestionStatusRequest request)
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("ReviewQuestion", "Task") });
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                var jsonContent = JsonSerializer.Serialize(request);
+                var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.PostAsync($"{ApiUrl}/lead-change-question-status", content);
+                var resultString = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<APIResponse<ChangeStatusResultDTO>>(resultString);
+
+                if (response.IsSuccessStatusCode && result?.IsSuccess == true)
+                {
+                    TempData["Success"] = "Duyệt câu hỏi thành công!";
+                }
+                else
+                {
+                    TempData["Error"] = $"Duyệt câu hỏi thất bại: {result?.Message ?? "Lỗi không xác định"}";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi hệ thống: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Details));
         }
     }
 } 

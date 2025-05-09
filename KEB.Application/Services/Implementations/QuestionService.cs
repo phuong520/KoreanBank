@@ -44,7 +44,7 @@ namespace KEB.Application.Services.Implementations
                 if (queriedQuestion != null)
                 {
                     var mappedQuestion = _mapper.Map<QuestionDetailDto>(queriedQuestion);
-                   
+
                     response.Result.Add(mappedQuestion);
                     response.IsSuccess = true;
                     response.StatusCode = System.Net.HttpStatusCode.OK;
@@ -128,6 +128,7 @@ namespace KEB.Application.Services.Implementations
                 Expression<Func<Question, bool>> taskFilter = (x => x.TaskId == request.TaskId);
                 filter = ExpressionExtension.CombineFilters(filter, taskFilter);
             }
+            if (request.FromTime != null && request.ToTime != null)
             {
                 Expression<Func<Question, bool>> timeFilter = x => x.CreatedDate >= request.FromTime && x.CreatedDate <= request.ToTime;
                 filter = ExpressionExtension.CombineFilters(filter, timeFilter);
@@ -143,10 +144,22 @@ namespace KEB.Application.Services.Implementations
                         if (request.SortAscending) return x.OrderBy(x => x.CreatedDate);
                         else return x.OrderByDescending(x => x.CreatedDate);
                     });
+            var mappedData = _mapper.Map<List<QuestionDisplayDto>>(queryResult);
 
-            //return queryResult;
-            return (APIResponse<QuestionDisplayDto>)queryResult;
+            var response = new APIResponse<QuestionDisplayDto>
+            {
+                Result = mappedData,
+                Message = "Lấy danh sách câu hỏi thành công",
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                Pagination = new Pagination
+                {
+                    Page = request.PaginationRequest.Page,
+                    Size = request.PaginationRequest.Size
+                }
+            };
 
+            return response;
 
         }
 
@@ -266,7 +279,7 @@ namespace KEB.Application.Services.Implementations
                 // Log changes
                 await _unitOfWork.AccessLogs.AddRangeAsync(logs);
                 // Save changes and commit
-                //await _unitOfWork.SaveChangesAsync(); // AddRangeAsync func has already called save changes
+                await _unitOfWork.SaveChangesAsync(); // AddRangeAsync func has already called save changes
 
                 // New notification
                 await _unitOfWork.Notifications.AddAsync(new Notification
@@ -279,14 +292,14 @@ namespace KEB.Application.Services.Implementations
                 });
 
                 // Send email to the created user
-                //await Task.Run(() =>
-                //{
-                //    _unitOfWork.EmailService.SendEmail(importHistory.User.Email,
-                //                                "TEAM LEAD HAS MADE SOME UPDATE ON YOUR QUESTIONS",
-                //                                $"Team lead {requestedUser.UserName} " +
-                //                                        $"has approved {approved} questions and denied {denied} question of the import history on {importHistory.ActionName:dd MMM yyyy}",
-                //                                importHistory.User.UserName);
-                //});
+                await Task.Run(() =>
+                {
+                    _unitOfWork.EmailService.SendEmail(importHistory.User.Email,
+                                                "TEAM LEAD HAS MADE SOME UPDATE ON YOUR QUESTIONS",
+                                                $"Team lead {requestedUser.UserName} " +
+                                                        $"has approved {approved} questions and denied {denied} question of the import history on {importHistory.ActionName:dd MMM yyyy}",
+                                                importHistory.User.UserName);
+                });
                 response.Message = $"{approved};{denied}";
                 response.StatusCode = System.Net.HttpStatusCode.OK;
                 response.IsSuccess = true;
@@ -490,7 +503,7 @@ namespace KEB.Application.Services.Implementations
             {
                 UserId = requestedUser.Id,
                 TargetObject = nameof(Question),
-               // ActionName = string.Format(AccessLogConstant.CREATE_ACTION, "câu hỏi bằng hình thức: ") + request.AddMethod,
+                // ActionName = string.Format(AccessLogConstant.CREATE_ACTION, "câu hỏi bằng hình thức: ") + request.AddMethod,
                 IsSuccess = false,
                 AccessTime = DateTime.Now,
                 IpAddress = request.IpAddress ?? "",
@@ -603,10 +616,11 @@ namespace KEB.Application.Services.Implementations
                 }
 
                 var attach = new ImageFile();
-                if(request.AttachmentFile != null) { 
-                     attach = await GetAttachFile.GetImageFile(request.AttachmentFile);
+                if (request.AttachmentFile != null)
+                {
+                    attach = await GetAttachFile.GetImageFile(request.AttachmentFile);
                     await _unitOfWork.ImageFiles.AddAsync(attach);
-                    }
+                }
 
                 // Create question entity from DTO
 
@@ -619,8 +633,9 @@ namespace KEB.Application.Services.Implementations
                 question.LevelDetailId = request.LevelDetailId;
                 question.QuestionTypeId = request.QuestionTypeId;
                 question.ReferenceId = request.ReferenceId;
-                if(request.AttachmentFile != null) { 
-                question.AttachFileId = attach.Id;
+                if (request.AttachmentFile != null)
+                {
+                    question.AttachFileId = attach.Id;
                 }
                 // Handle log creation
                 var systemAccessLog = new SystemAccessLog
@@ -773,5 +788,6 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
 
+      
     }
 }

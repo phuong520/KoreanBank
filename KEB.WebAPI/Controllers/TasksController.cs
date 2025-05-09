@@ -63,7 +63,7 @@ namespace KEB.WebAPI.Controllers
                     var client = _hubContext.Clients.User(request.NotifyTo.ToString());
                     Console.WriteLine($"Mapping UserId: {request.NotifyTo}");
                     Console.WriteLine($"User connections: {string.Join(", ", client)}");
-                    //await _hubContext.Clients.All.SendLatestNotifications(notis);
+                    await _hubContext.Clients.All.SendLatestNotifications(notis);
                     await client.SendLatestNotifications(notis);
                 }
                 return Ok(response);

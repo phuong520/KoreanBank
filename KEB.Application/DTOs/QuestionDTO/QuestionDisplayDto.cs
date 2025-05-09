@@ -21,7 +21,7 @@ namespace KEB.Application.DTOs.QuestionDTO
         public string SkillName { get; set; }
         public string Difficulty { get; set; }
         public IFormFile? AttachmentUrl { get; set; }
-        public IEnumerable<AnswerDTO.AddAnswerDTO> Answers { get; set; }
+        public IEnumerable<AddAnswerDTO> Answers { get; set; }
         public int OrderInPaper { get; set; }
         public string Description { get; set; }
 

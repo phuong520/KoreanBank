@@ -1,4 +1,5 @@
 ﻿using KEB.Domain.Entities;
+using KEB.Domain.Enums;
 using KEB.Infrastructure.Context;
 using KEB.Infrastructure.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -70,6 +71,5 @@ namespace KEB.Infrastructure.Repository.Implementations
 
             return totalDuration;
         }
-
     }
 }

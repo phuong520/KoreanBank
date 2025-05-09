@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KEB.Application.DTOs.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -20,5 +21,6 @@ namespace KEB.Application.Services
         public bool IsSuccess { get; set; } = true;
         public string Message { get; set; }
         public List<T> Result { get; set; }
+        public Pagination Pagination { get; set; }
     }
 }

@@ -39,8 +39,8 @@ namespace KEB.Infrastructure.Context
                    RoleName = "Giảng viên"
                }
            );
+           
             //user
-            
         modelBuilder.Entity<User>().HasData(
     new User
     {
