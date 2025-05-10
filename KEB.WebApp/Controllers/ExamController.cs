@@ -1,4 +1,5 @@
 ﻿using KEB.Application.DTOs.ExamDTO;
+using KEB.Application.DTOs.ExamTypeDTO;
 using KEB.Application.DTOs.ReferenceDTO;
 using KEB.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,11 @@ namespace KEB.WebApp.Controllers
         public async Task< IActionResult> Index()
         {
             
-                var response = await _httpClient.GetFromJsonAsync<APIResponse<object>>($"{ApiUrl}/get-exam");
+            var response = await _httpClient.GetFromJsonAsync<APIResponse<object>>($"{ApiUrl}/get-exam");
+            if (response == null || !response.IsSuccess)
+            {
+                return View(new List<ExamTypeGeneralDisplayDTO>());
+            }
             return View(response.Result);
         }
     

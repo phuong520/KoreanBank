@@ -79,7 +79,7 @@
             <a asp-controller="Topics" asp-action="Index">Chủ đề</a>
             <a asp-controller="References" asp-action="Index">Tài liệu tham khảo</a>
 
-            <button class="btn btn-primary" onclick="toggleSection('examOptions')">Kỳ Thi ▼</button>
+            <button class="btn btn-primary" style="background-color: #024b94;" onclick="toggleSection('examOptions')">Kỳ Thi ▼</button>
             <div id="examOptions">
                 <a asp-controller="ExamType" asp-action="Index" class="d-block text-decoration-none text-white mb-2">
                     Loại Kỳ Thi
@@ -91,7 +91,7 @@
 
             <a asp-controller="Question" asp-action="Create">Nhập Câu Hỏi</a>
 
-            <button class="btn btn-primary" onclick="toggleSection('questionBankOptions')">Ngân Hàng Câu Hỏi ▼</button>
+            <button class="btn btn-primary" style="background-color: #024b94;" onclick="toggleSection('questionBankOptions')">Ngân Hàng Câu Hỏi ▼</button>
             <div id="questionBankOptions">
                 <a asp-controller="QuestionType" asp-action="Index" class="d-block text-decoration-none text-white mb-2">
                     Loại câu hỏi
@@ -103,7 +103,7 @@
 
             <a href="#">Ngân Hàng Đề Thi</a>
 
-            <button class="btn btn-primary" onclick="toggleSection('taskOptions')">Nhiệm vụ ▼</button>
+            <button class="btn btn-primary" style="background-color: #024b94;" onclick="toggleSection('taskOptions')">Nhiệm vụ ▼</button>
             <div id="taskOptions">
                 <a asp-controller="Task" asp-action="ReviewQuestion" class="d-block text-decoration-none text-white mb-2">
                     Duyệt câu hỏi

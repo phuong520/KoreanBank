@@ -346,8 +346,8 @@ namespace KEB.WebApp.Controllers
                 var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
 
                 var response = await _httpClient.PostAsync($"{ApiUrl}/lead-change-question-status", content);
-                //var resultString = await response.Content.ReadAsStringAsync();
-                //var result = JsonSerializer.Deserialize<APIResponse<ChangeStatusResultDTO>>(resultString);
+                var resultString = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<APIResponse<ChangeStatusResultDTO>>(resultString);
 
                 if (response.IsSuccessStatusCode )
                 {

@@ -25,7 +25,7 @@ namespace KEB.WebAPI.Controllers
             var response = await _unitOfService.ReferenceService.GetAllReferences();
             return Ok(response);
         }
-        [HttpPost]
+        [HttpPost("add-ref")]
         //[Authorize(Roles = "R2")]
         public async Task<IActionResult> AddNewReference(AddReferenceDto request)
         {

@@ -19,7 +19,7 @@ namespace KEB.WebAPI.Controllers
         }
 
         [HttpGet]
-        [Route("get-exam")]
+        [Route("get-exam-by-id")]
         //[Authorize(Roles = "R2,R3")]
         public async Task<IActionResult> GetExams(Guid? id = null)
         {

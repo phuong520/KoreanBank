@@ -9,7 +9,7 @@ namespace KEB.Domain.Entities
     public class Topic : BaseEntity
     {
         public string TopicName { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public List<LevelDetail> LevelDetails { get; set; }
         public List<ConstraintDetail> ConstraintDetails { get; set; }
     }

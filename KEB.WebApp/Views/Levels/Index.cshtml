@@ -4,7 +4,7 @@
 }
 <header>
     <style>
-        /* Tùy chỉnh Select2 để giống với giao diện từ ảnh */
+        
         .select2-container--default .select2-selection--multiple {
             border: 1px solid #ced4da;
             border-radius: 0.25rem;
@@ -59,15 +59,15 @@
     </div>
 
     <div class="table-responsive">
-        <table class="table table-bordered">
+        <table class="table" style="border: 1px solid #dee2e6;">
             <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>Tên Cấp Độ</th>
-                    <th>Số Chủ Đề</th>
-                    <th>Số Câu Hỏi Nghe</th>
-                    <th>Số Câu Hỏi Đọc</th>
-                    <th>Số Câu Hỏi Viết</th>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <th style="border-right: none;">STT</th>
+                    <th style="border-right: none;">Tên Cấp Độ</th>
+                    <th style="border-right: none;">Số Chủ Đề</th>
+                    <th style="border-right: none;">Số Câu Hỏi Nghe</th>
+                    <th style="border-right: none;">Số Câu Hỏi Đọc</th>
+                    <th style="border-right: none;">Số Câu Hỏi Viết</th>
                     <th>Hoạt động</th>
                 </tr>
             </thead>
@@ -77,13 +77,13 @@
                     int index = 1;
                     foreach (var level in Model)
                     {
-                        <tr>
-                            <td>@index</td>
-                            <td>@level.LevelName</td>
-                            <td>@level.NumOfRelatedTopics</td>
-                            <td>@level.NumOfQuestions.NumOfListeningQuestions</td>
-                            <td>@level.NumOfQuestions.NumOfReadingQuestions</td>
-                            <td>@level.NumOfQuestions.NumOfWritingQuestions</td>
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="border-right: none;">@index</td>
+                            <td style="border-right: none;">@level.LevelName</td>
+                            <td style="border-right: none;">@level.NumOfRelatedTopics</td>
+                            <td style="border-right: none;">@level.NumOfQuestions.NumOfListeningQuestions</td>
+                            <td style="border-right: none;">@level.NumOfQuestions.NumOfReadingQuestions</td>
+                            <td style="border-right: none;">@level.NumOfQuestions.NumOfWritingQuestions</td>
                             <td class="text-center">
                                 <a href="@Url.Action("Edit", "Level", new { id = level.LevelId })" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-pencil"></i>

@@ -4,45 +4,82 @@
     ViewData["Title"] = "Reference List";
 }
 
-<div class="container mt-4">
-    <h2 class="text-center mb-4">Reference List</h2>
-    <div class="card">
-        
-        <div class="card-body">
-            @if (Model != null && Model.Any())
-            {
-                <table class="table table-bordered table-striped shadow-sm">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Tên tài liệu</th>
-                            <th>Tác giả</th>
-                            <th>Năm xuất bản</th>
-                            <th>Số câu hỏi</th>
-                            <th>Chi tiết</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var reference in Model)
-                        {
-                            <tr>
-                                <td>@reference.ReferenceName</td>
-                                <td>@reference.ReferenceAuthor</td>
-                                <td>@reference.PublishedYear</td>
-                                <td>@reference.NumOfQuestions</td>
-                                <td>
-                                    <a href="@Url.Action("Details", "References", new { id = reference.Id })" class="btn btn-info btn-sm">View</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <div class="alert alert-warning" role="alert">
-                    No references found.
-                </div>
-            }
+<div class="container-fluid mt-3">
+    <div class="d-flex justify-content-between mb-3">
+        <div class="search-box">
+            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm" style="border-radius: 20px; background-color: #e9ecef; width: 170px;">
         </div>
+        <a href="@Url.Action("Create", "References")" class="btn btn-primary">Tạo Mới</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" style="border: 1px solid #dee2e6;">
+            <thead>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <th style="border-right: none; text-align: center; width: 5%;">STT</th>
+                    <th style="border-right: none; width: 30%;">Tài Liệu</th>
+                    <th style="border-right: none; width: 15%;">Năm Xuất Bản</th>
+                    <th style="border-right: none; width: 30%;">Chủ Thích</th>
+                    <th style="border-right: none; text-align: center; width: 10%;">Số Câu Hỏi</th>
+                    <th style="border-right: none; text-align: center; width: 10%;">Hoạt động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    int index = 1;
+                    foreach (var reference in Model)
+                    {
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="border-right: none; text-align: center;">@index</td>
+                            <td style="border-right: none;">@reference.ReferenceName</td>
+                            <td style="border-right: none;">@reference.PublishedYear</td>
+                            <td style="border-right: none;">@reference.Description</td>
+                            <td style="border-right: none; text-align: center;">@reference.NumOfQuestions</td>
+                             <td class="text-center">
+                                <a href="@Url.Action("Edit", "Level", new { id = reference.Id })" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="@Url.Action("Delete", "Level", new { id =  reference.Id })" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-info-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center">Không có dữ liệu</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-center mt-3">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">...</a></li>
+                <li class="page-item"><a class="page-link" href="#">67</a></li>
+                <li class="page-item"><a class="page-link" href="#">68</a></li>
+            </ul>
+        </nav>
     </div>
 </div>
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Xử lý tìm kiếm
+            $("#searchInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("table tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+    </script>
+}

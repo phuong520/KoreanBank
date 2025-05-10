@@ -1,49 +1,227 @@
 ﻿@model List<KEB.Application.DTOs.TopicDTO.TopicDisplayDto>
-
 @{
     ViewData["Title"] = "Danh sách chủ đề";
 }
-<div>
-    <a href="@Url.Action("Create", "Topics")" class="btn btn-primary action-btn view-btn">Thêm chủ đề</a>
-</div>
-<h1>@ViewData["Title"]</h1>
+<header>
+    <style>
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            min-height: 38px;
+            padding: 2px 8px;
+        }
 
-@if (Model != null && Model.Any())
-{
-    <table class="table ">
-        <thead class="table-dark">
-            <tr>
-               
-                <th>Tên chủ đề</th>
-                <th>Mô tả</th>
-                <th>Số câu nghe</th>
-                <th>Số câu đọc</th>
-                <th>Số câu viết</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var topic in Model)
-            {
-                <tr>
-                    
-                    <td>@topic.TopicName</td>
-                    <td>@topic.Description</td>
-                    <td>@topic.NumOfQuestions.NumOfListeningQuestions</td>
-                    <td>@topic.NumOfQuestions.NumOfReadingQuestions</td>
-                    <td>@topic.NumOfQuestions.NumOfWritingQuestions</td>
-                </tr>
+            .select2-container--default .select2-selection--multiple .select2-selection__choice {
+                background-color: #0d6efd;
+                color: black;
+                border: none;
+                border-radius: 4px;
+                margin-top: 4px;
+                margin-right: 5px;
+                padding: 2px 8px;
             }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>Không có chủ đề nào để hiển thị.</p>
-}
 
-@if (ViewBag.ErrorMessage != null)
-{
-    <div class="alert alert-danger">
-        @ViewBag.ErrorMessage
+            .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+                color: black;
+                margin-right: 5px;
+            }
+
+                .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+                    color: #f8f9fa;
+                }
+
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .select2-dropdown {
+            border-color: #ced4da;
+            border-radius: 0.25rem;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #0d6efd;
+        }
+
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+    </style>
+</header>
+<div class="container mt-3">
+    <h2 class="text-center mb-4">@ViewData["Title"]</h2>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div class="search-box">
+            <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm">
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTopicModal">
+            Tạo mới
+        </button>
     </div>
+
+    <div class="table-responsive">
+        <table class="table" style="border: 1px solid #dee2e6;">
+            <thead>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <th style="border-right: none">STT</th>
+                    <th style="border-right: none">Chủ Đề</th>
+                    <th style="border-right: none">Số Câu Hỏi Nghe</th>
+                    <th style="border-right: none">Số Câu Hỏi Nói</th>
+                    <th style="border-right: none">Số Câu Hỏi Đọc</th>
+                    <th style="border-right: none">Số Câu Hỏi Viết</th>
+                    <th style="border-right: none">Hoạt động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    int index = 1;
+                    foreach (var topic in Model)
+                    {
+                        <tr style="border-bottom: 1px solid #dee2e6;">
+                            <td style="border-right: none">@index</td>
+                            <td style="border-right: none">@topic.TopicName</td>
+                            <td style="border-right: none">@topic.NumOfQuestions.NumOfListeningQuestions</td>
+                            <td style="border-right: none">@topic.NumOfQuestions.NumOfSpeakingQuestions</td>
+                            <td style="border-right: none">@topic.NumOfQuestions.NumOfReadingQuestions</td>
+                            <td style="border-right: none">@topic.NumOfQuestions.NumOfWritingQuestions</td>
+                            <td class="text-center">
+                                <a href="@Url.Action("Edit", "Topics", new { id = topic.TopicId })" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="@Url.Action("Delete", "Topics", new { id = topic.TopicId })" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-info-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center">Không có dữ liệu</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-center">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">...</a></li>
+                <li class="page-item"><a class="page-link" href="#">67</a></li>
+                <li class="page-item"><a class="page-link" href="#">68</a></li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Modal Thêm Chủ Đề -->
+<div class="modal fade" id="addTopicModal" tabindex="-1" aria-labelledby="addTopicModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="addTopicModalLabel">Thêm chủ đề</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTopicForm" method="post" action="@Url.Action("Create", "Topics")">
+                    <div class="mb-3">
+                        <label for="topicName" class="form-label">Chủ đề</label>
+                        <input type="text" class="form-control" id="topicName" name="TopicName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="levelSelect" class="form-label">Cấp độ</label>
+                        <div class="dropdown">
+                            <select name="Levels" id="levelSelect" class="form-control select2-multiple" asp-items="ViewBag.Levels" multiple="multiple">
+                                <option value="">-- Chọn cấp độ --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Tạo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Thư viện jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Thư viện Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Khởi tạo Select2
+            $("#levelSelect").select2({
+                placeholder: "-- Chọn cấp độ --",
+                allowClear: true,
+                closeOnSelect: false,
+                width: '100%',
+                dropdownParent: $('#addTopicModal'), // Để dropdown hiển thị đúng trong modal
+                language: {
+                    noResults: function() {
+                        return "Không tìm thấy cấp độ";
+                    }
+                }
+            });
+
+            // Xử lý tìm kiếm trong bảng
+            $("#searchInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("table tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            // Xử lý form submit
+            $("#addTopicForm").on("submit", function (e) {
+                e.preventDefault(); // Ngăn form submit mặc định
+
+                let topicName = $("#topicName").val();
+                let levelIds = $("select[name='Levels']").val();
+
+                if (!topicName || !levelIds || levelIds.length === 0) {
+                    alert("Vui lòng nhập đầy đủ thông tin.");
+                    return;
+                }
+
+                // Tạo đối tượng request gửi đi
+                let requestData = {
+                    TopicName: topicName,
+                    Levels: levelIds
+                };
+
+                $.ajax({
+                    url: '@Url.Action("Create", "Topics")', // Controller action
+                    type: "POST",
+                    data: requestData,
+                    success: function (res) {
+                        // Hiển thị thông báo, đóng modal, làm mới bảng, v.v.
+                        alert("Tạo chủ đề thành công!");
+                        $("#addTopicModal").modal('hide');
+                        // Làm mới trang để hiển thị dữ liệu mới
+                        location.reload();
+                    },
+                    error: function (xhr) {
+                        alert("Lỗi khi tạo chủ đề.");
+                        console.log(xhr);
+                    }
+                });
+            });
+        });
+    </script>
 }
