@@ -81,6 +81,7 @@ namespace KEB.Application.Services.Implementations
                 // Access logging
                 accessLog.IsSuccess = true;
                 await _unitOfWork.AccessLogs.AddAsync(accessLog);
+                response.Result.Add(_mapper.Map<QuestionTypeDisplayDto>(newQuestionType));
                 // Response
                 response.IsSuccess = true;
                 response.StatusCode = System.Net.HttpStatusCode.Created;

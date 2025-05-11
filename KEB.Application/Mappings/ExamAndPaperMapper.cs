@@ -32,9 +32,9 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.LevelName,
                 opt => opt.MapFrom(src => src.ExamType.Levels.LevelName))
                 .ForMember(dest => dest.HostUserName,
-                opt => opt.MapFrom(src => src.User.UserName))
+                opt => opt.MapFrom(src => src.Host.UserName))
                 .ForMember(dest => dest.ReviewerUserName,
-                opt => opt.MapFrom(src => src.User.UserName))
+                opt => opt.MapFrom(src => src.Reviewer.UserName))
                 .ForMember(dest => dest.TakePlaceTime,
                 opt => opt.MapFrom(src => src.TakePlaceTime));
 

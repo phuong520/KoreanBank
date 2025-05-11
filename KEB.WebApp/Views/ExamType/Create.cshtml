@@ -1,0 +1,520 @@
+﻿@model KEB.Application.DTOs.ExamTypeDTO.ExamTypeComplexDisplayDTO
+@{
+    ViewData["Title"] = "Tạo Loại Kỳ Thi";
+}
+
+<div class="container-fluid">
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Tạo Loại Kỳ Thi</h6>
+            <div class="d-flex align-items-center">
+                <div class="dropdown mr-2">
+                    <button class="btn btn-sm" type="button">
+                        <i class="fas fa-globe"></i>
+                    </button>
+                </div>
+                <div class="dropdown mr-2">
+                    <button class="btn btn-sm" type="button">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm" type="button">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                </div>
+                <div class="ml-2">
+                    <img src="~/images/user-avatar.jpg" class="rounded-circle" width="32" height="32" alt="User">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="examCreationForm" method="post">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="trinhDo">Trình độ</label>
+                            <div class="input-group">
+                                <select class="form-control" asp-items="ViewBag.Levels" id="trinhDo" name="Level">
+                                    <option value="">Chọn trình độ</option>
+                                    <!-- Add options as needed -->
+                                </select>
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="loaiKyThi">Loại Kỳ Thi</label>
+                            <input type="text" class="form-control" id="loaiKyThi" name="ExamTypeName">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Cấu trúc các bài thi</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Language Skills Tabs -->
+                    <ul class="nav nav-tabs" id="skillTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" id="nghe-tab" data-toggle="tab" href="#nghe" role="tab" aria-controls="nghe" aria-selected="true">Nghe</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="noi-tab" data-toggle="tab" href="#noi" role="tab" aria-controls="noi" aria-selected="false">Nói</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="doc-tab" data-toggle="tab" href="#doc" role="tab" aria-controls="doc" aria-selected="false">Đọc</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" id="viet-tab" data-toggle="tab" href="#viet" role="tab" aria-controls="viet" aria-selected="false">Viết</a>
+                        </li>
+                    </ul>
+                        
+                    <!-- Language Skills Summary -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0">
+                            <tbody>
+                                <tr class="text-center">
+                                    <td style="width: 25%">Tổng Số Câu:</td>
+                                    <td style="width: 25%">
+                                        <input type="number" class="form-control form-control-sm" id="totalQuestions" name="TotalQuestions" min="0" value="0">
+                                    </td>
+                                    <td style="width: 25%">Câu</td>
+                                    <td style="width: 25%"></td>
+                                </tr>
+                                <tr class="text-center">
+                                    <td>Tổng Số Đề Thi:</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" id="totalExams" name="TotalExams" min="0" value="0">
+                                    </td>
+                                    <td>Đề</td>
+                                    <td></td>
+                                </tr>
+                                <tr class="text-center">
+                                    <td>Thời gian làm bài:</td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm" id="examTime" name="ExamTime" min="0" value="0">
+                                    </td>
+                                    <td>Phút</td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content p-3 border-top" id="skillTabContent">
+                        <!-- NGHE (Listening) Tab -->
+                        <div class="tab-pane fade show active" id="nghe" role="tabpanel" aria-labelledby="nghe-tab">
+                            <div class="row mb-2">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>Cấu Trúc Đề Thi Nghe:</div>
+                                        <div class="text-danger">
+                                            Tổng Điểm Hiện Tại: <span id="ngheCurrentPoints">0</span>
+                                            &nbsp;&nbsp;
+                                            Tổng Số Câu Hiện Tại: <span id="ngheCurrentQuestions">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Exam section structure for NGHE (Listening) tab -->
+                            <div class="nghe-exam-section mb-3">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Chủ Đề</label>
+                                            <div class="input-group">
+                                                    <select class="form-select" asp-items="ViewBag.Topics" id="levelSelect">
+                                                        <option value="">-- Chọn chủ đề --</option>
+                                                    </select>
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label>Dạng Câu Hỏi</label>
+                                            <div class="input-group">
+                                                    <select class="form-select" asp-items="ViewBag.QuestionTypes" id="levelSelect">
+                                                        <option value="">-- Chọn dạng câu hỏi --</option>
+                                                    </select>
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Mức Độ</label>
+                                            <div class="input-group">
+                                                <select class="form-control section-difficulty" name="Nghe[0].MucDo">
+                                                    <option value="">Chọn mức độ</option>
+                                                    
+                                                        <option value="">Dễ</option>
+                                                        <option value="">Khó</option>
+                                                        <option value="">TB</option>
+                                                    
+                                                </select>
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Số Câu</label>
+                                            <input type="number" class="form-control section-questions" name="Nghe[0].SoCau" min="0" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label>Số Điểm Mỗi Câu</label>
+                                            <input type="number" class="form-control section-points" name="Nghe[0].SoDiemMoiCau" min="0" step="0.1" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-end">
+                                        <button type="button" class="btn btn-danger btn-remove-section mb-3">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add section button for NGHE -->
+                            <div class="text-center mb-3 section-add-button">
+                                <button type="button" class="btn btn-success btn-circle btn-add-section" data-section="nghe">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                @*         <!-- NOI (Speaking) Tab --> *@
+                @*         <div class="tab-pane fade" id="noi" role="tabpanel" aria-labelledby="noi-tab"> *@
+                @*             <div class="row mb-2"> *@
+                @*                 <div class="col-12"> *@
+                @*                     <div class="d-flex justify-content-between align-items-center"> *@
+                @*                         <div>Cấu Trúc Đề Thi Nói:</div> *@
+                @*                         <div class="text-danger"> *@
+                @*                             Tổng Điểm Hiện Tại: <span id="noiCurrentPoints">0</span> *@
+                @*                             &nbsp;&nbsp; *@
+                @*                             Tổng Số Câu Hiện Tại: <span id="noiCurrentQuestions">0</span> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                 </div> *@
+                @*             </div> *@
+                            
+                @*             <!-- Exam section structure for NOI (Speaking) tab --> *@
+                @*             <div class="noi-exam-section mb-3"> *@
+                @*                 <div class="row"> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Chủ Đề</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-topic" name="Noi[0].ChuDe"> *@
+                @*                                     <option value="">Chọn chủ đề</option> *@
+                @*                                     @foreach (var item in ViewBag.ChuDeList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-3"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Dạng Câu Hỏi</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-question-type" name="Noi[0].DangCauHoi"> *@
+                @*                                     <option value="">Chọn dạng câu hỏi</option> *@
+                @*                                     @foreach (var item in ViewBag.DangCauHoiList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Mức Độ</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-difficulty" name="Noi[0].MucDo"> *@
+                @*                                     <option value="">Chọn mức độ</option> *@
+                @*                                     @foreach (var item in ViewBag.MucDoList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Số Câu</label> *@
+                @*                             <input type="number" class="form-control section-questions" name="Noi[0].SoCau" min="0" value="0"> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Số Điểm Mỗi Câu</label> *@
+                @*                             <input type="number" class="form-control section-points" name="Noi[0].SoDiemMoiCau" min="0" step="0.1" value="0"> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-1 d-flex align-items-end"> *@
+                @*                         <button type="button" class="btn btn-danger btn-remove-section mb-3"> *@
+                @*                             <i class="fas fa-times"></i> *@
+                @*                         </button> *@
+                @*                     </div> *@
+                @*                 </div> *@
+                @*             </div> *@
+
+                @*             <!-- Add section button for NOI --> *@
+                @*             <div class="text-center mb-3 section-add-button"> *@
+                @*                 <button type="button" class="btn btn-success btn-circle btn-add-section" data-section="noi"> *@
+                @*                     <i class="fas fa-plus"></i> *@
+                @*                 </button> *@
+                @*             </div> *@
+                @*         </div> *@
+                        
+                @*         <!-- DOC (Reading) Tab --> *@
+                @*         <div class="tab-pane fade" id="doc" role="tabpanel" aria-labelledby="doc-tab"> *@
+                @*             <div class="row mb-2"> *@
+                @*                 <div class="col-12"> *@
+                @*                     <div class="d-flex justify-content-between align-items-center"> *@
+                @*                         <div>Cấu Trúc Đề Thi Đọc:</div> *@
+                @*                         <div class="text-danger"> *@
+                @*                             Tổng Điểm Hiện Tại: <span id="docCurrentPoints">0</span> *@
+                @*                             &nbsp;&nbsp; *@
+                @*                             Tổng Số Câu Hiện Tại: <span id="docCurrentQuestions">0</span> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                 </div> *@
+                @*             </div> *@
+                            
+                @*             <!-- Exam section structure for DOC (Reading) tab --> *@
+                @*             <div class="doc-exam-section mb-3"> *@
+                @*                 <div class="row"> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Chủ Đề</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-topic" name="Doc[0].ChuDe"> *@
+                @*                                     <option value="">Chọn chủ đề</option> *@
+                @*                                     @foreach (var item in ViewBag.ChuDeList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-3"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Dạng Câu Hỏi</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-question-type" name="Doc[0].DangCauHoi"> *@
+                @*                                     <option value="">Chọn dạng câu hỏi</option> *@
+                @*                                     @foreach (var item in ViewBag.DangCauHoiList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Mức Độ</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-difficulty" name="Doc[0].MucDo"> *@
+                @*                                     <option value="">Chọn mức độ</option> *@
+                @*                                     @foreach (var item in ViewBag.MucDoList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Số Câu</label> *@
+                @*                             <input type="number" class="form-control section-questions" name="Doc[0].SoCau" min="0" value="0"> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Số Điểm Mỗi Câu</label> *@
+                @*                             <input type="number" class="form-control section-points" name="Doc[0].SoDiemMoiCau" min="0" step="0.1" value="0"> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-1 d-flex align-items-end"> *@
+                @*                         <button type="button" class="btn btn-danger btn-remove-section mb-3"> *@
+                @*                             <i class="fas fa-times"></i> *@
+                @*                         </button> *@
+                @*                     </div> *@
+                @*                 </div> *@
+                @*             </div> *@
+
+                @*             <!-- Add section button for DOC --> *@
+                @*             <div class="text-center mb-3 section-add-button"> *@
+                @*                 <button type="button" class="btn btn-success btn-circle btn-add-section" data-section="doc"> *@
+                @*                     <i class="fas fa-plus"></i> *@
+                @*                 </button> *@
+                @*             </div> *@
+                @*         </div> *@
+                        
+                @*         <!-- VIET (Writing) Tab --> *@
+                @*         <div class="tab-pane fade" id="viet" role="tabpanel" aria-labelledby="viet-tab"> *@
+                @*             <div class="row mb-2"> *@
+                @*                 <div class="col-12"> *@
+                @*                     <div class="d-flex justify-content-between align-items-center"> *@
+                @*                         <div>Cấu Trúc Đề Thi Viết:</div> *@
+                @*                         <div class="text-danger"> *@
+                @*                             Tổng Điểm Hiện Tại: <span id="vietCurrentPoints">0</span> *@
+                @*                             &nbsp;&nbsp; *@
+                @*                             Tổng Số Câu Hiện Tại: <span id="vietCurrentQuestions">0</span> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                 </div> *@
+                @*             </div> *@
+                            
+                @*             <!-- Exam section structure for VIET (Writing) tab --> *@
+                @*             <div class="viet-exam-section mb-3"> *@
+                @*                 <div class="row"> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Chủ Đề</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-topic" name="Viet[0].ChuDe"> *@
+                @*                                     <option value="">Chọn chủ đề</option> *@
+                @*                                     @foreach (var item in ViewBag.ChuDeList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-3"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Dạng Câu Hỏi</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-question-type" name="Viet[0].DangCauHoi"> *@
+                @*                                     <option value="">Chọn dạng câu hỏi</option> *@
+                @*                                     @foreach (var item in ViewBag.DangCauHoiList) *@
+                @*                                     { *@
+                @*                                         <option value="@item.Value">@item.Text</option> *@
+                @*                                     } *@
+                @*                                 </select> *@
+                @*                                 <div class="input-group-append"> *@
+                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
+                @*                                 </div> *@
+                @*                             </div> *@
+                @*                         </div> *@
+                @*                     </div> *@
+                @*                     <div class="col-md-2"> *@
+                @*                         <div class="form-group"> *@
+                @*                             <label>Mức Độ</label> *@
+                @*                             <div class="input-group"> *@
+                @*                                 <select class="form-control section-difficulty" name="Viet[0].MucDo"> *@
+                @*                                     <option value="">Chọn mức độ</option> *@
+                        </div> 
+                     </div> 
+                 </div> 
+
+                <div class="row justify-content-end">
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-secondary">Quay Lại</button>
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add event handlers for form interactions
+            // Update total questions, points, etc.
+            
+            // Example calculation logic:
+            function recalculateTotals() {
+                let totalQuestions = 0;
+                let totalPoints = 0;
+                
+                $('.exam-section').each(function() {
+                    const questionCount = parseInt($(this).find('input[type="number"]').eq(0).val()) || 0;
+                    const pointsPerQuestion = parseFloat($(this).find('input[type="number"]').eq(1).val()) || 0;
+                    
+                    totalQuestions += questionCount;
+                    totalPoints += questionCount * pointsPerQuestion;
+                });
+                
+                $('#currentQuestions').text(totalQuestions);
+                $('#currentPoints').text(totalPoints);
+            }
+            
+            // Initial calculation
+            recalculateTotals();
+            
+            // Update when inputs change
+            $('input[type="number"]').on('change', recalculateTotals);
+            
+            // Add new section
+            $('.btn-success').click(function() {
+                const newSection = $('.exam-section').first().clone();
+                newSection.find('input').val(0);
+                newSection.insertBefore($(this).parent());
+                
+                // Reattach event handlers
+                newSection.find('input[type="number"]').on('change', recalculateTotals);
+                
+                // Remove button handler
+                newSection.find('.btn-danger').click(function() {
+                    $(this).closest('.exam-section').remove();
+                    recalculateTotals();
+                });
+            });
+            
+            // Remove section
+            $('.btn-danger').click(function() {
+                $(this).closest('.exam-section').remove();
+                recalculateTotals();
+            });
+        });
+    </script>
+}

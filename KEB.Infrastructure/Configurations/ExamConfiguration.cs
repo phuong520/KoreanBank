@@ -16,8 +16,8 @@ namespace KEB.Infrastructure.Configurations
             builder.ToTable(nameof(Exam));
             builder.HasKey(x => x.Id);
             builder.HasOne(e=>e.ExamType).WithMany(r=>r.Exams).HasForeignKey(e=>e.ExamTypeId);
-            builder.HasOne(x=>x.User).WithMany(r=>r.Exams).HasForeignKey(e=>e.HostId);
-            builder.HasOne(x=>x.User).WithMany(r=>r.Exams).HasForeignKey(e=>e.ReviewerId);
+            builder.HasOne(x=>x.Host).WithMany(r=>r.HostedExams).HasForeignKey(e=>e.HostId).OnDelete(DeleteBehavior.Restrict); ;
+            builder.HasOne(x=>x.Reviewer).WithMany(r=>r.ReviewedExams).HasForeignKey(e=>e.ReviewerId).OnDelete(DeleteBehavior.Restrict); ;
         }
     }
 }

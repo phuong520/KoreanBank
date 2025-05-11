@@ -1,0 +1,94 @@
+﻿@model KEB.Domain.Entities.Exam
+@{
+    ViewData["Title"] = "Tạo Kỳ Thi";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">@ViewData["Title"]</h2>
+        </div>
+        <div class="col text-end">
+            <a href="#" class="btn btn-outline-info me-2" title="Trợ giúp"><i class="fas fa-question-circle"></i></a>
+            <a href="#" class="btn btn-outline-secondary me-2" title="Ngôn ngữ"><i class="fas fa-globe"></i></a>
+            <a href="#" class="btn btn-outline-primary" title="Thông báo"><i class="fas fa-bell"></i></a>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="ExamTypeId" class="form-label">Loại Kỳ Thi:</label>
+                    <select asp-for="ExamTypeId" asp-items="ViewBag.ExamTypes" class="form-select">
+                        <option value="">-- Chọn loại kỳ thi --</option>
+                    </select>
+                    <span asp-validation-for="ExamTypeId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="ExamName" class="form-label">Tên Kỳ Thi:</label>
+                    <input asp-for="ExamName" class="form-control" />
+                    <span asp-validation-for="ExamName" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="TakePlaceTime" class="form-label">Ngày Thi:</label>
+                    <div class="input-group">
+                        <input asp-for="TakePlaceTime" type="date" class="form-control" />
+                        <span class="input-group-text">
+                            <i class="fas fa-calendar-alt"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="TakePlaceTime" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="HostId" class="form-label">Host:</label>
+                    <select asp-for="HostId" asp-items="ViewBag.Hosts" class="form-select">
+                        <option value="">-- Chọn host --</option>
+                    </select>
+                    <span asp-validation-for="HostId" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="ReviewerId" class="form-label">Reviewer:</label>
+                    <select asp-for="ReviewerId" asp-items="ViewBag.Hosts" class="form-select">
+                        <option value="">-- Chọn reviewer --</option>
+                    </select>
+                    <span asp-validation-for="ReviewerId" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col text-end">
+                <a asp-action="Index" class="btn btn-secondary me-2">Quay Lại</a>
+                <button type="submit" class="btn btn-primary">Tạo</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            // Additional JavaScript if needed
+        });
+    </script>
+}

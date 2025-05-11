@@ -1,4 +1,4 @@
-﻿@model List<KEB.Application.DTOs.ExamDTO.ExamGeneralDisplayDTO>
+﻿@model List<KEB.Application.DTOs.ExamDTO.ExamAsTaskDisplayDTO>
 
 @{
     ViewData["Title"] = "Danh sách bài thi";
@@ -18,26 +18,39 @@ else if (!Model.Any())
 }
 else
 {
-    <table class="table table-bordered">
+    <table class="table" style="border: 1px solid #dee2e6;">
         <thead>
-            <tr>
-                <th>Tên bài thi</th>
-                <th>Loại</th>
-                <th>Cấp độ</th>
-                <th>Người tạo</th>
-                <th>Ngày tạo</th>
+            <tr style="border-bottom: 1px solid #dee2e6;">
+                <th style="border-right: none;">STT</th>
+                <th style="border-right: none;">Tên bài thi</th>
+                <th style="border-right: none;">Loại kỳ thi</th>
+                <th style="border-right: none;">Trình độ</th>
+                <th style="border-right: none;">Ngày thi</th>
+                <th style="border-right: none;">Tình trạng</th>
+                <th style="border-right: none;">Hoạt động</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var exam in Model)
             {
-                <tr>
-                    <td>@exam.Examname</td>
-                    <td>@exam.ExamTypeName</td>
-                    <td>@exam.LevelName</td>
-                    <td>@exam.Occured</td>
-                    <td>@exam.CreatedTime.ToString("dd/MM/yyyy")</td>
+                int i = 1;
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="border-right: none;">@i</td>
+                    <td style="border-right: none;" name="ExamName">@exam.ExamName</td>
+                    <td style="border-right: none;" name="ExamType">@exam.ExamType</td>
+                    <td style="border-right: none;" name="LevelName">@exam.LevelName</td>
+                    <td style="border-right: none;" name="TakePlaceTime">@exam.TakePlaceTime</td>
+                    <td style="border-right: none;" name="Occured">@(exam.Occured ? "Chưa diễn ra" : "Đã diễn ra")</td>
+                    <td style="border-right: none;">
+                        <a href="@Url.Action("Edit", "Exam", new { id = exam.ExamId })" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="@Url.Action("Delete", "Exam", new { id = exam.ExamId })" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-info-circle"></i>
+                        </a>
+                    </td>
                 </tr>
+                i++;
             }
         </tbody>
     </table>

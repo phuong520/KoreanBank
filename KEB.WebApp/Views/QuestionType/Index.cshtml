@@ -1,21 +1,24 @@
 ﻿@model IEnumerable<KEB.Application.DTOs.QuestionTypeDTO.QuestionTypeDisplayDto>
-
+@using KEB.Domain.Enums
 @{
     ViewData["Title"] = "Danh sách loại câu hỏi";
+    var skills = Enum.GetValues(typeof(Skill)).Cast<Skill>().ToList();
 }
 
 <h2 class="mb-4">Danh sách loại câu hỏi</h2>
-<div>
-    <a href="@Url.Action("Create", "QuestionType")" class="btn btn-primary action-btn view-btn">Thêm loại câu hỏi</a>
+<div class="mb-3">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionTypeModal">
+        <i class="bi bi-plus-circle me-1"></i> Thêm loại câu hỏi
+    </button>
 </div>
-<table class="table table-bordered table-hover">
-    <thead class="table-dark">
-        <tr>
-            <th>#</th>
-            <th>Tên loại câu hỏi</th>
-            <th>Mô tả</th>
-            <th>Kỹ năng</th>
-            <th>Số lượng câu hỏi</th>
+<table class="table table-striped table-hover" style="border: 1px solid #dee2e6;">
+    <thead class="table-light">
+        <tr style="border-bottom: 1px solid #dee2e6;">
+            <th style="border-right: none;">#</th>
+            <th style="border-right: none;">Tên loại câu hỏi</th>
+            <th style="border-right: none;">Mô tả</th>
+            <th style="border-right: none;">Kỹ năng</th>
+            <th style="border-right: none;">Số lượng câu hỏi</th>
         </tr>
     </thead>
     <tbody>
@@ -30,15 +33,112 @@
             int index = 1;
             foreach (var item in Model)
             {
-                <tr>
-                    <td>@index</td>
-                    <td>@item.QuestionTypeName</td>
-                    <td>@item.QuestionTypeContent</td>
-                    <td>@item.Skill</td>
-                    <td>@item.NumOfQuestions</td>
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="border-right: none;">@index</td>
+                    <td style="border-right: none;">@item.QuestionTypeName</td>
+                    <td style="border-right: none;">@item.QuestionTypeContent</td>
+                    <td style="border-right: none;">@item.Skill</td>
+                    <td style="border-right: none;">@item.NumOfQuestions</td>
                 </tr>
                 index++;
             }
         }
     </tbody>
 </table>
+
+<!-- Modal Thêm loại câu hỏi -->
+<div class="modal fade" id="addQuestionTypeModal" tabindex="-1" aria-labelledby="addQuestionTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addQuestionTypeModalLabel">Thêm loại câu hỏi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form Thêm loại câu hỏi -->
+                <form id="addQuestionTypeForm" method="post" action="@Url.Action("Create", "QuestionType")">
+                    <div class="mb-3">
+                        <label for="questionTypeName" class="form-label">Tên loại câu hỏi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="questionTypeName" name="QuestionTypeName" required />
+                        <div class="invalid-feedback">Vui lòng nhập tên loại câu hỏi</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="questionTypeContent" class="form-label">Mô tả loại câu hỏi <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="questionTypeContent" name="QuestionTypeContent" rows="3" required></textarea>
+                        <div class="invalid-feedback">Vui lòng nhập mô tả cho loại câu hỏi</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="skill" class="form-label">Kỹ năng <span class="text-danger">*</span></label>
+                        <select class="form-control" id="skill" name="Skill" required>
+                            <option value="">-- Chọn kỹ năng --</option>
+                            @foreach (var diff in skills)
+                            {
+                                <option value="@((int)diff)">@diff</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Vui lòng chọn kỹ năng</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Thêm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <!-- Bao gồm Bootstrap Bundle JS (bao gồm Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script xử lý form validation và submit -->
+    <script>
+        // Đợi tài liệu HTML được tải xong
+        document.addEventListener('DOMContentLoaded', function () {
+            // Lấy form element
+            const form = document.getElementById('addQuestionTypeForm');
+
+            // Xử lý sự kiện submit form
+            form.addEventListener('submit', function (event) {
+                // Kiểm tra form có hợp lệ không
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // Hiển thị các thông báo lỗi
+                    Array.from(form.elements).forEach(input => {
+                        if (input.nodeName !== 'BUTTON' && !input.checkValidity()) {
+                            input.classList.add('is-invalid');
+                        }
+                    });
+                } else {
+                    // Ẩn modal khi submit thành công
+                    // Bootstrap sẽ tự động submit form và chuyển trang
+                }
+
+                form.classList.add('was-validated');
+            });
+
+            // Reset form khi modal được đóng
+            const modal = document.getElementById('addQuestionTypeModal');
+            modal.addEventListener('hidden.bs.modal', function () {
+                form.reset();
+                form.classList.remove('was-validated');
+                Array.from(form.elements).forEach(input => {
+                    input.classList.remove('is-invalid');
+                });
+            });
+
+            // Xử lý sự kiện input để xóa lỗi khi user điền thông tin
+            Array.from(form.elements).forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.checkValidity()) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+        });
+    </script>
+}

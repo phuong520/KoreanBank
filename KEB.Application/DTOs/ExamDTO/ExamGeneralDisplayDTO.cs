@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KEB.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,7 +16,7 @@ namespace KEB.Application.DTOs.ExamDTO
         public DateTime TakePlaceTime { get; set; }
         public DateTime CreatedTime { get; set; }
         public bool IsSuspended { get; set; }
-        public string Occured { get; set; }
+        public bool Occured { get; set; }
 
     }
 }

@@ -10,6 +10,7 @@ namespace KEB.Application.DTOs.ExamDTO
     {
         public Guid ExamId { get; set; }
         public string ExamName { get; set; }
+        public string ExamType { get; set; }
         public string LevelName { get; set; }
         public DateTime TakePlaceTime { get; set; }
         public DateTime CreatedTime { get; set; }

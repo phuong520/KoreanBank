@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Spreadsheet;
 using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.ExamDTO;
 using KEB.Application.Services.Interfaces;
@@ -95,6 +96,7 @@ namespace KEB.Application.Services.Implementations
                     ExamName = request.ExamName,
                     ExamTypeId = request.ExamTypeId,
                     TakePlaceTime = request.TakePlaceTime,
+                    IsSuspended=false,
                     IsDeleted = false,
                     ReviewerId = request.ReviewerId,
                     HostId = request.HostId
@@ -226,29 +228,22 @@ namespace KEB.Application.Services.Implementations
                 });
                 await Task.Run(() =>
                 {
-                    // Send email to relevances that the exam has been automatically suspended because no papers was detected after editing time
+                   // Send email to relevances that the exam has been automatically suspended because no papers was detected after editing time
                     List<SendEmail> emails =
                     [
                         new SendEmail {
-                            Email = exam.User.Email,
+                            Email = exam.Host.Email,
                             Body = $"The exam {exam.ExamName } has been automatically suspended because no papers detected after editing time",
-                            RecipientFullName = exam.User.UserName,
+                            RecipientFullName = exam.Host.UserName,
                             Subject = "AUTO SUSPEND EXAM",
-                            UserId = exam.User.Id
+                            UserId = exam.HostId
                         },
                         new SendEmail {
-                            Email = exam.User.Email,
+                            Email = exam.Reviewer.Email,
                             Body = $"The exam {exam.ExamName } has been automatically suspended because no papers detected after editing time",
-                            RecipientFullName = exam.User.UserName,
+                            RecipientFullName = exam.Reviewer.UserName,
                             Subject = "AUTO SUSPEND EXAM",
-                            UserId = exam.User.Id
-                        },
-                        new SendEmail {
-                            Email = exam.User.Email,
-                            Body = $"The exam {exam.ExamName } has been automatically suspended because no papers detected after editing time",
-                            RecipientFullName = exam.User.UserName,
-                            Subject = "AUTO SUSPEND EXAM",
-                            UserId = exam.User.Id
+                            UserId = exam.ReviewerId
                         }
                     ];
                     _unitOfWork.Enqueue<EmailNotiService>((x) => x.SendEmails(emails));
@@ -383,10 +378,10 @@ namespace KEB.Application.Services.Implementations
             DateTime earliestNewTime = currentTime.AddDays(SystemDataFormat.EARLIEST_EXAM_TAKEPLACETIME_FROMNOW);
             ExamType? examType = targetExam.ExamType;
             List<string> validateResult = [];
-            User? oldHost = targetExam.User;
-            User? newHost = targetExam.User;
-            User? oldReviewer = targetExam.User;
-            User? newReviewer = targetExam.User;
+            User? oldHost = targetExam.Host;
+            User? newHost = targetExam.Host;
+            User? oldReviewer = targetExam.Reviewer;
+            User? newReviewer = targetExam.Reviewer;
             List<SendEmail> needSendEmails = [];
             if (request.NewExamTypeId != null && examType.Id != request.NewExamTypeId)
             {
@@ -432,7 +427,7 @@ namespace KEB.Application.Services.Implementations
                 newHost = await _unitOfWork.Users.GetAsync(x => x.Id == request.NewHostId);
                 if (newHost != null && newHost.IsActive && newHost.RoleId.ToString() != LogicString.Role.AdminRoleId)
                 {
-                    targetExam.User = newHost;
+                    targetExam.Host = newHost;
                     targetExam.HostId = newHost.Id;
                     // Handle new host
                     if (newHost.Id == oldReviewer.Id)
@@ -506,7 +501,7 @@ namespace KEB.Application.Services.Implementations
                 newReviewer = await _unitOfWork.Users.GetAsync(x => x.Id == request.NewReviewerId);
                 if (newReviewer != null && newReviewer.IsActive && newReviewer.RoleId.ToString() != LogicString.Role.AdminRoleId)
                 {
-                    targetExam.User = newReviewer;
+                    targetExam.Reviewer = newReviewer;
                     targetExam.ReviewerId = newReviewer.Id;
                     // Handle new reviewer
                     if (newReviewer.Id != oldHost.Id)
@@ -538,7 +533,7 @@ namespace KEB.Application.Services.Implementations
                             Email = oldReviewer.Email,
                             Subject = "BẠN VỪA BỊ ĐÁ KHỎI MỘT KỲ THI",
                             Body = CommonUntils.PassParamsToFormat(SystemDataFormat.EXAM_KICKOUT_EMAIL_BODY,
-                                targetExam.User.UserName, requestedUser.UserName, targetExam.ExamName),
+                                targetExam.Host.UserName, requestedUser.UserName, targetExam.ExamName),
                             RecipientFullName = oldReviewer.FullName,
                         });
                     else { }
@@ -635,48 +630,51 @@ namespace KEB.Application.Services.Implementations
 
             try
             {
-                var queriedResult = await _unitOfWork.Exams.GetAllAsync(filter, includeProperties: "ExamType,Host,Reviewer,ExamType.Level");
-                List<ExamAsTaskDisplayDTO> subList = queriedResult.Where(x => !request.UserId.HasValue || x.HostId == request.UserId).Select(x => new ExamAsTaskDisplayDTO
+                var queriedResult = await _unitOfWork.Exams.GetAllAsync(filter, includeProperties: "ExamType,Host,Reviewer,ExamType.Levels");
+                List<ExamAsTaskDisplayDTO> subList = queriedResult.Where(x => !request.UserId.HasValue || x.HostId == request.UserId)
+                    .Select(x => new ExamAsTaskDisplayDTO
+
                 {
                     ExamId = x.Id,
                     ExamName = x.ExamName,
                     LevelName = x.ExamType.Levels.LevelName,
+                    ExamType = x.ExamType.ExamTypeName,
                     Occured = x.TakePlaceTime > DateTime.Now,
                     TakePlaceTime = x.TakePlaceTime,
                     TaskName = "Host",
-                    UserName = x.User.UserName
+                    UserName = x.Host.UserName
                 }).ToList();
-                List<ExamAsTaskDisplayDTO> fullList = queriedResult.Where(x => !request.UserId.HasValue || x.ReviewerId == request.UserId).Select(x => new ExamAsTaskDisplayDTO
+                List<ExamAsTaskDisplayDTO> fullList = queriedResult.Where(x => !request.UserId.HasValue || x.ReviewerId == request.UserId)
+                     .Where(x => !subList.Any(h => h.ExamId == x.Id))
+                    .Select(x => new ExamAsTaskDisplayDTO
                 {
                     ExamId = x.Id,
                     ExamName = x.ExamName,
                     LevelName = x.ExamType.Levels.LevelName,
+                    ExamType = x.ExamType.ExamTypeName,
                     Occured = x.TakePlaceTime < DateTime.Now,
                     TakePlaceTime = x.TakePlaceTime,
                     TaskName = "Review",
-                    UserName = x.User.UserName
+                    UserName = x.Reviewer.UserName
                 }).ToList();
-                if (request.Host == true)
+                
+                List<ExamAsTaskDisplayDTO> finalList = request.Host switch
                 {
-                    subList = [];
-                }
-                else if (request.Host == false)
-                {
-                    fullList = [];
-                }
-                foreach (var task in subList)
-                {
-                    fullList.Add(task);
-                }
-                if (fullList.Count == 0)
+                    true => subList,             // Chỉ lấy host
+                    false => fullList,          // Chỉ lấy reviewer
+                    null => subList.Concat(fullList).ToList() // Cả hai
+                };
+
+                // Trả kết quả
+                if (!finalList.Any())
                 {
                     response.StatusCode = System.Net.HttpStatusCode.NoContent;
                     response.Message = AppMessages.NO_CONTENT;
                 }
                 else
                 {
-                    response.Result = [.. fullList.OrderByDescending(x => x.TakePlaceTime)];
-                    response.Message = $"{fullList.Count}";
+                    response.Result = finalList.OrderByDescending(x => x.TakePlaceTime).ToList();
+                    response.Message = $"{finalList.Count}";
                 }
             }
             catch (Exception)
@@ -687,6 +685,7 @@ namespace KEB.Application.Services.Implementations
             }
             return response;
         }
+         
 
         public async Task<APIResponse<object>> GetExamAsync(Guid? id)
 

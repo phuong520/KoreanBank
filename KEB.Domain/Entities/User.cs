@@ -23,7 +23,8 @@ namespace KEB.Domain.Entities
         public Role Role { get; set; }
         public Guid NotificationId { get; set; }
         public List<Notification> Notifications { get; set; }
-        public List<Exam> Exams { get; set; }
+        public ICollection<Exam> HostedExams { get; set; }    // Làm Host
+        public ICollection<Exam> ReviewedExams { get; set; }  // Làm Reviewer
         public List<SystemAccessLog> SystemAccessLogs { get; set; }
         public List<AddQuestionTask> AddQuestions { get; set; }
     }

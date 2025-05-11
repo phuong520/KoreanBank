@@ -8,6 +8,7 @@ namespace KEB.Application.DTOs.ExamDTO
 {
     public class GetExamAsTaskRequest
     {
+        
         public Guid? UserId { get; set; }
         public Guid? LevelId { get; set; }
         public bool? Occured { get; set; }
