@@ -81,7 +81,7 @@ namespace KEB.WebAPI.Controllers
         [HttpPost]
         [Route("add-single-question")]
         //[Authorize(Roles = "R2,R3")]
-        public async Task<IActionResult> AddSingleQuestion(AddSingleQuestionRequest request)
+        public async Task<IActionResult> AddSingleQuestion([FromForm] AddSingleQuestionRequest request)
         {
            
             var result = await _unitOfService.QuestionService.AddSingleQuestionAsync(request);

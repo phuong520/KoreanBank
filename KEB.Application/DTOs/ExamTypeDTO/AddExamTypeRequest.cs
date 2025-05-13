@@ -9,7 +9,7 @@ namespace KEB.Application.DTOs.ExamTypeDTO
 {
     public class AddExamTypeRequest
     {
-        //public Guid? ExamTypeId { get; set; }
+        
         public Guid RequestedUserId { get; set; }
         public Guid LevelId { get; set; }
         public string ExamTypeName { get; set; }

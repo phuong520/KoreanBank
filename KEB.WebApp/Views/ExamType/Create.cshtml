@@ -1,462 +1,208 @@
-﻿@model KEB.Application.DTOs.ExamTypeDTO.ExamTypeComplexDisplayDTO
+﻿@using KEB.Domain.Enums
+@model KEB.Application.DTOs.ExamTypeDTO.ExamTypeComplexDisplayDTO
 @{
     ViewData["Title"] = "Tạo Loại Kỳ Thi";
+    var difficulties = Enum.GetValues(typeof(Difficulty)).Cast<Difficulty>().ToList();
+    var skills = Enum.GetValues(typeof(Skill)).Cast<Skill>().ToList();
 }
 
 <div class="container-fluid">
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Tạo Loại Kỳ Thi</h6>
-            <div class="d-flex align-items-center">
-                <div class="dropdown mr-2">
-                    <button class="btn btn-sm" type="button">
-                        <i class="fas fa-globe"></i>
-                    </button>
-                </div>
-                <div class="dropdown mr-2">
-                    <button class="btn btn-sm" type="button">
-                        <i class="fas fa-question-circle"></i>
-                    </button>
-                </div>
-                <div class="dropdown">
-                    <button class="btn btn-sm" type="button">
-                        <i class="fas fa-bell"></i>
-                    </button>
-                </div>
-                <div class="ml-2">
-                    <img src="~/images/user-avatar.jpg" class="rounded-circle" width="32" height="32" alt="User">
-                </div>
+            <div>
+                <a asp-action="Index" asp-controller="ExamType" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Quay lại danh sách
+                </a>
             </div>
         </div>
         <div class="card-body">
-            <form id="examCreationForm" method="post">
+            <form id="examTypeForm" asp-action="Create" asp-controller="ExamType" method="post">
+                @if (ViewData.ModelState.ErrorCount > 0)
+                {
+                    <div class="alert alert-danger">
+                        <asp-validation-summary ="All"></asp-validation-summary>
+                    </div>
+                }
+
                 <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="trinhDo">Trình độ</label>
-                            <div class="input-group">
-                                <select class="form-control" asp-items="ViewBag.Levels" id="trinhDo" name="Level">
-                                    <option value="">Chọn trình độ</option>
-                                    <!-- Add options as needed -->
-                                </select>
-                                <div class="input-group-append">
-                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
-                                </div>
-                            </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="LevelId" class="form-label">Trình độ <span class="text-danger">*</span></label>
+                            <select asp-for="LevelId" class="form-select" asp-items="ViewBag.Levels" id="levelSelect" required>
+                                <option value="">-- Chọn trình độ --</option>
+                            </select>
+                            <span asp-validation-for="LevelId" class="text-danger"></span>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="loaiKyThi">Loại Kỳ Thi</label>
-                            <input type="text" class="form-control" id="loaiKyThi" name="ExamTypeName">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label asp-for="ExamTypeName" class="form-label">Loại Kỳ Thi <span class="text-danger">*</span></label>
+                            <input asp-for="ExamTypeName" type="text" class="form-control" required>
+                            <span asp-validation-for="ExamTypeName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="selectedSkill" class="form-label">Kỹ năng <span class="text-danger">*</span></label>
+                            <select id="selectedSkill" name="ExamTypeConstraints[0].Skill" class="form-select" required>
+                                <option value="">-- Chọn kỹ năng --</option>
+                                @foreach (var skill in skills)
+                                {
+                                    <option value="@((int)skill)">@skill</option>
+                                }
+                            </select>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mb-4">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0">Cấu trúc các bài thi</h6>
+                        <h6 class="mb-0">Cấu trúc bài thi</h6>
                     </div>
-                    <div class="card-body p-0">
-                        <!-- Language Skills Tabs -->
-                    <ul class="nav nav-tabs" id="skillTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link active" id="nghe-tab" data-toggle="tab" href="#nghe" role="tab" aria-controls="nghe" aria-selected="true">Nghe</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="noi-tab" data-toggle="tab" href="#noi" role="tab" aria-controls="noi" aria-selected="false">Nói</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="doc-tab" data-toggle="tab" href="#doc" role="tab" aria-controls="doc" aria-selected="false">Đọc</a>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <a class="nav-link" id="viet-tab" data-toggle="tab" href="#viet" role="tab" aria-controls="viet" aria-selected="false">Viết</a>
-                        </li>
-                    </ul>
-                        
-                    <!-- Language Skills Summary -->
-                    <div class="table-responsive">
-                        <table class="table table-bordered mb-0">
-                            <tbody>
-                                <tr class="text-center">
-                                    <td style="width: 25%">Tổng Số Câu:</td>
-                                    <td style="width: 25%">
-                                        <input type="number" class="form-control form-control-sm" id="totalQuestions" name="TotalQuestions" min="0" value="0">
-                                    </td>
-                                    <td style="width: 25%">Câu</td>
-                                    <td style="width: 25%"></td>
-                                </tr>
-                                <tr class="text-center">
-                                    <td>Tổng Số Đề Thi:</td>
-                                    <td>
-                                        <input type="number" class="form-control form-control-sm" id="totalExams" name="TotalExams" min="0" value="0">
-                                    </td>
-                                    <td>Đề</td>
-                                    <td></td>
-                                </tr>
-                                <tr class="text-center">
-                                    <td>Thời gian làm bài:</td>
-                                    <td>
-                                        <input type="number" class="form-control form-control-sm" id="examTime" name="ExamTime" min="0" value="0">
-                                    </td>
-                                    <td>Phút</td>
-                                    <td></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="card-body">
+                        <!-- Hidden fields for ExamTypeConstraints -->
+                        <input type="hidden" name="ExamTypeConstraints[0].ExamTypeConstraintId" value="" />
+                        <input type="hidden" name="ExamTypeConstraints[0].ExamTypeId" value="" />
 
-                    <!-- Tab Content -->
-                    <div class="tab-content p-3 border-top" id="skillTabContent">
-                        <!-- NGHE (Listening) Tab -->
-                        <div class="tab-pane fade show active" id="nghe" role="tabpanel" aria-labelledby="nghe-tab">
-                            <div class="row mb-2">
-                                <div class="col-12">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>Cấu Trúc Đề Thi Nghe:</div>
-                                        <div class="text-danger">
-                                            Tổng Điểm Hiện Tại: <span id="ngheCurrentPoints">0</span>
-                                            &nbsp;&nbsp;
-                                            Tổng Số Câu Hiện Tại: <span id="ngheCurrentQuestions">0</span>
-                                        </div>
+                        <!-- Language Skills Summary -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr class="text-center">
+                                        <td style="width: 25%">Tổng Số Câu:</td>
+                                        <td style="width: 25%">
+                                            <input type="number" class="form-control form-control-sm"
+                                                   name="ExamTypeConstraints[0].TotalNumberOfQuestions"
+                                                   id="totalQuestions" min="0" value="0" required>
+                                        </td>
+                                        <td style="width: 25%">Câu</td>
+                                    </tr>
+                                    <tr class="text-center">
+                                        <td>Tổng Số Đề Thi:</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm"
+                                                   name="ExamTypeConstraints[0].NumberOfPapers"
+                                                   id="totalExams" min="0" value="0" required>
+                                        </td>
+                                        <td>Đề</td>
+                                    </tr>
+                                    <tr class="text-center">
+                                        <td>Thời gian làm bài:</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm"
+                                                   name="ExamTypeConstraints[0].DurationInMinutes"
+                                                   id="examTime" min="0" value="0" required>
+                                        </td>
+                                        <td>Phút</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Exam structure details -->
+                        <div class="row mb-2">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>Cấu Trúc Đề Thi:</div>
+                                    <div class="text-danger">
+                                        Tổng Điểm Hiện Tại: <span id="currentPoints" class="current-points">0</span>
+                                        &nbsp;&nbsp;
+                                        Tổng Số Câu Hiện Tại: <span id="currentQuestions" class="current-questions">0</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Exam section structure for NGHE (Listening) tab -->
-                            <div class="nghe-exam-section mb-3">
-                                <div class="row">
-                                    <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label>Chủ Đề</label>
-                                            <div class="input-group">
-                                                    <select class="form-select" asp-items="ViewBag.Topics" id="levelSelect">
-                                                        <option value="">-- Chọn chủ đề --</option>
-                                                    </select>
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="form-group">
-                                            <label>Dạng Câu Hỏi</label>
-                                            <div class="input-group">
-                                                    <select class="form-select" asp-items="ViewBag.QuestionTypes" id="levelSelect">
-                                                        <option value="">-- Chọn dạng câu hỏi --</option>
-                                                    </select>
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label>Mức Độ</label>
-                                            <div class="input-group">
-                                                <select class="form-control section-difficulty" name="Nghe[0].MucDo">
-                                                    <option value="">Chọn mức độ</option>
-                                                    
-                                                        <option value="">Dễ</option>
-                                                        <option value="">Khó</option>
-                                                        <option value="">TB</option>
-                                                    
-                                                </select>
-                                                <div class="input-group-append">
-                                                    <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label>Số Câu</label>
-                                            <input type="number" class="form-control section-questions" name="Nghe[0].SoCau" min="0" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <div class="form-group">
-                                            <label>Số Điểm Mỗi Câu</label>
-                                            <input type="number" class="form-control section-points" name="Nghe[0].SoDiemMoiCau" min="0" step="0.1" value="0">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-1 d-flex align-items-end">
-                                        <button type="button" class="btn btn-danger btn-remove-section mb-3">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Add section button for NGHE -->
-                            <div class="text-center mb-3 section-add-button">
-                                <button type="button" class="btn btn-success btn-circle btn-add-section" data-section="nghe">
-                                    <i class="fas fa-plus"></i>
-                                </button>
                             </div>
                         </div>
-                        
-                @*         <!-- NOI (Speaking) Tab --> *@
-                @*         <div class="tab-pane fade" id="noi" role="tabpanel" aria-labelledby="noi-tab"> *@
-                @*             <div class="row mb-2"> *@
-                @*                 <div class="col-12"> *@
-                @*                     <div class="d-flex justify-content-between align-items-center"> *@
-                @*                         <div>Cấu Trúc Đề Thi Nói:</div> *@
-                @*                         <div class="text-danger"> *@
-                @*                             Tổng Điểm Hiện Tại: <span id="noiCurrentPoints">0</span> *@
-                @*                             &nbsp;&nbsp; *@
-                @*                             Tổng Số Câu Hiện Tại: <span id="noiCurrentQuestions">0</span> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                 </div> *@
-                @*             </div> *@
-                            
-                @*             <!-- Exam section structure for NOI (Speaking) tab --> *@
-                @*             <div class="noi-exam-section mb-3"> *@
-                @*                 <div class="row"> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Chủ Đề</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-topic" name="Noi[0].ChuDe"> *@
-                @*                                     <option value="">Chọn chủ đề</option> *@
-                @*                                     @foreach (var item in ViewBag.ChuDeList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-3"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Dạng Câu Hỏi</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-question-type" name="Noi[0].DangCauHoi"> *@
-                @*                                     <option value="">Chọn dạng câu hỏi</option> *@
-                @*                                     @foreach (var item in ViewBag.DangCauHoiList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Mức Độ</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-difficulty" name="Noi[0].MucDo"> *@
-                @*                                     <option value="">Chọn mức độ</option> *@
-                @*                                     @foreach (var item in ViewBag.MucDoList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Số Câu</label> *@
-                @*                             <input type="number" class="form-control section-questions" name="Noi[0].SoCau" min="0" value="0"> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Số Điểm Mỗi Câu</label> *@
-                @*                             <input type="number" class="form-control section-points" name="Noi[0].SoDiemMoiCau" min="0" step="0.1" value="0"> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-1 d-flex align-items-end"> *@
-                @*                         <button type="button" class="btn btn-danger btn-remove-section mb-3"> *@
-                @*                             <i class="fas fa-times"></i> *@
-                @*                         </button> *@
-                @*                     </div> *@
-                @*                 </div> *@
-                @*             </div> *@
 
-                @*             <!-- Add section button for NOI --> *@
-                @*             <div class="text-center mb-3 section-add-button"> *@
-                @*                 <button type="button" class="btn btn-success btn-circle btn-add-section" data-section="noi"> *@
-                @*                     <i class="fas fa-plus"></i> *@
-                @*                 </button> *@
-                @*             </div> *@
-                @*         </div> *@
-                        
-                @*         <!-- DOC (Reading) Tab --> *@
-                @*         <div class="tab-pane fade" id="doc" role="tabpanel" aria-labelledby="doc-tab"> *@
-                @*             <div class="row mb-2"> *@
-                @*                 <div class="col-12"> *@
-                @*                     <div class="d-flex justify-content-between align-items-center"> *@
-                @*                         <div>Cấu Trúc Đề Thi Đọc:</div> *@
-                @*                         <div class="text-danger"> *@
-                @*                             Tổng Điểm Hiện Tại: <span id="docCurrentPoints">0</span> *@
-                @*                             &nbsp;&nbsp; *@
-                @*                             Tổng Số Câu Hiện Tại: <span id="docCurrentQuestions">0</span> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                 </div> *@
-                @*             </div> *@
-                            
-                @*             <!-- Exam section structure for DOC (Reading) tab --> *@
-                @*             <div class="doc-exam-section mb-3"> *@
-                @*                 <div class="row"> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Chủ Đề</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-topic" name="Doc[0].ChuDe"> *@
-                @*                                     <option value="">Chọn chủ đề</option> *@
-                @*                                     @foreach (var item in ViewBag.ChuDeList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-3"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Dạng Câu Hỏi</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-question-type" name="Doc[0].DangCauHoi"> *@
-                @*                                     <option value="">Chọn dạng câu hỏi</option> *@
-                @*                                     @foreach (var item in ViewBag.DangCauHoiList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Mức Độ</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-difficulty" name="Doc[0].MucDo"> *@
-                @*                                     <option value="">Chọn mức độ</option> *@
-                @*                                     @foreach (var item in ViewBag.MucDoList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Số Câu</label> *@
-                @*                             <input type="number" class="form-control section-questions" name="Doc[0].SoCau" min="0" value="0"> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Số Điểm Mỗi Câu</label> *@
-                @*                             <input type="number" class="form-control section-points" name="Doc[0].SoDiemMoiCau" min="0" step="0.1" value="0"> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-1 d-flex align-items-end"> *@
-                @*                         <button type="button" class="btn btn-danger btn-remove-section mb-3"> *@
-                @*                             <i class="fas fa-times"></i> *@
-                @*                         </button> *@
-                @*                     </div> *@
-                @*                 </div> *@
-                @*             </div> *@
+                        <!-- Container for exam sections -->
+                        <div id="exam-sections" class="exam-sections">
+                            <!-- Initial section -->
+                            <div class="exam-section card mb-3">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Chủ Đề <span class="text-danger">*</span></label>
+                                                <select name="ExamTypeConstraints[0].ConstraintDetails[0].TopicId" class="form-select topic-select" required>
+                                                    <option value="">-- Chọn chủ đề --</option>
+                                                    @foreach (var topic in ViewBag.Topics)
+                                                    {
+                                                        <option value="@topic.Value">@topic.Text</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Dạng Câu Hỏi <span class="text-danger">*</span></label>
+                                                <select name="ExamTypeConstraints[0].ConstraintDetails[0].QuestionTypeId" class="form-select question-type-select" required>
+                                                    <option value="">-- Chọn dạng câu hỏi --</option>
+                                                    @foreach (var qType in ViewBag.QuestionTypes)
+                                                    {
+                                                        <option value="@qType.Value">@qType.Text</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Loại câu hỏi</label>
+                                                <select name="ExamTypeConstraints[0].ConstraintDetails[0].IsMultipleChoice" class="form-select" onchange="toggleAnswerType()">
+                                                    <option value="True">Trắc nghiệm</option>
+                                                    <option value="False">Tự luận</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Mức Độ <span class="text-danger">*</span></label>
+                                                <select name="ExamTypeConstraints[0].ConstraintDetails[0].Difficulty" class="form-select section-difficulty" required>
+                                                    <option value="">-- Chọn độ khó --</option>
+                                                    @foreach (var diff in difficulties)
+                                                    {
+                                                        <option value="@((int)diff)">@diff</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Số Câu <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control section-questions"
+                                                       name="ExamTypeConstraints[0].ConstraintDetails[0].NumberOfQuestions"
+                                                       min="0" value="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Điểm/Câu <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control section-points"
+                                                       name="ExamTypeConstraints[0].ConstraintDetails[0].MarkPerQuestion"
+                                                       min="0" step="0.1" value="0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                            <button type="button" class="btn btn-danger btn-sm btn-remove-section">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-                @*             <!-- Add section button for DOC --> *@
-                @*             <div class="text-center mb-3 section-add-button"> *@
-                @*                 <button type="button" class="btn btn-success btn-circle btn-add-section" data-section="doc"> *@
-                @*                     <i class="fas fa-plus"></i> *@
-                @*                 </button> *@
-                @*             </div> *@
-                @*         </div> *@
-                        
-                @*         <!-- VIET (Writing) Tab --> *@
-                @*         <div class="tab-pane fade" id="viet" role="tabpanel" aria-labelledby="viet-tab"> *@
-                @*             <div class="row mb-2"> *@
-                @*                 <div class="col-12"> *@
-                @*                     <div class="d-flex justify-content-between align-items-center"> *@
-                @*                         <div>Cấu Trúc Đề Thi Viết:</div> *@
-                @*                         <div class="text-danger"> *@
-                @*                             Tổng Điểm Hiện Tại: <span id="vietCurrentPoints">0</span> *@
-                @*                             &nbsp;&nbsp; *@
-                @*                             Tổng Số Câu Hiện Tại: <span id="vietCurrentQuestions">0</span> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                 </div> *@
-                @*             </div> *@
-                            
-                @*             <!-- Exam section structure for VIET (Writing) tab --> *@
-                @*             <div class="viet-exam-section mb-3"> *@
-                @*                 <div class="row"> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Chủ Đề</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-topic" name="Viet[0].ChuDe"> *@
-                @*                                     <option value="">Chọn chủ đề</option> *@
-                @*                                     @foreach (var item in ViewBag.ChuDeList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-3"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Dạng Câu Hỏi</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-question-type" name="Viet[0].DangCauHoi"> *@
-                @*                                     <option value="">Chọn dạng câu hỏi</option> *@
-                @*                                     @foreach (var item in ViewBag.DangCauHoiList) *@
-                @*                                     { *@
-                @*                                         <option value="@item.Value">@item.Text</option> *@
-                @*                                     } *@
-                @*                                 </select> *@
-                @*                                 <div class="input-group-append"> *@
-                @*                                     <span class="input-group-text"><i class="fas fa-chevron-down"></i></span> *@
-                @*                                 </div> *@
-                @*                             </div> *@
-                @*                         </div> *@
-                @*                     </div> *@
-                @*                     <div class="col-md-2"> *@
-                @*                         <div class="form-group"> *@
-                @*                             <label>Mức Độ</label> *@
-                @*                             <div class="input-group"> *@
-                @*                                 <select class="form-control section-difficulty" name="Viet[0].MucDo"> *@
-                @*                                     <option value="">Chọn mức độ</option> *@
-                        </div> 
-                     </div> 
-                 </div> 
+                        <!-- Add section button -->
+                        <div class="text-center mb-3">
+                            <button type="button" class="btn btn-success btn-add-section">
+                                <i class="fas fa-plus me-1"></i> Thêm phần thi
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="row justify-content-end">
                     <div class="col-auto">
-                        <button type="button" class="btn btn-secondary">Quay Lại</button>
+                        <a asp-action="Index" asp-controller="ExamType" class="btn btn-secondary me-2">Hủy</a>
                         <button type="submit" class="btn btn-primary">Lưu</button>
                     </div>
                 </div>
@@ -466,54 +212,158 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@3.2.12/dist/jquery.validate.unobtrusive.min.js"></script>
+
     <script>
         $(document).ready(function() {
-            // Add event handlers for form interactions
-            // Update total questions, points, etc.
-            
-            // Example calculation logic:
+            // Initial setup
+            recalculateTotals();
+
+            // Function to recalculate totals
             function recalculateTotals() {
                 let totalQuestions = 0;
                 let totalPoints = 0;
-                
-                $('.exam-section').each(function() {
-                    const questionCount = parseInt($(this).find('input[type="number"]').eq(0).val()) || 0;
-                    const pointsPerQuestion = parseFloat($(this).find('input[type="number"]').eq(1).val()) || 0;
-                    
+
+                $(`.exam-section`).each(function() {
+                    const questionCount = parseInt($(this).find('.section-questions').val()) || 0;
+                    const pointsPerQuestion = parseFloat($(this).find('.section-points').val()) || 0;
+
                     totalQuestions += questionCount;
                     totalPoints += questionCount * pointsPerQuestion;
                 });
-                
-                $('#currentQuestions').text(totalQuestions);
-                $('#currentPoints').text(totalPoints);
+
+                $(`#currentQuestions`).text(totalQuestions);
+                $(`#currentPoints`).text(totalPoints.toFixed(1));
+
+                // Update total questions in the summary table
+                $(`#totalQuestions`).val(totalQuestions);
             }
-            
-            // Initial calculation
-            recalculateTotals();
-            
+
             // Update when inputs change
-            $('input[type="number"]').on('change', recalculateTotals);
-            
-            // Add new section
-            $('.btn-success').click(function() {
-                const newSection = $('.exam-section').first().clone();
-                newSection.find('input').val(0);
-                newSection.insertBefore($(this).parent());
-                
-                // Reattach event handlers
-                newSection.find('input[type="number"]').on('change', recalculateTotals);
-                
-                // Remove button handler
-                newSection.find('.btn-danger').click(function() {
-                    $(this).closest('.exam-section').remove();
-                    recalculateTotals();
-                });
-            });
-            
-            // Remove section
-            $('.btn-danger').click(function() {
-                $(this).closest('.exam-section').remove();
+            $(document).on('input', '.section-questions, .section-points', function() {
                 recalculateTotals();
+            });
+
+            // Add new section
+            $('.btn-add-section').click(function() {
+                // Find the container and count existing sections
+                const $sectionsContainer = $(`.exam-sections`);
+                const sectionCount = $sectionsContainer.find('.exam-section').length;
+
+                // Clone the first section
+                const $newSection = $sectionsContainer.find('.exam-section').first().clone();
+
+                // Reset values
+                $newSection.find('input[type="number"]').val(0);
+                $newSection.find('select').val('');
+
+                // Update the indices in the field names
+                $newSection.find('[name]').each(function() {
+                    const name = $(this).attr('name');
+                    const updatedName = name.replace(/ConstraintDetails\[\d+\]/, `ConstraintDetails[${sectionCount}]`);
+                    $(this).attr('name', updatedName);
+                });
+
+                // Append the new section
+                $sectionsContainer.append($newSection);
+
+                // Recalculate totals
+                recalculateTotals();
+            });
+
+            // Remove section
+            $(document).on('click', '.btn-remove-section', function() {
+                const $section = $(this).closest('.exam-section');
+                const $sectionsContainer = $('.exam-sections');
+
+                // Don't remove if it's the last section
+                if ($sectionsContainer.find('.exam-section').length <= 1) {
+                    alert('Phải có ít nhất một phần thi!');
+                    return;
+                }
+
+                // Remove the section
+                $section.remove();
+
+                // Re-index the remaining sections
+                $sectionsContainer.find('.exam-section').each(function(index) {
+                    $(this).find('[name]').each(function() {
+                        const name = $(this).attr('name');
+                        const updatedName = name.replace(/ConstraintDetails\[\d+\]/, `ConstraintDetails[${index}]`);
+                        $(this).attr('name', updatedName);
+                    });
+                });
+
+                // Recalculate totals
+                recalculateTotals();
+            });
+
+            // Form validation
+            $("#examTypeForm").validate({
+                rules: {
+                    LevelId: { required: true },
+                    ExamTypeName: { required: true, minlength: 3 },
+                    "ExamTypeConstraints[0].Skill": { required: true }
+                },
+                messages: {
+                    LevelId: "Vui lòng chọn trình độ",
+                    ExamTypeName: {
+                        required: "Vui lòng nhập tên loại kỳ thi",
+                        minlength: "Tên loại kỳ thi phải có ít nhất 3 ký tự"
+                    },
+                    "ExamTypeConstraints[0].Skill": "Vui lòng chọn kỹ năng"
+                },
+                errorElement: "span",
+                errorClass: "text-danger",
+                highlight: function(element) {
+                    $(element).addClass("is-invalid");
+                },
+                unhighlight: function(element) {
+                    $(element).removeClass("is-invalid");
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element);
+                },
+                submitHandler: function(form) {
+                    // Validate exam structure
+                    let isValid = true;
+
+                    const totalQuestions = parseInt($('#totalQuestions').val()) || 0;
+
+                    // Ensure we have total questions defined
+                    if (totalQuestions <= 0) {
+                        isValid = false;
+                        alert('Vui lòng thêm số câu hỏi cho bài thi');
+                        return false;
+                    }
+
+                    // Check constraint details
+                    const $sections = $('.exam-section');
+                    $sections.each(function() {
+                        const $section = $(this);
+                        const numQuestions = parseInt($section.find('.section-questions').val()) || 0;
+                        const markPerQuestion = parseFloat($section.find('.section-points').val()) || 0;
+
+                        if (numQuestions <= 0 || markPerQuestion <= 0) {
+                            isValid = false;
+                            alert('Vui lòng điền đầy đủ số câu và điểm cho tất cả các phần');
+                            return false;
+                        }
+                    });
+
+                    if (isValid) {
+                        // Submit the form
+                        form.submit();
+                    }
+                }
+            });
+
+            // Log form data before submit (for debugging)
+            $('#examTypeForm').on('submit', function() {
+                console.log('Form submitting with data:', $(this).serialize());
             });
         });
     </script>

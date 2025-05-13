@@ -249,8 +249,9 @@ namespace KEB.WebApp.Controllers
                     formData.Add(new StringContent(request.RequestedUserId.ToString()), nameof(request.RequestedUserId));
                     formData.Add(new StringContent(((int)request.Difficulty).ToString()), nameof(request.Difficulty));
                     formData.Add(new StringContent(request.QuestionContent ?? string.Empty), nameof(request.QuestionContent));
-                    //var answersJson = System.Text.Json.JsonSerializer.Serialize(request.Answers);
-                    //formData.Add(new StringContent(answersJson, Encoding.UTF8, "application/json"), nameof(request.Answers));
+                    formData.Add(new StringContent(request.AttachmentDuration?.ToString() ?? "0"), nameof(request.AttachmentDuration));
+                    formData.Add(new StringContent(request.IsMultipleChoice.ToString()), nameof(request.IsMultipleChoice));
+
                     // Thêm các đáp án
                     for (int i = 0; i < request.Answers.Count; i++)
                     {
@@ -292,7 +293,7 @@ namespace KEB.WebApp.Controllers
                     ModelState.AddModelError("", $"Lỗi hệ thống: {ex.Message}");
                 }
             }
-
+            await LoadDropdownData();
             return View(request);
 
         }

@@ -1,0 +1,502 @@
+﻿@model List<KEB.Application.DTOs.ExamPaperDTO.PaperGeneralDisplayDTO>
+@using KEB.Domain.Enums
+
+@{
+    ViewBag.Title = "Ngân hàng câu hỏi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var difficulties = Enum.GetValues(typeof(Difficulty)).Cast<Difficulty>().ToList();
+    var skills = Enum.GetValues(typeof(Skill)).Cast<Skill>().ToList();
+    int i = 1;
+
+    // Mặc định hiển thị tab "Nghe"
+    string currentSkill = "Nghe";
+
+    // Nếu có query parameter "skill" thì cập nhật currentSkill
+    if (Context.Request.Query.ContainsKey("skill"))
+    {
+        currentSkill = Context.Request.Query["skill"].ToString();
+    }
+
+    // Lọc danh sách giấy tờ theo kỹ năng hiện tại
+    var displayPapers = Model;
+
+    // Chuyển đổi giá trị skill từ tiếng Việt sang tiếng Anh cho việc so sánh
+    string skillForFiltering = currentSkill;
+    switch (currentSkill)
+    {
+        case "Nghe": skillForFiltering = "Nghe"; break;
+        case "Nói": skillForFiltering = "Nói"; break;
+        case "Đọc": skillForFiltering = "Đọc"; break;
+        case "Viết": skillForFiltering = "Viết"; break;
+    }
+
+    // Lọc danh sách giấy tờ theo kỹ năng được chọn
+    displayPapers = Model.Where(p => p.Skill == skillForFiltering).ToList();
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân Hàng Đề Thi</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background-color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            color: #0066b3;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-icon {
+            font-size: 18px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .search-container {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 180px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            background-color: #e8e8e8;
+            color: #333;
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            background: white;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            text-align: center;
+            color: #666;
+            text-decoration: none;
+        }
+
+            .tab.active {
+                border-bottom: 2px solid #0066b3;
+                color: #0066b3;
+                font-weight: 500;
+            }
+
+        .subtab-container {
+            display: flex;
+            overflow-x: auto;
+            background: white;
+            padding: 0 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .subtab {
+            padding: 10px 15px;
+            white-space: nowrap;
+            cursor: pointer;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .table-container {
+            padding: 0 20px;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            font-weight: 500;
+            color: #666;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .exam-status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #ff6b6b;
+            color: white;
+        }
+
+        .status-completed {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .action-icon {
+            color: #666;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            gap: 10px;
+        }
+
+        .page-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #666;
+        }
+
+            .page-item.active {
+                background-color: #0066b3;
+                color: white;
+            }
+
+            .page-item.disabled {
+                color: #ccc;
+                cursor: not-allowed;
+            }
+
+        .download-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Thêm nút "Thêm mới" */
+        .add-new-btn {
+            background-color: #0066b3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+            .add-new-btn:hover {
+                background-color: #0055a4;
+            }
+
+        /* Styling cho modal popup */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-cancel {
+            background-color: #f3f3f3;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            background-color: #0066b3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+            .btn-submit:hover {
+                background-color: #0055a4;
+            }
+
+        .no-data {
+            padding: 30px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">Ngân Hàng Đề Thi</div>
+        <div class="header-actions">
+            <div class="header-icon">
+                <i class="fa fa-info-circle"></i>
+            </div>
+            <div class="header-icon">
+                <i class="fa fa-globe"></i>
+            </div>
+            <div class="header-icon">
+                <i class="fa fa-bell"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Tìm kiếm">
+        <button class="add-new-btn" id="addNewBtn">
+            <i class="fa fa-plus"></i> Thêm mới
+        </button>
+    </div>
+
+    <div class="tab-container">
+        <a href="?skill=Nghe" class="tab @(currentSkill == "Nghe" ? "active" : "")">Nghe</a>
+        <a href="?skill=Nói" class="tab @(currentSkill == "Nói" ? "active" : "")">Nói</a>
+        <a href="?skill=Đọc" class="tab @(currentSkill == "Đọc" ? "active" : "")">Đọc</a>
+        <a href="?skill=Viết" class="tab @(currentSkill == "Viết" ? "active" : "")">Viết</a>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30px;">STT</th>
+                    <th>Kỳ Thi</th>
+                    <th>Trình độ</th>
+                    <th>Tiêu đề bài thi </th>
+                    <th>Ngày Thi</th>
+                    <th>Tình Trạng</th>
+                    <th>Hoạt động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (displayPapers.Any())
+                {
+                    i = 1;
+                    foreach (var paper in displayPapers)
+                    {
+                        <tr>
+                            <td>@i</td>
+                            <td>@paper.ExamName</td>
+                            <td>@paper.LevelName</td>
+                            <td>@paper.PaperName</td>
+                            <td>@paper.TakePlaceTime</td>
+                            <td><span class="exam-status status-completed">@paper.PaperStatus</span></td>
+                            <td>
+                                <span class="action-icon">👁️</span>
+                                <button class="download-btn">⬇️</button>
+                            </td>
+                        </tr>
+                        i++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="no-data">Không có dữ liệu cho kỹ năng này</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+        <div class="page-item disabled">«</div>
+        <div class="page-item active">1</div>
+        <div class="page-item">2</div>
+        <div class="page-item">3</div>
+        <div class="page-item">4</div>
+        <div class="page-item">...</div>
+        <div class="page-item">7</div>
+        <div class="page-item">»</div>
+    </div>
+
+    <!-- Modal Popup để thêm đề thi mới -->
+    <div id="addExamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Thêm Đề Thi Mới</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <form id="addExamForm" method="post" action="/Paper/Create">
+                <div class="form-group">
+                    <label class="form-label" for="examType">Loại Kỳ Thi:</label>
+                    <select name="examId" id="examType" class="form-control" asp-items="ViewBag.Exams">
+                        <option value="">-- Chọn loại kỳ thi --</option>
+                    </select>
+                </div>
+                <input type="hidden" name="skill" value="@currentSkill" />
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="cancelAdd">Hủy</button>
+                    <button type="submit" class="btn-submit">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript để điều khiển modal popup
+        document.addEventListener('DOMContentLoaded', function() {
+            const addNewBtn = document.getElementById('addNewBtn');
+            const modal = document.getElementById('addExamModal');
+            const closeBtn = document.getElementById('closeModal');
+            const cancelBtn = document.getElementById('cancelAdd');
+
+            // Mở modal khi nhấn nút "Thêm mới"
+            addNewBtn.addEventListener('click', function() {
+                modal.style.display = 'flex';
+            });
+
+            // Đóng modal khi nhấn nút đóng
+            closeBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            // Đóng modal khi nhấn nút hủy
+            cancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            // Đóng modal khi nhấn bên ngoài modal
+            window.addEventListener('click', function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Thêm tìm kiếm
+            const searchInput = document.querySelector('.search-input');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+
+                tableRows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

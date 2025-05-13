@@ -1,7 +1,9 @@
-﻿@model KEB.Application.DTOs.QuestionAddDTO.AddSingleQuestionRequest
+﻿@using KEB.Domain.Enums
+@model KEB.Application.DTOs.QuestionAddDTO.AddSingleQuestionRequest
 @{
     ViewBag.Title = "Nhập Câu Hỏi";
     Layout = "_Layout";
+    var difficulties = Enum.GetValues(typeof(Difficulty)).Cast<Difficulty>().ToList();
 }
 
 <div class="container mt-4">
@@ -19,7 +21,7 @@
             <div class="col-md-6">
                 <!-- Cấp độ -->
                 <div class="form-group mb-3">
-                    <label  class="form-label">Trình độ</label>
+                    <label class="form-label">Trình độ</label>
                     <select class="form-select" asp-items="ViewBag.Levels" id="levelSelect">
                         <option value="">-- Chọn trình độ --</option>
                     </select>
@@ -50,24 +52,29 @@
                     <span asp-validation-for="QuestionContent" class="text-danger"></span>
                 </div>
 
-                <!-- Đáp án -->
-                <div class="form-group mb-3">
-                    <label class="form-label">Đáp án:</label>
+                <!-- Đáp án trắc nghiệm -->
+                <div id="multipleChoiceAnswers" class="form-group mb-3">
+                    <label class="form-label">Đáp án trắc nghiệm:</label>
                     <div id="answers">
                         <div class="form-group mb-2 d-flex align-items-center">
-                            <input asp-for="Answers[0].Content" class="form-control me-2" placeholder="Đáp án 1" required />
-                            @* <input type="hidden" name="Answers[0].IsCorrect" value="false" /> *@
+                            <input name="Answers[0].Content" class="form-control me-2" placeholder="Đáp án 1" required />
                             <input type="checkbox" name="Answers[0].IsCorrect" class="form-check-input" value="true" />
                             <label class="ms-1">Đúng</label>
                         </div>
                         <div class="form-group mb-2 d-flex align-items-center">
-                            <input asp-for="Answers[1].Content" class="form-control me-2" placeholder="Đáp án 2" required />
-                            @* <input type="hidden" name="Answers[1].IsCorrect" value="false" /> *@
+                            <input name="Answers[1].Content" class="form-control me-2" placeholder="Đáp án 2" required />
                             <input type="checkbox" name="Answers[1].IsCorrect" class="form-check-input" value="true" />
                             <label class="ms-1">Đúng</label>
                         </div>
                     </div>
-                    <button type="button" onclick="addAnswer()" class="btn btn-sm btn-success mt-2">Thêm Đáp Án</button>
+                    <button type="button" id="addAnswerBtn" onclick="addAnswer()" class="btn btn-sm btn-success mt-2">Thêm Đáp Án</button>
+                </div>
+
+                <!-- Đáp án tự luận -->
+                <div id="essayAnswer" class="form-group mb-3" style="display: none;">
+                    <label class="form-label">Đáp án tự luận:</label>
+                    <textarea name="Answers[0].Content" class="form-control" rows="4" placeholder="Nhập đáp án mẫu cho câu hỏi tự luận"></textarea>
+                    <input type="hidden" name="Answers[0].IsCorrect" value="true" />
                 </div>
             </div>
 
@@ -94,9 +101,10 @@
                 <div class="form-group mb-3">
                     <label asp-for="Difficulty" class="form-label">Mức độ</label>
                     <select asp-for="Difficulty" class="form-select">
-                        <option value="3">Dễ</option>
-                        <option value="5">Trung bình</option>
-                        <option value="7">Khó</option>
+                        @foreach (var diff in difficulties)
+                        {
+                            <option value="@((int)diff)">@diff</option>
+                        }
                     </select>
                     <span asp-validation-for="Difficulty" class="text-danger"></span>
                 </div>
@@ -134,36 +142,92 @@
             const container = document.getElementById('answers');
             const div = document.createElement('div');
             div.classList.add('form-group', 'mb-2', 'd-flex', 'align-items-center');
-                    div.innerHTML = `
-            <input name="Answers[${answerIndex}].Content" class="form-control me-2" placeholder="Đáp án ${answerIndex + 1}" required />
-            
-            <input type="checkbox" name="Answers[${answerIndex}].IsCorrect" class="form-check-input" value="true" />
-            <label class="ms-1">Đúng</label>
-        `;
+            div.innerHTML = `
+                <input name="Answers[${answerIndex}].Content" class="form-control me-2" placeholder="Đáp án ${answerIndex + 1}"  />
+                <input type="checkbox" name="Answers[${answerIndex}].IsCorrect" class="form-check-input" value="true" />
+                <label class="ms-1">Đúng</label>
+            `;
             container.appendChild(div);
             answerIndex++;
         }
 
         function toggleAnswerType() {
             const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
-            const answersContainer = document.getElementById('answers');
-            const addButton = document.querySelector('button[onclick="addAnswer()"]');
+            const multipleChoiceContainer = document.getElementById('multipleChoiceAnswers');
+            const essayContainer = document.getElementById('essayAnswer');
 
-            if (!isMultipleChoice) {
-                // Nếu là tự luận: giữ lại 1 đáp án
-                while (answersContainer.children.length > 1) {
-                    answersContainer.removeChild(answersContainer.lastChild);
+            if (isMultipleChoice) {
+                // Hiển thị phần trắc nghiệm, ẩn phần tự luận
+                multipleChoiceContainer.style.display = 'block';
+                essayContainer.style.display = 'none';
+
+                // Bỏ thuộc tính required cho textarea của câu hỏi tự luận
+                const essayTextarea = essayContainer.querySelector('textarea');
+                if (essayTextarea) {
+                    essayTextarea.removeAttribute('required');
                 }
-                addButton.style.display = 'none';
+
+                // Kích hoạt required cho các trường đáp án trắc nghiệm
+                const multipleChoiceInputs = multipleChoiceContainer.querySelectorAll('input[name$="].Content"]');
+                multipleChoiceInputs.forEach(input => {
+                    input.setAttribute('required', 'required');
+                });
             } else {
-                addButton.style.display = 'inline-block';
+                // Hiển thị phần tự luận, ẩn phần trắc nghiệm
+                multipleChoiceContainer.style.display = 'none';
+                essayContainer.style.display = 'block';
+
+                // Thêm thuộc tính required cho textarea của câu hỏi tự luận
+                const essayTextarea = essayContainer.querySelector('textarea');
+                if (essayTextarea) {
+                    essayTextarea.setAttribute('required', 'required');
+                }
+
+                // Bỏ required cho các trường đáp án trắc nghiệm
+                const multipleChoiceInputs = multipleChoiceContainer.querySelectorAll('input[name$="].Content"]');
+                multipleChoiceInputs.forEach(input => {
+                    input.removeAttribute('required');
+                });
             }
+        }
+
+        // Xử lý khi submit form
+        function validateAndSubmitForm(e) {
+            const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
+
+            // Kiểm tra xem có ít nhất một đáp án đúng cho câu hỏi trắc nghiệm
+            if (isMultipleChoice) {
+                const correctAnswers = document.querySelectorAll('input[name$="].IsCorrect"]:checked');
+                if (correctAnswers.length === 0) {
+                    alert('Vui lòng chọn ít nhất một đáp án đúng');
+                    e.preventDefault();
+                    return false;
+                }
+            } else {
+                // Đảm bảo rằng đáp án tự luận không trống
+                const essayAnswer = document.querySelector('#essayAnswer textarea');
+                if (!essayAnswer.value.trim()) {
+                    alert('Vui lòng nhập đáp án mẫu cho câu hỏi tự luận');
+                    e.preventDefault();
+                    essayAnswer.focus();
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             toggleAnswerType();
+
+            // Thêm sự kiện kiểm tra validate trước khi submit form
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', validateAndSubmitForm);
+            }
         });
     </script>
+
     <script>
         document.getElementById('levelSelect').addEventListener('change', function () {
             const levelId = this.value;
@@ -175,33 +239,122 @@
                 return;
             }
             console.log(levelId);
-            fetch(`/Question/GetTopic?levelId=${levelId}`,{
-                 method: "POST",
-                 headers: {
-            "Content-Type": "application/json"
-        }
+            fetch(`/Question/GetTopic?levelId=${levelId}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
             })
-                .then(response => {
-                    if (!response.ok) {
-                        console.log("Goi api that bai");
-                        throw new Error("Không lấy được dữ liệu");
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
-                     const topics = data.result ?? data;
-                    topics.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.detailId;
-                option.text = item.topicName;
-                topicSelect.appendChild(option);
-            });
-                })
-                .catch(error => {
-                    console.error("Lỗi:", error);
-                    topicSelect.innerHTML = '<option value="">-- Không có chủ đề --</option>';
+            .then(response => {
+                if (!response.ok) {
+                    console.log("Goi api that bai");
+                    throw new Error("Không lấy được dữ liệu");
+                }
+                return response.json();
+            })
+            .then(data => {
+                topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
+                const topics = data.result ?? data;
+                topics.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.detailId;
+                    option.text = item.topicName;
+                    topicSelect.appendChild(option);
                 });
+            })
+            .catch(error => {
+                console.error("Lỗi:", error);
+                topicSelect.innerHTML = '<option value="">-- Không có chủ đề --</option>';
+            });
+        });
+    </script>
+
+    <!-- Script debug và xử lý form -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+
+            // Thêm id cho form nếu chưa có
+            if (!form.id) {
+                form.id = 'questionForm';
+            }
+
+            // Hàm để hiển thị các dữ liệu sẽ được gửi đi
+            function logFormData() {
+                console.group('Form Data Preview:');
+
+                // Log thông tin cơ bản
+                console.log('Question Type:', document.getElementById('IsMultipleChoice').value === 'true' ? 'Trắc nghiệm' : 'Tự luận');
+                console.log('Question Content:', document.querySelector('[name="QuestionContent"]').value);
+
+                // Log các đáp án
+                if (document.getElementById('IsMultipleChoice').value === 'true') {
+                    // Trắc nghiệm
+                    const answers = document.querySelectorAll('#multipleChoiceAnswers input[name$="].Content"]');
+                    const correctAnswers = document.querySelectorAll('#multipleChoiceAnswers input[name$="].IsCorrect"]:checked');
+
+                    console.log('Multiple Choice Answers:', Array.from(answers).map(a => a.value));
+                    console.log('Correct Answers Count:', correctAnswers.length);
+                } else {
+                    // Tự luận
+                    const essayAnswer = document.querySelector('#essayAnswer textarea').value;
+                    console.log('Essay Answer:', essayAnswer);
+                }
+
+                console.groupEnd();
+            }
+
+            // Xử lý form submit bằng AJAX nếu là câu hỏi tự luận
+            form.addEventListener('submit', function(e) {
+                // Log thông tin trước khi submit
+                console.log('Form submit triggered');
+                logFormData();
+
+                const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
+                if (!isMultipleChoice) {
+                    // Đảm bảo đáp án tự luận có trong mảng Answers
+                    const essayAnswer = document.querySelector('#essayAnswer textarea');
+                    if (!essayAnswer.value.trim()) {
+                        e.preventDefault();
+                        alert('Vui lòng nhập đáp án mẫu cho câu hỏi tự luận');
+                        essayAnswer.focus();
+                        return false;
+                    }
+
+                    // Sử dụng AJAX để submit form với câu hỏi tự luận
+                    e.preventDefault();
+
+                    const formData = new FormData(form);
+
+                    // Thêm các trường ẩn để đảm bảo cấu trúc dữ liệu đúng
+                    if (!formData.has('Answers[1].Content')) {
+                        formData.append('Answers[1].Content', '');
+                        formData.append('Answers[1].IsCorrect', 'false');
+                    }
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Lỗi khi gửi form');
+                        }
+                        return response;
+                    })
+                    .then(data => {
+                        console.log('Form submitted successfully');
+                        // Chuyển hướng về trang danh sách hoặc hiển thị thông báo thành công
+                        window.location.href = '/Question/Index';
+                    })
+                    .catch(error => {
+                        console.error('Submit error:', error);
+                        alert('Có lỗi xảy ra khi lưu câu hỏi. Vui lòng thử lại.');
+                    });
+
+                    return false;
+                }
+            });
         });
     </script>
 }

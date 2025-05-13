@@ -163,11 +163,17 @@ namespace KEB.Application.Services.Implementations
             {
                 validationMessages.Add(AppMessages.EXAM_TYPE_NUMOFPAPERS_LESSTHAN1);
             }
-
+            var details = constraint.ConstraintDetails?.ToList();
+            if (details == null || details.Count == 0)
+            {
+                validationMessages.Add("Danh sách constraint detail đang trống. Vui lòng thêm ít nhất 1 chủ đề.");
+            }
             // 2. Tổng số câu hỏi trong từng detail phải đúng với tổng số constraint
-            int sumOfDetailQuestions = constraint.ConstraintDetails.Sum(x => x.NumberOfQuestions);
+            int sumOfDetailQuestions = details?.Sum(x => x.NumberOfQuestions) ?? 0;
             if (sumOfDetailQuestions != constraint.TotalNumberOfQuestions)
             {
+                throw new ArgumentException($"Bài thi {skill}:<br/>Tổng số lượng câu hỏi ({sumOfDetailQuestions}) của các detail không bằng số lượng câu hỏi constraint ({constraint.TotalNumberOfQuestions})");
+
                 validationMessages.Add("Tổng số lượng câu hỏi của từng detail không bằng số lượng câu hỏi của constraint");
             }
 
@@ -249,7 +255,7 @@ namespace KEB.Application.Services.Implementations
                 }
                 var satisfiedQuestions = await _unitOfWork.Questions.GetAllAsync(filter:
                             x => (x.QuestionType.Skill == skill)
-                            //&& x.Status == QuestionStatus.Ok
+                            && x.Status == QuestionStatus.Pending
                             && x.QuestionTypeId == detail.QuestionTypeId
                             && (x.Difficulty == detail.Difficulty)
                             && x.IsMultipleChoice == detail.IsMultipleChoice

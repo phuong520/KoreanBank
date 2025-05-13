@@ -302,7 +302,7 @@ namespace KEB.Application.Services.Implementations
             try
             {
                 exam = await _unitOfWork.Exams.GetAsync(x => x.Id == examId,
-                                                    includeProperties: "User,User,ExamType,Papers")
+                                                    includeProperties: "Host,Reviewer,ExamType,Papers")
                         ?? throw new InvalidOperationException("Exam not found ~");
                 //bool inEditingTime = currentTime > exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION)
                 //        && currentTime < exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION + SystemDataFormat.EXAM_PAPERS_EDIT_DURATION);
@@ -813,7 +813,7 @@ namespace KEB.Application.Services.Implementations
         {
             APIResponse<PaperGeneralDisplayDTO> response = new();
             var exam = await _unitOfWork.Exams.GetAsync(filter: x => x.Id == request.ExamId,
-                includeProperties: "ExamType, ExamType.Level");
+                includeProperties: "ExamType, ExamType.Levels");
             if (exam == null && request.ExamId != null)
             {
                 response.IsSuccess = false;
@@ -845,7 +845,7 @@ namespace KEB.Application.Services.Implementations
             try
             {
                 var papers = await _unitOfWork.Papers.GetAllAsync(filter: filter,
-                        includeProperties: "Exam,Exam.ExamType,Exam.ExamType.Level",
+                        includeProperties: "Exam,Exam.ExamType,Exam.ExamType.Levels",
                         orderBy: x => x.OrderByDescending(x => x.CreatedDate),
                         pageNumber: request.PaginationRequest.Page,
                         pageSize: request.PaginationRequest.Size);

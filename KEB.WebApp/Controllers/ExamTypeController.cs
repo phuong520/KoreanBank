@@ -7,6 +7,7 @@ using KEB.Application.DTOs.TopicDTO;
 using KEB.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Security.Policy;
 
@@ -76,9 +77,43 @@ namespace KEB.WebApp.Controllers
         }
         public async Task<IActionResult> Create()
         {
-            LoadDropdownData();
+            await LoadDropdownData();
             return View();
         }
+        [HttpPost]
+        public async Task<IActionResult> Create(AddExamTypeRequest request)
+        {
+            
+            var token = HttpContext.Request.Cookies["token"];
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
 
+            var userId = Guid.Empty;
+            if (jsonToken != null)
+            {
+                var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                {
+                    userId = parsedGuid;
+                }
+            }
+            request.RequestedUserId = userId;
+            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/add-new-exam-type", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<APIResponse<ExamTypeComplexDisplayDTO>>();
+                if (result != null && result.IsSuccess)
+                {
+                    TempData["SuccessMessage"] = "Tạo loại câu hỏi thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+            ModelState.AddModelError("", "Không thể tạo loại câu hỏi. Vui lòng thử lại.");
+            return View(request);
+        }
     }
 }
