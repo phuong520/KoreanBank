@@ -13,6 +13,8 @@ using System.Text;
 using System.Threading.Tasks;
 using static KEB.Domain.ValueObject.LogicString;
 using OfficeOpenXml;
+using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml;
 
 namespace KEB.Application.Services.Implementations
 {
@@ -379,6 +381,43 @@ namespace KEB.Application.Services.Implementations
             //    TargetObject = "Import question excel template",
             //    Details = $"Reupload excel template for importing questions | {message}"
             //});
+        }
+        private static TableProperties GetTablePropertiesForSingleBordersTable(UInt32Value size)
+        {
+            return new TableProperties(
+                new TableBorders(
+                    new TopBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
+                    new BottomBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
+                    new LeftBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
+                    new RightBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
+                    new InsideHorizontalBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
+                    new InsideVerticalBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size }
+                )
+            );
+        }
+
+        private static Table Create2ColsTableFromContents(string[] contents)
+        {
+            Table table = new();
+            table.Append(GetTablePropertiesForSingleBordersTable(7));
+
+            foreach (string content in contents)
+            {
+                TableRow row = new();
+                TableCell leftCell = new(new Paragraph(new Run(new Text(content))
+                //{
+                //    RunProperties = new RunProperties(new Bold())
+                //}
+                ));
+                leftCell.Append(new TableCellProperties(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = "3200" }));
+
+                TableCell emptyCell = new(new Paragraph(new Run(new Text(""))));
+                emptyCell.Append(new TableCellProperties(new TableCellWidth { Type = TableWidthUnitValues.Dxa, Width = "6400" }));
+
+                row.Append(leftCell, emptyCell);
+                table.Append(row);
+            }
+            return table;
         }
     }
 }

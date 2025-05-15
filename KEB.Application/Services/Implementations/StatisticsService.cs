@@ -99,7 +99,7 @@ namespace KEB.Application.Services.Implementations
             }
             return response;
         }
-
+        //ok
         public async Task<APIResponse<StatisticDto>> StatisticExamPaperByMonth(DateTime lowerBound, DateTime upperBound)
         {
             APIResponse<StatisticDto> response = new();
@@ -136,7 +136,7 @@ namespace KEB.Application.Services.Implementations
 
             return response;
         }
-
+        //ok
         public async Task<APIResponse<StatisticDto>> StatisticExamPaperBySkill(DateTime? lowerBound, DateTime? upperBound)
         {
             APIResponse<StatisticDto> response = new();
@@ -217,6 +217,7 @@ namespace KEB.Application.Services.Implementations
             }
             return response;
         }
+       //ok
         public async Task<APIResponse<StatisticDto>> StatisticImportedQuestionsByStatus(DateTime? lowerBound, DateTime? upperBound)
         {
             APIResponse<StatisticDto> response = new();

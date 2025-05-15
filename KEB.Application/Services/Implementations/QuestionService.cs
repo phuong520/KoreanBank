@@ -39,7 +39,7 @@ namespace KEB.Application.Services.Implementations
             try
             {
                 var queriedQuestion = await _unitOfWork.Questions
-                    .GetAsync(x => x.Id == questionId, "QuestionType,Answers,CreatedBy,UpdatedBy," +
+                    .GetAsync(x => x.Id == questionId, "QuestionType,Answers," +
                                                        "LevelDetail,References,LevelDetail.Level,LevelDetail.Topic");
                 if (queriedQuestion != null)
                 {
@@ -222,7 +222,8 @@ namespace KEB.Application.Services.Implementations
                 // Get questions from database
                 var targetQuestions = (await _unitOfWork.Questions.GetAllAsync(filter: x => idList.Contains(x.Id),
                                                 orderBy: x => x.OrderBy(x => x.Id),
-                                                includeProperties: "Answers")).ToList();
+                                                includeProperties: "Answers"))
+                                                .ToList();
                 // All questions to be processed must exist in the system
                 if (targetQuestions.Count < idList.Count())
                 {
@@ -268,6 +269,7 @@ namespace KEB.Application.Services.Implementations
                         QuestionContent = targetQuestions[requestIndex].ToString(),
                         Action = $"Change question status from {targetQuestions[requestIndex].Status} to {item.ToStatus}"
                     });
+                    
                     targetQuestions[requestIndex].Status = item.ToStatus;
                     targetQuestions[requestIndex].Description = item.Reason;
                     targetQuestions[requestIndex].UpdatedDate = currentTime;

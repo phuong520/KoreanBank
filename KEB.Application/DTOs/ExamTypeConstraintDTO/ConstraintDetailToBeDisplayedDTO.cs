@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KEB.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,7 +15,7 @@ namespace KEB.Application.DTOs.ExamTypeConstraintDTO
         public string QuestionForm { get; set; }
         public Guid TopicId { get; set; }
         public string TopicName { get; set; }
-        public string Difficulty { get; set; }
+        public Difficulty Difficulty { get; set; }
         public int NumOfQuestions { get; set; }
         public float MarkPerQuestion { get; set; }
         public float TotalMark { get; set; }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Wordprocessing;
 using KEB.Application.DTOs.AnswerDTO;
 using KEB.Application.DTOs.QuestionAddDTO;
 using KEB.Application.DTOs.QuestionDTO;
@@ -44,8 +45,11 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.LevelDetail.Topic.TopicName))
                 .ForMember(dest => dest.ReferenceName,
                 opt => opt.MapFrom(src => src.References.ReferenceName))
-            .ForMember(dest => dest.Difficulty,
-                opt => opt.MapFrom(src => src.Difficulty.ToString()));
+                .ForMember(dest => dest.NotifyTo,
+                opt => opt.MapFrom(src => src.CreatedBy))
+                .ForMember(dest => dest.LogId,
+                opt => opt.MapFrom(src => src.LogId));
+                
 
             CreateMap<Question, QuestionDetailDto>()
                  .ForMember(dest => dest.Description,
@@ -81,14 +85,17 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.QuestionTypeId, opt => opt.MapFrom(src => src.QuestionTypeId))
                 .ForMember(dest => dest.Difficulty, opt => opt.MapFrom(src => src.Difficulty))
                 .ForMember(dest => dest.QuestionContent, opt => opt.MapFrom(src => src.QuestionContent))
-                .ForMember(dest => dest.Answers, opt => opt.Ignore())
+               // .ForMember(dest => dest.Answers, opt => opt.Ignore())
+                .ForMember(dest => dest.Answers, opt => opt.MapFrom(src=> src.Answers))
                 .ForMember(dest => dest.AttachmentDuration, opt => opt.MapFrom(src => src.AttachmentDuration))
                 .ForMember(dest => dest.AttachmentFile, opt => opt.Ignore())
                 .ForMember(dest => dest.IsMultipleChoice, opt => opt.MapFrom(src => src.IsMultipleChoice))
                // .ForMember(dest => dest.LogId, opt => opt.MapFrom(src => src.LogId))
                 .ForMember(dest => dest.TaskId, opt => opt.MapFrom(src => src.TaskId))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => QuestionStatus.Pending));
+
             CreateMap<AddAnswerDTO, Answer>();
+
             CreateMap<PaperDetail, QuestionDisplayDto>()
            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Question.Id))
            .ForMember(dest => dest.QuestionContent, opt => opt.MapFrom(src => src.Question.QuestionContent))

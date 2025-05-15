@@ -49,6 +49,8 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.TakePlaceTime > DateTime.Now));
 
             CreateMap<Paper, PaperGeneralDisplayDTO>()
+                 .ForMember(dest => dest.PaperId,
+                opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.ExamName,
                 opt => opt.MapFrom(src => src.Exam.ExamName))
                 .ForMember(dest => dest.Skill,

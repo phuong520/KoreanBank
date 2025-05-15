@@ -37,8 +37,8 @@ namespace KEB.Application.Mappings
             CreateMap<ExamTypeConstraint, ConstraintToBeDisplayedDTO>()
                 .ForMember(dest => dest.ExamTypeConstraintId,
                 opt => opt.MapFrom(src => src.Id))
-                .ForMember(dest => dest.ConstraintDetails,
-                opt => opt.MapFrom(src => src.ConstraintDetails));
+                .ForMember(dest => dest.NumberOfPapers, opt => opt.MapFrom(src => src.NumberOfPaper))
+                .ForMember(dest => dest.ConstraintDetails, opt => opt.MapFrom(src => src.ConstraintDetails));
 
             CreateMap<ConstraintDetail, ConstraintDetailToBeDisplayedDTO>()
                 .ForMember(dest => dest.ConstraintDetailId,

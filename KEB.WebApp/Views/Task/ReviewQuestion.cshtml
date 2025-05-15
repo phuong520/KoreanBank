@@ -4,9 +4,10 @@
 @{
     var status = Enum.GetValues(typeof(QuestionStatus)).Cast<QuestionStatus>().ToList();
     int i = 1;
-    
+
     // Lấy trạng thái hiện tại từ ViewBag hoặc mặc định là Pending
-    var currentStatus = ViewBag.CurrentStatus != null ? ViewBag.CurrentStatus : QuestionStatus.Pending;
+    // var currentStatus = ViewBag.CurrentStatus != null ? ViewBag.CurrentStatus : QuestionStatus.Pending;
+    var currentStatus = QuestionStatus.Pending;
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -14,218 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Duyệt câu hỏi</title>
-    <style>
-        * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: Arial, sans-serif;
-        }
-
-        body {
-        background-color: #f8f9fa;
-        }
-
-        .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-        }
-
-        .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        }
-
-        .header h1 {
-        font-size: 24px;
-        font-weight: bold;
-        }
-
-        .tabs {
-        display: flex;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        overflow: hidden;
-        margin-bottom: 20px;
-        }
-
-        .tab {
-        flex: 1;
-        padding: 15px 0;
-        text-align: center;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        }
-
-        .tab.active {
-        background-color: #e6f0ff;
-        color: #3498db;
-        font-weight: bold;
-        }
-
-        .tab:not(.active) {
-        background-color: #f8f9fa;
-        color: #6c757d;
-        }
-
-        .table-header {
-        display: grid;
-        grid-template-columns: 0.5fr 4fr 3fr 2fr 2fr 2fr;
-        padding: 10px 0;
-        border-bottom: 1px solid #ddd;
-        font-weight: bold;
-        color: #0078d7;
-        font-size: 14px;
-        }
-
-        .question-item {
-        display: grid;
-        grid-template-columns: 0.5fr 4fr 3fr 2fr 2fr 2fr;
-        padding: 15px 0;
-        border-bottom: 1px solid #eee;
-        align-items: center;
-        }
-
-        .chart {
-        width: 100px;
-        height: 60px;
-        display: flex;
-        justify-content: center;
-        }
-        
-        .btn {
-        padding: 8px 12px;
-        border-radius: 50px;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 14px;
-        margin-bottom: 5px;
-        }
-
-        .btn-accept {
-        background-color: #eefaee;
-        color: #28a745;
-        }
-
-        .btn-reject {
-        background-color: #feefef;
-        color: #dc3545;
-        }
-
-        .input-field {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        }
-
-        .info-button {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background-color: #f0f0f0;
-        color: #0078d7;
-        border: 1px solid #ddd;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        cursor: pointer;
-        margin: 0 auto;
-        }
-
-        .pagination {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-        gap: 5px;
-        }
-
-        .page-item {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 5px;
-        cursor: pointer;
-        }
-
-        .page-item.active {
-        background-color: #212529;
-        color: white;
-        }
-
-        .page-item:not(.active) {
-        background-color: transparent;
-        color: #212529;
-        }
-
-        .chart-container {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        }
-
-        .chart-bar {
-        display: flex;
-        height: 40px;
-        align-items: flex-end;
-        gap: 10px;
-        }
-
-        .bar {
-        width: 20px;
-        border-radius: 2px 2px 0 0;
-        }
-
-        .bar.blue {
-        background-color: #4a86e8;
-        height: 15px;
-        }
-
-        .bar.orange {
-        background-color: #ff9900;
-        height: 30px;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            border-radius: 5px;
-            color: white;
-            display: none;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-        
-        .notification.success {
-            background-color: #28a745;
-        }
-        
-        .notification.error {
-            background-color: #dc3545;
-        }
-        
-        .attachment-preview {
-            max-width: 100px;
-            max-height: 100px;
-            cursor: pointer;
-        }
-        
-        .disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/ReviewQuestion.css" />
 </head>
 <body>
     <div class="container">
@@ -234,15 +24,14 @@
         </div>
 
         <div class="tabs">
-            @foreach(var item in status){
+            @foreach (var item in status)
+            {
                 var isActive = item.Equals(currentStatus) ? "active" : "";
-                var description = item.GetType()
-                .GetMember(item.ToString())
+                var description = item.GetType().GetMember(item.ToString())
                 .FirstOrDefault()?
                 .GetCustomAttributes(typeof(DescriptionAttribute), false)
                 .Cast<DescriptionAttribute>()
-                .FirstOrDefault()?
-                .Description ?? item.ToString();
+                .FirstOrDefault()?.Description ?? item.ToString();
 
                 <div class="tab @isActive" data-status="@((int)item)">@description</div>
             }
@@ -250,18 +39,17 @@
 
         <form id="reviewForm" method="post" asp-action="ReviewQuestion">
             @Html.AntiForgeryToken()
-            <input type="hidden" id="questionId" name="QuestionId" />
-            <input type="hidden" id="toStatus" name="ToStatus" />
-            <input type="hidden" id="reason" name="Reason" />
-            <input type="hidden" id="notifyTo" name="NotifyTo" value="@ViewBag.CreatedBy" />
-            <input type="hidden" id="logId" name="LogId" value="@ViewBag.LogId" />
+            <input type="hidden" id="questionId" name="Requests[0].QuestionId" />
+            <input type="hidden" id="toStatus" name="Requests[0].ToStatus" />
+            <input type="hidden" id="reason" name="Requests[0].Reason" />
+            <input type="hidden" id="notifyTo" name="NotifyTo" />
+            <input type="hidden" id="logId" name="LogId" />
         </form>
 
         <div class="table-header">
             <div class="stt">STT</div>
             <div>Câu Hỏi</div>
             <div>Đáp án</div>
-            <div>Tệp đính kèm</div>
             <div>Đánh Giá</div>
             <div>Nhận xét</div>
         </div>
@@ -269,9 +57,9 @@
         <div class="question-content">
             @if (Model != null && Model.Any())
             {
-                foreach(var question in Model)
+                foreach (var question in Model)
                 {
-                    <div class="question-item" data-question-id="@question.Id">
+                    <div class="question-item" data-question-id="@question.Id" data-created-by="@question.NotifyTo" data-log-id="@question.LogId">
                         <div class="stt">@i</div>
                         @{
                             i++;
@@ -301,44 +89,23 @@
                                 <p style="color: #dc3545;">Không có đáp án nào.</p>
                             }
                         </div>
-                        @* <div class="attachment"> *@
-                        @*     @if (!string.IsNullOrEmpty(question.AttachmentUrl)) *@
-                        @*     { *@
-                        @*         var fileName = Path.GetFileName(question.AttachmentUrl); // Lấy tên tệp từ URL *@
-                        @*         if (fileName.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || *@
-                        @*         fileName.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) || *@
-                        @*         fileName.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) *@
-                        @*         { *@
-                        @*             <img src="@question.AttachmentUrl" alt="Tệp đính kèm" class="attachment-preview" onclick="openAttachment('@question.AttachmentUrl')"> *@
-                        @*         } *@
-                        @*         else *@
-                        @*         { *@
-                        @*             <a href="@question.AttachmentUrl" target="_blank">Xem tệp đính kèm</a> *@
-                        @*         } *@
-                        @*     } *@
-                        @*     else *@
-                        @*     { *@
-                        @*         <span>Không có tệp đính kèm</span> *@
-                        @*     } *@
-                        @* </div> *@
-
                         <div class="actions">
-                            @if (currentStatus.Equals(QuestionStatus.Pending))
+                            @if (currentStatus == QuestionStatus.Pending)
                             {
-                                <button class="btn btn-accept" onclick="reviewQuestion('@question.Id', 'Ok')">
-                                    <span>✓</span> Chấp nhận
+                                <button type="button" class="btn btn-accept" onclick="reviewQuestion('@question.Id', 4, '@question.NotifyTo', '@question.LogId')">
+                                    ✓ Chấp nhận
                                 </button>
-                                <button class="btn btn-reject" onclick="reviewQuestion('@question.Id', 'Denied')">
-                                    <span>✗</span> Từ chối
+                                <button type="button" class="btn btn-reject" onclick="reviewQuestion('@question.Id', 3, '@question.NotifyTo', '@question.LogId')">
+                                    ✗ Từ chối
                                 </button>
                             }
                             else
                             {
-                                <span>@(currentStatus.ToString())</span>
+                                <span>@currentStatus.ToString()</span>
                             }
                         </div>
                         <div class="comment">
-                            <input type="text" class="input-field reason-input" data-id="@question.Id" placeholder="Nhận xét..." @(currentStatus != QuestionStatus.Pending ? "disabled" : "")>
+                            <input type="text" class="input-field reason-input" data-id="@question.Id" placeholder="Nhận xét..." @(currentStatus != QuestionStatus.Pending ? "disabled" : "") />
                         </div>
                     </div>
                 }
@@ -350,116 +117,49 @@
                 </div>
             }
         </div>
-        
-        @* <div class="pagination"> *@
-        @*     @{ *@
-        @*         var totalPages = ViewBag.TotalPages ?? 1; *@
-        @*         var currentPage = ViewBag.CurrentPage ?? 1; *@
-                
-        @*         if (totalPages <= 7) *@
-        @*         { *@
-        @*             for (int page = 1; page <= totalPages; page++) *@
-        @*             { *@
-        @*                 var isActive = page == currentPage ? "active" : ""; *@
-        @*                 <div class="page-item @isActive" data-page="@page">@page</div> *@
-        @*             } *@
-        @*         } *@
-        @*         else *@
-        @*         { *@
-        @*             // First page *@
-        @*             var isFirstActive = currentPage == 1 ? "active" : ""; *@
-        @*             <div class="page-item @isFirstActive" data-page="1">1</div> *@
-                    
-        @*             // Middle pages with ellipsis *@
-        @*             if (currentPage > 3) *@
-        @*             { *@
-        @*                 <div class="page-item">...</div> *@
-        @*             } *@
-                    
-        @*             // Pages around current *@
-        @*             int startPage = Math.Max(2, currentPage - 1); *@
-        @*             int endPage = Math.Min(totalPages - 1, currentPage + 1); *@
-                    
-        @*             for (int page = startPage; page <= endPage; page++) *@
-        @*             { *@
-        @*                 var isActive = page == currentPage ? "active" : ""; *@
-        @*                 <div class="page-item @isActive" data-page="@page">@page</div> *@
-        @*             } *@
-                    
-        @*             // Ellipsis before last page *@
-        @*             if (currentPage < totalPages - 2) *@
-        @*             { *@
-        @*                 <div class="page-item">...</div> *@
-        @*             } *@
-                    
-        @*             // Last page *@
-        @*             var isLastActive = currentPage == totalPages ? "active" : ""; *@
-        @*             <div class="page-item @isLastActive" data-page="@totalPages">@totalPages</div> *@
-        @*         } *@
-        @*     } *@
-        @* </div> *@
     </div>
 
     <div id="notification" class="notification"></div>
 
     <script>
-        // Xử lý chuyển tab
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => {
+        // Chuyển tab theo trạng thái câu hỏi
+        document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                const selectedStatus = tab.dataset.status;
-                window.location.href = `/Task/ReviewQuestion?status=${selectedStatus}`;
+                const status = tab.dataset.status;
+                window.location.href = `/Task/ReviewQuestion?status=${status}`;
             });
         });
-        
-        // Xử lý duyệt câu hỏi
-        function reviewQuestion(questionId, newStatus) {
-            const input = document.querySelector(`.reason-input[data-id="${questionId}"]`);
-            const reason = input ? input.value : "";
-            
-            if (newStatus === 'Denied' && !reason) {
-                showNotification('Vui lòng nhập lý do từ chối', 'error');
-                return;
-            }
 
-            // Cập nhật form values
-            document.getElementById('questionId').value = questionId;
-            document.getElementById('toStatus').value = newStatus;
-            document.getElementById('reason').value = reason;
-
-            // Submit form
-            document.getElementById('reviewForm').submit();
-        }
-        
         // Hiển thị thông báo
         function showNotification(message, type) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = 'notification ' + type;
-            notification.style.display = 'block';
-            
+            const notify = document.getElementById('notification');
+            notify.innerText = message;
+            notify.className = `notification ${type}`;
+            notify.style.display = 'block';
             setTimeout(() => {
-                notification.style.display = 'none';
+                notify.style.display = 'none';
             }, 3000);
         }
-        
-        // Xử lý mở tệp đính kèm
-        function openAttachment(url) {
-            window.open(url, '_blank');
-        }
 
-        // Hiển thị thông báo từ TempData
-        @if (TempData["Success"] != null)
-        {
-            <text>
-            showNotification('@TempData["Success"]', 'success');
-            </text>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <text>
-            showNotification('@TempData["Error"]', 'error');
-            </text>
+        // Gửi form duyệt câu hỏi
+        function reviewQuestion(questionId, toStatus, createdBy, logId) {
+            const reasonInput = document.querySelector(`.reason-input[data-id="${questionId}"]`);
+            const reason = reasonInput ? reasonInput.value : "";
+
+            if (toStatus == 3 && reason.trim() === "") {
+                showNotification("Vui lòng nhập lý do từ chối", "error");
+                return;
+            }
+              console.log(questionId, toStatus, reason, createdBy, logId);
+
+                document.getElementById('questionId').value = questionId;
+                document.getElementById('toStatus').value = toStatus;
+                document.getElementById('reason').value = reason;
+                document.getElementById('notifyTo').value = createdBy;
+                document.getElementById('logId').value = logId;
+                console.log(document.getElementById('notifyTo').value);
+
+            document.getElementById("reviewForm").submit();
         }
     </script>
 </body>

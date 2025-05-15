@@ -27,7 +27,7 @@ namespace KEB.Infrastructure.Repository
         public async Task AddRangeAsync(IEnumerable<T> entities)
         {
             await _context.Set<T>().AddRangeAsync(entities);
-            await _context.SaveChangesAsync();
+            //await _context.SaveChangesAsync();
         }
 
         public async Task AddRangeWithNoCommitAsync(IEnumerable<T> entities)

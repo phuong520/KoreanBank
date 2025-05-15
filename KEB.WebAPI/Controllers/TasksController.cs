@@ -46,7 +46,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("lead-change-question-status")]
-       // [Authorize(Roles = "R2")]
+        // [Authorize(Roles = "R2")]
         public async Task<IActionResult> ChangeQuestionStatus(ChangeQuestionStatusRequest request)
         {
             try
@@ -73,6 +73,7 @@ namespace KEB.WebAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
         [HttpGet]
         [Route("view-import-question-tasks")]
        //[Authorize(Roles = "R2,R3")]

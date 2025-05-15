@@ -1,0 +1,328 @@
+﻿@model KEB.Application.DTOs.ExamPaperDTO.PaperDetailDisplayDTO
+@using System.Linq
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đề thi</title>
+    <link rel="stylesheet" href="~/css/paperDetail.css" />
+</head>
+<body>
+    <div class="container">
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'paperDetails')">Chi tiết đề thi</button>
+            <button class="tab-button" onclick="openTab(event, 'paperActivities')">Hoạt động đề thi</button>
+        </div>
+
+        <!-- Paper Details Tab - now includes questions by type view -->
+        <div id="paperDetails" class="tab-content active">
+            <!-- Header information section -->
+            <div class="header-section" style="display: flex; justify-content: space-between;">
+                <!-- Left side header -->
+                <div class="header-left" style="flex: 1;">
+                    <div class="header-title">Thông Tin Bài Thi</div>
+                    <br />
+                    <div class="exam-info">
+                        <div class="info-item">
+                            <div class="info-label">Tên đề thi:</div>
+                            <div class="info-value">@Model.PaperName</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Kỹ năng:</div>
+                            <div class="info-value">@Model.PaperConstraint.Skill</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Trình độ:</div>
+                            <div class="info-value">@Model.LevelName</div>
+                        </div>
+                    </div>
+                    <div class="info-label blue-text">Tổng kết:</div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <span>Tổng Số Câu: @Model.QuestionsList.Count</span>
+                        </div>
+                    </div>
+
+                    @{
+                        var easyQuestions = Model.PaperConstraint.ConstraintDetails.Where(c => c.Difficulty == KEB.Domain.Enums.Difficulty.Dễ).Sum(c => c.NumOfQuestions);
+                        var mediumQuestions = Model.PaperConstraint.ConstraintDetails.Where(c => c.Difficulty == KEB.Domain.Enums.Difficulty.Vừa).Sum(c => c.NumOfQuestions);
+                        var hardQuestions = Model.PaperConstraint.ConstraintDetails.Where(c => c.Difficulty == KEB.Domain.Enums.Difficulty.Khó).Sum(c => c.NumOfQuestions);
+                    }
+
+                    <div class="info-item">
+                        <div class="info-label">Dễ:</div>
+                        <div class="info-value"><span>@easyQuestions câu</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Trung bình:</div>
+                        <div class="info-value"><span>@mediumQuestions câu</span></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Khó:</div>
+                        <div class="info-value"><span>@hardQuestions câu</span></div>
+                    </div>
+                </div>
+
+                <!-- Right side header -->
+                <div class="header-right" style="flex: 1;">
+                    <div class="exam-info">
+                        <div class="info-item">
+                            <div class="info-label">Kỳ thi:</div>
+                            <div class="info-value">@Model.ExamName</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Ngày thi:</div>
+                            <div class="info-value">@Model.TakePlaceTime.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Trạng thái:</div>
+                            <div class="info-value">@Model.PaperStatus.ToString()</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Đã duyệt:</div>
+                            <div class="info-value">@(Model.Reviewed ? "Đã duyệt" : "Chưa duyệt")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions by Type Section -->
+            <div class="questions-by-type">
+                @{
+                    // Group questions by question type
+                    var questionsByType = Model.QuestionsList.GroupBy(q => q.QuestionTypeName).ToList();
+                    int stt = 1;
+                }
+
+                @foreach (var typeGroup in questionsByType)
+                {
+                    var questionType = typeGroup.Key;
+                    var questions = typeGroup.ToList();
+                    var halfCount = (questions.Count + 1) / 2; // Ceiling division to get half count
+
+                    <!-- Question Type Header -->
+                    <div class="question-type-header">@stt. @questionType</div>
+
+                    <!-- Navigation for this section -->
+                    <div class="question-navigation">
+                    </div>
+
+                    <!-- Questions Container with Two Columns -->
+                    <div class="questions-container">
+                        <!-- Left Column -->
+                        <div class="question-column">
+                            @for (int i = 0; i < halfCount; i++)
+                            {
+                                var question = questions[i];
+                                <div class="question-item">
+                                    <div class="question-content">
+                                        @question.QuestionContent
+                                        <span class="search-icon">🔍</span>
+                                    </div>
+                                    <div class="question-options">
+                                        @for (int j = 0; j < question.Answers.Count(); j++)
+                                        {
+                                            var optionLabel = (char)('A' + j);
+                                            <div class="option-item">@optionLabel. @question.Answers.ElementAt(j).Content</div>
+                                        }
+                                    </div>
+                                    <div class="question-footer">
+                                        <a href="#">@question.LevelName</a> |
+                                        <a href="#">@question.Difficulty</a> |
+                                        <a href="#">@question.QuestionTypeName</a> |
+                                        <a href="#">@question.ReferenceName</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="question-column">
+                            @for (int i = halfCount; i < questions.Count; i++)
+                            {
+                                var question = questions[i];
+                                <div class="question-item">
+                                    <div class="question-content">
+                                        @question.QuestionContent
+                                        <span class="search-icon">🔍</span>
+                                    </div>
+                                    <div class="question-options">
+                                        @for (int j = 0; j < question.Answers.Count(); j++)
+                                        {
+                                            var optionLabel = (char)('A' + j);
+                                            <div class="option-item">@optionLabel. @question.Answers.ElementAt(j).Content</div>
+                                        }
+                                    </div>
+                                    <div class="question-footer">
+                                        <a href="#">@question.LevelName</a> |
+                                        <a href="#">@question.Difficulty</a> |
+                                        <a href="#">@question.QuestionTypeName</a> |
+                                        <a href="#">@question.ReferenceName</a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    stt++;
+                }
+            </div>
+
+            <!-- Bottom buttons -->
+            <div class="button-group" style="text-align: center;">
+                <button class="btn" onclick="history.back()">Quay Lại</button>
+                <button class="btn btn-primary">Xem Trước</button>
+                <button class="btn">Tải Xuống</button>
+            </div>
+        </div>
+
+        <!-- Paper Activities Tab -->
+        <div id="paperActivities" class="tab-content">
+            <div class="header-title">Hoạt Động Đề Thi</div>
+            <div class="activity-log">
+                <div id="loading" class="loading">Đang tải hoạt động...</div>
+                <div id="activityList"></div>
+            </div>
+
+            <!-- Bottom buttons for activities tab -->
+            <div class="button-group" style="text-align: center; margin-top: 20px;">
+                <button class="btn" onclick="history.back()">Quay Lại</button>
+                <button class="btn btn-primary" onclick="refreshActivities()">Làm Mới</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            // Hide all tab contents
+            var tabContents = document.getElementsByClassName("tab-content");
+            for (var i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+
+            // Remove active class from all tab buttons
+            var tabButtons = document.getElementsByClassName("tab-button");
+            for (var i = 0; i < tabButtons.length; i++) {
+                tabButtons[i].classList.remove("active");
+            }
+
+            // Show the selected tab content and mark button as active
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+
+            // Load activities data if activities tab is selected
+            if (tabName === 'paperActivities') {
+                loadActivities();
+            }
+        }
+
+        // Function to load activity data directly from the API
+        function loadActivities() {
+            var paperId = '@Model.PaperId'; // Get the paper ID from the model
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('activityList').innerHTML = '';
+
+            fetch(`https://localhost:7101/api/ExamPapers/view-activities-on-paper?paperId=${paperId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    console.log('API Response:', data); // Debug log to see the response structure
+
+                    // Access the data based on API response structure
+                    let activities = null;
+                    if (data && data.data) {
+                        activities = data.data;
+                    } else if (data && Array.isArray(data)) {
+                        activities = data;
+                    } else if (data && data.result) {
+                        activities = data.result;
+                    } else if (data && data.value) {
+                        activities = data.value;
+                    }
+
+                    if (activities && activities.length > 0) {
+                        renderActivities(activities);
+                    } else {
+                        document.getElementById('activityList').innerHTML =
+                            '<div class="activity-item"><div class="activity-description">Không có hoạt động nào được ghi nhận.</div></div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('activityList').innerHTML =
+                        '<div class="activity-item"><div class="activity-description">Đã xảy ra lỗi khi tải dữ liệu hoạt động. Chi tiết lỗi: ' + error.message + '</div></div>';
+                    console.error('Error fetching activities:', error);
+                });
+        }
+
+        // Function to render activities in the UI as a timeline based on AccessLogDisplayDto
+        function renderActivities(activities) {
+            var activityListElement = document.getElementById('activityList');
+            activityListElement.innerHTML = '';
+
+            console.log('Activities to render:', activities); // Debug log
+
+            if (!activities || activities.length === 0) {
+                activityListElement.innerHTML = '<div class="activity-item"><div class="activity-description">Không có hoạt động nào được ghi nhận.</div></div>';
+                return;
+            }
+
+            // Sort activities by accessTime (newest first)
+            activities.sort((a, b) => new Date(b.accessTime) - new Date(a.accessTime));
+
+            activities.forEach(activity => {
+                // Format the timestamp
+                const formattedDate = formatDateTime(activity.accessTime);
+                // Create action description combining actionName and details
+                const actionDescription = activity.actionName;
+                const details = activity.details;
+
+                var activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.innerHTML = `
+                    <div class="activity-time">${formattedDate}</div>
+                    <div class="activity-description">
+                        <div class="activity-action">${actionDescription}</div>
+                        ${details ? `<div class="activity-details">${details}</div>` : ''}
+                    </div>
+                `;
+
+                activityListElement.appendChild(activityItem);
+            });
+        }
+
+        // Helper function to format date time
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return "Không có thời gian";
+
+            try {
+                const date = new Date(dateTimeStr);
+
+                // Check if date is valid
+                if (isNaN(date.getTime())) {
+                    return dateTimeStr; // Return original string if date is invalid
+                }
+
+                return date.toLocaleString('vi-VN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return dateTimeStr; // Return original string on error
+            }
+        }
+
+        // Function to refresh activities
+        function refreshActivities() {
+            loadActivities();
+        }
+    </script>
+</body>
+</html>

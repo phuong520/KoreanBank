@@ -43,7 +43,7 @@ namespace KEB.Infrastructure.UnitOfWorks
             AccessLogs = new SystemAccessLogRepository(_context);
             Answers = new AnswerRepository(_context);
             EmailService = new EmailService();
-           // FileService = new FileService(blobServiceClient);
+            //FileService = new FileService(blobServiceClient);
             ImageFiles = new ImageFileIRepository(_context);
             Notifications = new NotificationRepository(_context);
         }
@@ -84,7 +84,7 @@ namespace KEB.Infrastructure.UnitOfWorks
 
         public IEmailService EmailService { get; }
 
-        //public IFileService FileService { get; }
+        public IFileService FileService { get; }
 
         public INotificationRepository Notifications { get; }
         public IImageFileRepository ImageFiles { get; }

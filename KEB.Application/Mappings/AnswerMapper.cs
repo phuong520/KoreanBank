@@ -14,7 +14,11 @@ namespace KEB.Application.Mappings
         public AnswerMapper()
         {
 
-            CreateMap<Answer, AddAnswerDTO>().ReverseMap();
+            CreateMap<Answer, AddAnswerDTO>()
+                .ForMember(dest => dest.Content,
+                opt => opt.MapFrom(src => src.AnswerContent))
+                 .ForMember(dest => dest.IsCorrect,
+                opt => opt.MapFrom(src => src.IsTrue)).ReverseMap();
 
         }
     }

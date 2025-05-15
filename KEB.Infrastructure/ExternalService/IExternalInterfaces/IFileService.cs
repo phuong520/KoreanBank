@@ -10,6 +10,7 @@ namespace KEB.Infrastructure.ExternalService.IExternalInterfaces
     public interface IFileService
     {
         Task<string> Upload(string container, IFormFile file, string? fileName = "");
+        Task<string> Upload(string folderName, Stream fileStream, string fileName);
         Task<Stream> Get(string containerName, string blobName);
         Task<string> GetBlob(string? blobName, string containerName);
         Task DeleteBlob(string blobName, string containerName);

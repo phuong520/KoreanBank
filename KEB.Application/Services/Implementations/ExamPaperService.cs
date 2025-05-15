@@ -17,6 +17,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using static KEB.Domain.ValueObject.LogicString;
 
 namespace KEB.Application.Services.Implementations
 {
@@ -275,14 +276,267 @@ namespace KEB.Application.Services.Implementations
             throw new NotImplementedException();
         }
 
-        public Task<APIResponse<string>> GetUrlOfPaperContentPdf(ViewPaperDetailRequest request)
+        public async Task<APIResponse<string>> GetUrlOfPaperContentPdf(ViewPaperDetailRequest request)
         {
             throw new NotImplementedException();
-        }
+            //APIResponse<string> response = new();
+            //try
+            //{
+            //    bool isAuthorized = true;
+            //    Paper? paper = null;
+            //    Exam? exam = null;
+            //    DateTime currentTime = DateTime.Now;
+            //    var requestedUser = await _unitOfWork.Users.GetAsync(x => x.Id == request.RequestedUserId);
+            //    if (requestedUser == null)
+            //        throw new UnauthorizedAccessException(AppMessages.NO_PERMISSION);
+            //    else
+            //    {
+            //        paper = await _unitOfWork.Papers.GetAsync(x => x.Id == request.PaperId,
+            //        includeProperties: "Exam,Exam.ExamType," +
+            //                           "Exam.Host,Exam.Reviewer," +
+            //                           "Exam.ExamType.Levels," +
+            //                           "PaperDetails,PaperDetails.Question," +
+            //                           "PaperDetails.Question.LevelDetail," +
+            //                           "PaperDetails.Question.LevelDetail.Level," +
+            //                           "PaperDetails.Question.LevelDetail.Topic," +
+            //                           "PaperDetails.Question.References," +
+            //                           "PaperDetails.Question.Answers," +
+            //                           "PaperDetails.Question.QuestionType"
+            //                        );
+            //        if (paper == null)
+            //        {
+            //            response.StatusCode = System.Net.HttpStatusCode.NotFound;
+            //            response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
+            //            return response;
+            //        }
 
-        public Task<APIResponse<object>> LeaveCommentOnPaper(LeaveCommentRequest request)
+            //        exam = paper.Exam;
+            //        bool examHidden = exam.IsDeleted; // this means the exam is still visible but the papers is not
+            //        bool examSuspended = exam.IsSuspended; // this means the exam is canceled or suspended so that it actually did not/will not take place
+            //        bool examInEdit = exam.CreatedDate.AddDays(3) > currentTime; // 1 day for team lead to edit exam info & 2 day to edit & review exam paper
+            //        bool examInPrepare = currentTime > exam.TakePlaceTime.AddDays(-1) && currentTime < exam.TakePlaceTime; // 24 hours before exam taking place
+            //        bool examTookPlace = currentTime > exam.TakePlaceTime;
+            //        bool isTeamLead = requestedUser.RoleId.ToString() == LogicString.Role.TeamLeadRoleId;
+            //        bool review = exam.ReviewerId == request.RequestedUserId;
+            //        bool host = exam.HostId == request.RequestedUserId;
+
+            //        if (examTookPlace || examSuspended)
+            //        {
+            //            isAuthorized = examHidden;
+                        
+            //        }
+            //        else
+            //        {
+            //            // If the exam hasn't taken place & is not suspended
+            //            if (examInEdit || examInPrepare)
+            //            {
+            //                isAuthorized = review || host || isTeamLead;
+            //            }
+            //            else
+            //            {
+            //                isAuthorized = false;
+            //            }
+            //        }
+            //    }
+            //    if (!isAuthorized) throw new UnauthorizedAccessException("You are not allowed to download the paper at this time");
+            //    else
+            //    {
+            //        string filePath = string.IsNullOrEmpty(paper.ExportedContentUrl) ? await AutoGenerateAndSetPaperContentPdf(paper) : paper.ExportedContentUrl;
+
+            //        // Nếu đường dẫn bắt đầu bằng "/GeneratedPapers/", chuyển thành đường dẫn đầy đủ
+            //        if (filePath.StartsWith("/GeneratedPapers/"))
+            //        {
+            //            filePath = Path.Combine(Environment.CurrentDirectory, filePath.TrimStart('/'));
+            //        }
+
+            //        response.Result.Add(filePath);
+            //    }
+            //}
+            //catch (UnauthorizedAccessException e)
+            //{
+            //    response.IsSuccess = false;
+            //    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+            //    response.Message = e.Message;
+            //}
+            //catch (Exception e)
+            //{
+            //    response.IsSuccess = false;
+            //    response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            //    response.Message = AppMessages.INTERNAL_SERVER_ERROR;
+            //}
+            //return response;
+        }
+        private async Task<string> AutoGenerateAndSetPaperContentPdf(Paper paper)
         {
-            throw new NotImplementedException();
+            Exam exam = paper.Exam;
+            DateTime currentTime = DateTime.Now;
+            var allQuestions = paper.PaperDetails.OrderBy(x => x.OrderInPaper).Select(x => x.Question).ToList();
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "ExternalFiles", "index.html");
+            string logoPath = AzureBlob.SYSTEM_LOGO_URL;
+            StringBuilder questionsHtml = new();
+
+            if (paper.Skill == Skill.Nghe)
+            {
+                int quesIndex = 1;
+                foreach (var question in allQuestions)
+                {
+                    questionsHtml.Append($@"
+                                    <div class='question-title'>
+                                        <p>{question.QuestionType.TypeName}</p>
+                                    </div>");
+                    var tmpQuesContent = GetQuestionHtml(question, quesIndex);
+                    questionsHtml.Append(tmpQuesContent);
+                    quesIndex++;
+                }
+            }
+            else
+            {
+                var groupedQuestions = allQuestions.GroupBy(x => x.QuestionType);
+                int typeIndex = 1;
+                int quesIndex = 1;
+                foreach (var item in groupedQuestions)
+                {
+                    questionsHtml.Append($@"
+                                    <div class='question-title'>
+                                        <p>{CommonUntils.ConvertIntegerToRoman(typeIndex)}. {item.Key.TypeName}</p>
+                                    </div>");
+                    foreach (var question in item)
+                    {
+                        var tmpQuesContent = GetQuestionHtml(question, quesIndex);
+                        questionsHtml.Append(tmpQuesContent);
+                        quesIndex++;
+                    }
+                    typeIndex++;
+                }
+            }
+
+            string htmlContent = File.ReadAllText(templatePath);
+            htmlContent = htmlContent
+                .Replace("{ExamName}", exam.ExamName)
+                .Replace("{LogoPath}", logoPath)
+                .Replace("{ExamDate}", exam.TakePlaceTime.ToString("dd MMM yyyy"))
+                .Replace("{PaperName}", paper.PaperName)
+                .Replace("{Questions}", questionsHtml.ToString());
+
+            var renderer = new ChromePdfRenderer();
+            var pdfFromHtmlFile = renderer.RenderHtmlAsPdf(htmlContent);
+            // Tạo thư mục để lưu các file PDF nếu nó chưa tồn tại
+            string pdfDirectory = Path.Combine(Environment.CurrentDirectory, "GeneratedPapers");
+            if (!Directory.Exists(pdfDirectory))
+            {
+                Directory.CreateDirectory(pdfDirectory);
+            }
+            // Tạo tên file dựa trên thông tin paper
+            string fileName = $"{paper.PaperName}_{paper.Skill}_{currentTime:yyyyMMdd_HHmmss}.pdf";
+            string filePath = Path.Combine(pdfDirectory, fileName);
+
+            // Lưu PDF vào file
+            pdfFromHtmlFile.SaveAs(filePath);
+            // Lưu URL tương đối của file trong database
+            //paper.ExportedContentUrl = $"/GeneratedPapers/{fileName}";
+            await _unitOfWork.SaveChangesAsync();
+            // Log hoạt động
+            await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
+            {
+                AccessTime = currentTime,
+                ActionName = "Generate pdf for exam paper",
+                IpAddress = "",
+                IsSuccess = true,
+                TargetObject = $"{paper.PaperName}",
+                Details = $"Generate pdf for paper {paper.PaperName} and save to local path {filePath}"
+            });
+
+            return filePath;
+        }
+        private static string GetQuestionHtml(Question question, int quesIndex)
+        {
+            StringBuilder tmpAnswersContent = new();
+            bool useFlex = false;
+            int answerIndex = 1;
+            foreach (var answer in question.Answers)
+            {
+                if (answer.AnswerContent.Length > 48) useFlex = true;
+                tmpAnswersContent.Append(string.Format(SystemDataFormat.SINGLE_ANSWER_HTML_FORMAT,
+                    CommonUntils.ConvertIntegerToLetter(answerIndex),
+                    answer.AnswerContent));
+                answerIndex++;
+            }
+
+            // Xử lý tệp đính kèm nếu cần
+            //string attachmentHtml = "";
+            //if (!string.IsNullOrEmpty(question.AttachmentFile) && question.QuestionType.Skill != Skill.Nghe)
+            //{
+            //    var url = question.AttachmentFileName;
+            //    attachmentHtml = \$"\<img style="width:36%"" +
+            //                \$"src="{url}" alt="Attachment for question could not be loaded">";
+            //}
+
+            string? tmpQuesContent;
+            if (useFlex)
+                tmpQuesContent = string.Format(SystemDataFormat.QUESTION_FLEXANSWER_HTML_FORMAT,
+                    quesIndex,
+                    question.QuestionContent,
+                    2,
+                    // attachmentHtml,
+                    tmpAnswersContent.ToString());
+            else
+                tmpQuesContent = string.Format(SystemDataFormat.QUESTION_GRIDANSWER_HTML_FORMAT,
+                    quesIndex,
+                    question.QuestionContent,
+                    2,
+                    // attachmentHtml,
+                    tmpAnswersContent.ToString());
+
+            return tmpQuesContent;
+        }
+        public async Task<APIResponse<object>> LeaveCommentOnPaper(LeaveCommentRequest request)
+        {
+            APIResponse<object> response = new() { IsSuccess = false };
+            List<string> validateResult = [];
+            try
+            {
+                var requestedUser = await _unitOfWork.Users.GetByIdAsync(request.RequestedUserId);
+                if (requestedUser == null)
+                {
+                    validateResult.Add(LogicString.Permission.NoPermission);
+                    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                }
+                if (string.IsNullOrEmpty(request.Content))
+                {
+                    validateResult.Add("Nhận xét mà 0 có nội dung thì để làm gì ???");
+                    response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                }
+                var examPaper = await _unitOfWork.Papers.GetAsync(x => x.Id == request.TargetObjectId, includeProperties: "Exam");
+                if (examPaper == null)
+                {
+                    validateResult.Add("Không tìm thấy dữ liệu");
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                }
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    response.Message = string.Join(" ~ ", validateResult);
+                    return response;
+                }
+                var comment = new SystemAccessLog
+                {
+                    AccessTime = DateTime.Now,
+                    ActionName = "Comment on exam paper",
+                    UserId = request.RequestedUserId,
+                    IpAddress = request.IpAddress ?? "::1",
+                    IsSuccess = true,
+                    Details = request.Content,
+                    TargetObject = $"{examPaper.PaperName}",
+                };
+                await _unitOfWork.AccessLogs.AddAsync(comment);
+                response.IsSuccess = true;
+                //response.Result.Add(comment);
+            }
+            catch (Exception ex)
+            {
+                response.Message = ex.Message;
+                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            }
+            return response;
         }
 
         public Task<APIResponse<object>> UploadExamMaterials(Guid examId, Guid? requestedUserId = null, string ipAddress = "")
@@ -704,9 +958,49 @@ namespace KEB.Application.Services.Implementations
             }
             return result;
         }
-        public Task<APIResponse<AccessLogDisplayDto>> ViewActivitiesOnPaper(Guid paperId)
+        public async Task<APIResponse<AccessLogDisplayDto>> ViewActivitiesOnPaper(Guid paperId)
         {
-            throw new NotImplementedException();
+            APIResponse<AccessLogDisplayDto> response = new();
+            try
+            {
+                var examPaper = await _unitOfWork.Papers.GetAsync(x => x.Id == paperId);
+                if (examPaper == null)
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
+                    response.IsSuccess = false;
+                    return response;
+                }
+                var queried = await _unitOfWork.AccessLogs.GetAllAsync(x => x.TargetObject.Equals(examPaper.PaperName),
+                                                            orderBy: x => x.OrderByDescending(x => x.AccessTime),
+                                                            includeProperties: "User");
+
+
+                List<AccessLogDisplayDto> result = [];
+                string lastAction = "";
+                foreach (var item in queried)
+                {
+                    if (lastAction.Equals("Xem đề thi") && item.ActionName.Equals("Xem đề thi"))
+                    {
+                        response.Result.RemoveAt(response.Result.Count - 1);
+                        response.Result.Add(_mapper.Map<AccessLogDisplayDto>(item));
+                        lastAction = "Xem đề thi";
+                    }
+                    else
+                    {
+                        lastAction = item.ActionName;
+                        response.Result.Add(_mapper.Map<AccessLogDisplayDto>(item));
+                    }
+                }
+                response.Message = $"{response.Result.Count}";
+            }
+            catch (Exception e)
+            {
+                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                response.Message = e.Message;
+                response.IsSuccess = false;
+            }
+            return response;
         }
 
         public async Task<APIResponse<PaperDetailDisplayDTO>> ViewExamPaperDetail(ViewPaperDetailRequest request)
@@ -727,17 +1021,17 @@ namespace KEB.Application.Services.Implementations
                 {
                     paper = await _unitOfWork.Papers.GetAsync(x => x.Id == request.PaperId,
                     includeProperties: "Exam,Exam.ExamType," +
-                                       "Exam.User,Exam.User," +
-                                       "Exam.ExamType.Level," +
+                                       "Exam.Host,Exam.Reviewer," +
+                                       "Exam.ExamType.Levels," +
                                        "Exam.ExamType.ExamTypeConstraints," +
                                        "Exam.ExamType.ExamTypeConstraints.ConstraintDetails," +
-                                       "PaperQuestions,PaperQuestions.Question," +
-                                       "PaperQuestions.Question.LevelDetail," +
-                                       "PaperQuestions.Question.LevelDetail.Level," +
-                                       "PaperQuestions.Question.LevelDetail.Topic," +
-                                       "PaperQuestions.Question.Reference," +
-                                       "PaperQuestions.Question.Answers," +
-                                       "PaperQuestions.Question.QuestionType"
+                                       "PaperDetails,PaperDetails.Question," +
+                                       "PaperDetails.Question.LevelDetail," +
+                                       "PaperDetails.Question.LevelDetail.Level," +
+                                       "PaperDetails.Question.LevelDetail.Topic," +
+                                       "PaperDetails.Question.References," +
+                                       "PaperDetails.Question.Answers," +
+                                       "PaperDetails.Question.QuestionType"
                                     );
                     if (paper == null) throw new VersionNotFoundException(AppMessages.TARGET_ITEM_NOTFOUND);
                     var exam = paper.Exam;
@@ -785,7 +1079,8 @@ namespace KEB.Application.Services.Implementations
                         Details = $"{requestedUser.UserName} đã yêu cầu xem đề thi {paper.PaperName}"
                     });
                     var mappedResult = _mapper.Map<PaperDetailDisplayDTO>(paper);
-                    mappedResult.PaperConstraint = _mapper.Map<ConstraintToBeDisplayedDTO>(paper.Exam.ExamType.ExamTypeConstraints.First(x => x.Skill == paper.Skill));
+                    var source = paper.Exam.ExamType.ExamTypeConstraints.First(x => x.Skill == paper.Skill);
+                    mappedResult.PaperConstraint = _mapper.Map<ConstraintToBeDisplayedDTO>(source);
                     response.Result.Add(mappedResult);
                     response.IsSuccess = true;
                 }

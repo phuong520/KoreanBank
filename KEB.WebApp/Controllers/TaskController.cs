@@ -1,4 +1,5 @@
 using KEB.Application.DTOs.Common;
+using KEB.Application.DTOs.ExamPaperDTO;
 using KEB.Application.DTOs.ImportQuestionTaskDTO;
 using KEB.Application.DTOs.LevelDTO;
 using KEB.Application.DTOs.LevelTopicDetailDTO;
@@ -295,18 +296,18 @@ namespace KEB.WebApp.Controllers
                 {
                     return RedirectToAction("Login", "Common");
                 }
-
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
                 var response = await _httpClient.PostAsJsonAsync($"{BaseApiUrl}/Questions/get-questions", request);
                 if (response.IsSuccessStatusCode)
                 {
                     var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<QuestionDisplayDto>>();
+
+                    // Pass current status to ViewBag to maintain tab selection
+                    ViewBag.CurrentStatus = request.Status;
+
                     return View(apiResponse.Result);
                 }
-
                 return RedirectToAction(nameof(Index));
-
             }
             catch (Exception ex)
             {
@@ -316,7 +317,7 @@ namespace KEB.WebApp.Controllers
         }
 
         [HttpPost]
-       // [ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReviewQuestion(ChangeQuestionStatusRequest request)
         {
             try
@@ -326,12 +327,10 @@ namespace KEB.WebApp.Controllers
                 {
                     return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("ReviewQuestion", "Task") });
                 }
-
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                
+
                 var handler = new JwtSecurityTokenHandler();
                 var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-
                 var userId = Guid.Empty;
                 if (jsonToken != null)
                 {
@@ -341,21 +340,25 @@ namespace KEB.WebApp.Controllers
                         userId = parsedGuid;
                     }
                 }
+
+                // Set the user ID making the request
                 request.RequestedUserId = userId;
+                request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+
                 var jsonContent = JsonSerializer.Serialize(request);
                 var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
-
                 var response = await _httpClient.PostAsync($"{ApiUrl}/lead-change-question-status", content);
                 var resultString = await response.Content.ReadAsStringAsync();
                 var result = JsonSerializer.Deserialize<APIResponse<ChangeStatusResultDTO>>(resultString);
 
-                if (response.IsSuccessStatusCode )
+                if (response.IsSuccessStatusCode)
                 {
                     TempData["Success"] = "Duyệt câu hỏi thành công!";
                 }
                 else
                 {
-                    TempData["Error"] = $"Duyệt câu hỏi thất bại";
+                    // Display specific error message if available
+                    TempData["Error"] = result?.Message ?? "Duyệt câu hỏi thất bại";
                 }
             }
             catch (Exception ex)
@@ -363,8 +366,81 @@ namespace KEB.WebApp.Controllers
                 TempData["Error"] = $"Lỗi hệ thống: {ex.Message}";
             }
 
-            return RedirectToAction(nameof(Details));
+            // Return to the same tab view new { status = request.Requests.First().ToStatus }
+            return RedirectToAction(nameof(ReviewQuestion), new { status = request.Requests?.FirstOrDefault()?.ToStatus ?? QuestionStatus.Ok });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetQuestionDetailsForReview(Guid id)
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    return RedirectToAction("Login", "Common");
+                }
+
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+                // Call the API to get question details
+                var response = await _httpClient.GetAsync($"{BaseApiUrl}/Questions/get-question-has-id-{id}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<QuestionDisplayDto>>();
+
+                    if (apiResponse.IsSuccess && apiResponse.Result != null && apiResponse.Result.Count > 0)
+                    {
+                        var questionDetail = apiResponse.Result[0];
+
+                        // Extract LogId and CreatedBy information
+                        var logId = questionDetail.LogId;
+                        var createdById = questionDetail.NotifyTo;
+
+                        // Return as JSON for AJAX usage
+                        return Json(new
+                        {
+                            success = true,
+                            logId = logId,
+                            createdBy = createdById
+                        });
+                    }
+
+                    return Json(new { success = false, message = "Không tìm thấy thông tin câu hỏi" });
+                }
+
+                return Json(new { success = false, message = "Không thể lấy thông tin câu hỏi" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Lỗi hệ thống: {ex.Message}" });
+            }
+        }
+
+        public async Task<IActionResult> ReviewPaper(ViewExamPapersListRequest request)
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    return RedirectToAction("Login", "Common");
+                }
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var response = await _httpClient.PostAsJsonAsync($"{BaseApiUrl}/Questions/get-questions", request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<PaperGeneralDisplayDTO>>();
+                    return View(apiResponse.Result);
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Có lỗi xảy ra: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
     }
 } 

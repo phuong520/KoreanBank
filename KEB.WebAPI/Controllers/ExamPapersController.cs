@@ -135,6 +135,8 @@ namespace KEB.WebAPI.Controllers
             return Ok(response);
         }
 
+
+
         [HttpGet]
         [Route("get-pdf-url-for-papercontent")]
         //[Authorize(Roles = "R2,R3")]
@@ -150,19 +152,19 @@ namespace KEB.WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpGet]
-        [Route("get-pdf-url-for-paperaudio")]
-        //[Authorize(Roles = "R2,R3")]
-        public async Task<IActionResult> GetUrlOfPaperAudio(Guid requestedUserId, Guid paperId)
-        {
-            var request = new ViewPaperDetailRequest
-            {
-                PaperId = paperId,
-                RequestedUserId = requestedUserId,
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1",
-            };
-            var response = await _unitOfService.ExamPaperService.GetUrlOfPaperAudio(request);
-            return Ok(response);
-        }
+        //[HttpGet]
+        //[Route("get-pdf-url-for-paperaudio")]
+        ////[Authorize(Roles = "R2,R3")]
+        //public async Task<IActionResult> GetUrlOfPaperAudio(Guid requestedUserId, Guid paperId)
+        //{
+        //    var request = new ViewPaperDetailRequest
+        //    {
+        //        PaperId = paperId,
+        //        RequestedUserId = requestedUserId,
+        //        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1",
+        //    };
+        //    var response = await _unitOfService.ExamPaperService.GetUrlOfPaperAudio(request);
+        //    return Ok(response);
+        //}
     }
 }

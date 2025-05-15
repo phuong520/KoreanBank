@@ -25,6 +25,7 @@ namespace KEB.Application.DTOs.QuestionDTO
         public IEnumerable<AddAnswerDTO> Answers { get; set; }
         public int OrderInPaper { get; set; }
         public string Description { get; set; }
-
+        public Guid NotifyTo { get; set; }
+        public Guid LogId { get; set; }
     }
 }
