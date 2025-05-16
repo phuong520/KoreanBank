@@ -65,24 +65,62 @@ namespace KEB.WebApp.Controllers
         }
         // POST: Users/Create
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UserCreateDTO userCreateDTO)
         {
             if (!ModelState.IsValid)
             {
                 return View(userCreateDTO);
             }
-            if (userCreateDTO == null || userCreateDTO.RoleId == Guid.Empty)
+
+            var token = HttpContext.Request.Cookies["token"];
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+            var userId = Guid.Empty;
+            if (jsonToken != null)
+            {
+                var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                {
+                    userId = parsedGuid;
+                }
+            }
+
+            userCreateDTO.CreatedBy = userId;
+
+            if (userCreateDTO.RoleId == Guid.Empty)
             {
                 ModelState.AddModelError("RoleId", "Vui lòng chọn vai trò hợp lệ.");
                 return View(userCreateDTO);
             }
+
             try
             {
                 var url = $"{ApiUrl}/add-user";
 
-                // Gửi yêu cầu POST lên API
-                var response = await _httpClient.PostAsJsonAsync(url, userCreateDTO);
+                using var formData = new MultipartFormDataContent();
+
+                // Thêm dữ liệu text (chuyển tất cả sang string trước khi thêm)
+                formData.Add(new StringContent(userCreateDTO.Email ?? ""), "Email");
+                formData.Add(new StringContent(userCreateDTO.FullName ?? ""), "FullName");
+                formData.Add(new StringContent(userCreateDTO.DateOfBirth.ToString("yyyy-MM-dd") ?? ""), "DateOfBirth");
+                formData.Add(new StringContent(userCreateDTO.Gender.ToString()), "Gender");
+                formData.Add(new StringContent(userCreateDTO.RoleId.ToString()), "RoleId");
+                formData.Add(new StringContent(userCreateDTO.CreatedBy.ToString()), "CreatedBy");
+
+                // Thêm file ảnh nếu có
+                if (userCreateDTO.ImageFile != null && userCreateDTO.ImageFile.Length > 0)
+                {
+                    var streamContent = new StreamContent(userCreateDTO.ImageFile.OpenReadStream());
+                    streamContent.Headers.ContentType = new MediaTypeHeaderValue(userCreateDTO.ImageFile.ContentType);
+
+                    formData.Add(streamContent, "ImageFile", userCreateDTO.ImageFile.FileName);
+                }
+
+                // Gửi POST multipart lên API
+                var response = await _httpClient.PostAsync(url, formData);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -90,19 +128,18 @@ namespace KEB.WebApp.Controllers
                 }
                 else
                 {
-                    // Nếu không thành công
                     var errorMessage = await response.Content.ReadAsStringAsync();
-                    ViewBag.Error = $"Không thể tạo người dùng mới: {errorMessage}";
+                    Console.WriteLine($"Không thể tạo người dùng mới: {errorMessage}");
                     return View("Error");
                 }
             }
             catch (Exception ex)
             {
-                // Xử lý lỗi nếu có exception
                 ViewBag.Error = $"Đã xảy ra lỗi khi tạo người dùng: {ex.Message}";
                 return View("Error");
             }
         }
+
         public async Task<IActionResult> Edit(Guid id)
         {
             var response = await _httpClient.GetAsync($"{ApiUrl}/{id}");

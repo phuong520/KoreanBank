@@ -1,0 +1,201 @@
+﻿@model IEnumerable<KEB.Application.DTOs.SystemAccessLogDTO.AccessLogDisplayDto>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhật Ký Hoạt Động</title>
+    <style>
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+        }
+
+        body {
+        background-color: #f5f7fa;
+        }
+
+        .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        }
+
+        .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        }
+
+        .title {
+        font-size: 24px;
+        color: #2c3e50;
+        font-weight: bold;
+        }
+
+        .user-area {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        }
+
+        .icon {
+        font-size: 20px;
+        color: #7f8c8d;
+        cursor: pointer;
+        }
+
+        .user-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background-color: #3498db;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        }
+
+        .search-container {
+        position: relative;
+        margin-bottom: 20px;
+        }
+
+        .search-input {
+        width: 300px;
+        padding: 10px 15px 10px 40px;
+        border: none;
+        background-color: #dfe6e9;
+        border-radius: 20px;
+        font-size: 14px;
+        }
+
+        .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #7f8c8d;
+        }
+
+        table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        th {
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        text-align: left;
+        padding: 15px;
+        font-size: 14px;
+        border-bottom: 1px solid #ecf0f1;
+        }
+
+        td {
+        padding: 15px;
+        border-bottom: 1px solid #ecf0f1;
+        color: #34495e;
+        font-size: 14px;
+        }
+
+        .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        gap: 5px;
+        }
+
+        .page-item {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        }
+
+        .page-item.active {
+        background-color: #6c5ce7;
+        color: white;
+        }
+
+        .page-item:not(.active) {
+        background-color: #dfe6e9;
+        color: #2d3436;
+        }
+
+        .user-info {
+        display: flex;
+        flex-direction: column;
+        }
+
+        .user-role {
+        font-size: 13px;
+        color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Nhật Ký Hoạt Động</h1>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Tìm kiếm">
+            <div class="search-icon">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Tên Tài Khoản</th>
+                    <th>Họ Và Tên</th>
+                    <th>Vai Trò</th>
+                    <th>Hành động</th>
+                    <th>Thời gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{int index = 1;}
+                @foreach(var log in Model){
+                    <tr>
+                        <td>@index</td>
+                        <td>@log.User.UserName</td>
+                        <td>@log.User.FullName</td>
+                        <td>@log.User.RoleName</td>
+                        <td>@log.ActionName</td>
+                        <td>@log.AccessTime</td>
+                    </tr>
+                    index++;
+                }
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <div class="page-item active">1</div>
+            <div class="page-item">2</div>
+            <div class="page-item">3</div>
+            <div class="page-item">...</div>
+            <div class="page-item">20</div>
+        </div>
+    </div>
+
+    <!-- Adding Font Awesome for icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+</body>
+</html>

@@ -74,7 +74,10 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.LevelName,
                 opt => opt.MapFrom(src => src.Exam.ExamType.Levels.LevelName))
                 .ForMember(dest => dest.QuestionsList,
-                opt => opt.MapFrom(src => src.PaperDetails));
+                opt => opt.MapFrom(src => src.PaperDetails))
+                .ForMember(dest => dest.HostId, opt => opt.MapFrom(src => src.Exam.HostId))
+                .ForMember(dest => dest.ReviewerId, opt => opt.MapFrom(src => src.Exam.ReviewerId));
+
 
             CreateMap<PaperDetail, QuestionInPaperDTO>()
                 .ForMember(dest => dest.Id,

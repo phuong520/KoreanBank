@@ -59,7 +59,7 @@ namespace KEB.WebAPI.Controllers
         [HttpPost]
         [Route("add-user")]
         //[Authorize(Roles = "Quản trị viên")]
-        public async Task<IActionResult> AddUser([FromForm] UserCreateDTO userCreateDTO)
+        public async Task<IActionResult> AddUser( UserCreateDTO userCreateDTO)
         {
             var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
             var response = new APIResponse<UserDisplayDTO>();

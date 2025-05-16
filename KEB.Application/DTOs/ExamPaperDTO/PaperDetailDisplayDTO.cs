@@ -20,6 +20,8 @@ namespace KEB.Application.DTOs.ExamPaperDTO
         public List<QuestionInPaperDTO> QuestionsList { get; set; } = [];
         public PaperStatus PaperStatus { get; set; }
         public bool Reviewed { get; set; }
+        public Guid HostId { get; set; }
+        public Guid ReviewerId { get; set; }
 
     }
 }

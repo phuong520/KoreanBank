@@ -226,17 +226,17 @@ namespace KEB.Domain.ValueObject
             public const int ACTIVEALLOWEDTIME = 480; // This field is represented in minutes 
             public const string ACTIVEALLOWEDTIMEVALUE = "2 phút"; // This field is corresponding to the above
 
-            public const string NEWACCOUNTSUBJECT = "TÀI KHOẢN MỚI TRÊN HỆ THỐNG FSAKEB";
-            public const string AUTODEACTIVATE_SUBJECT = "FSAKEB: TỰ ĐỘNG KHÓA TÀI KHOẢN";
-            public const string DEACTIVATESUBJECT = "FSAKEB: TÀI KHOẢN BỊ KHÓA";
-            public const string REACTIVATESUBJECT = "FSAKEB: MỞ KHÓA TÀI KHOẢN!";
-            public const string RESETPASSWORDSUBJECT = "FSAKEB: ĐẶT LẠI MẬT KHẨU!";
+            public const string NEWACCOUNTSUBJECT = "TÀI KHOẢN MỚI TRÊN HỆ THỐNG KEB";
+            public const string AUTODEACTIVATE_SUBJECT = "KEB: TỰ ĐỘNG KHÓA TÀI KHOẢN";
+            public const string DEACTIVATESUBJECT = "KEB: TÀI KHOẢN BỊ KHÓA";
+            public const string REACTIVATESUBJECT = "KEB: MỞ KHÓA TÀI KHOẢN!";
+            public const string RESETPASSWORDSUBJECT = "KEB: ĐẶT LẠI MẬT KHẨU!";
 
             public const string NEWACCOUTEMAIL = @"
                     <html>
                         <body>
                             <h1 style='color: blue;'>Gửi {0}!</h1>
-                            <p>Bạn đã được cấp một tài khoản mới trên hệ thống FSAKEB! <bold style='color: red'>Vui lòng không tiết lộ thông tin đăng nhập cho người khác!!!</bold></p>
+                            <p>Bạn đã được cấp một tài khoản mới trên hệ thống KEB! <bold style='color: red'>Vui lòng không tiết lộ thông tin đăng nhập cho người khác!!!</bold></p>
                             <p>Vì chính sách bảo mật, vui lòng đăng nhập và đổi mật khẩu của bạn trong vòng {1}! 
                             <bold style='color: red'>Lưu ý: hệ thống sẽ tự động khóa tài khoản sau thời gian trên!!!</bold>
                             </p>
@@ -253,7 +253,7 @@ namespace KEB.Domain.ValueObject
                                 <span  style='color: Green; font-size: 14px;'>Mật khẩu: </span>
                                 <bold style='text-decoration: underline;'>{4}</bold>
                             </p>
-                            <p>Thân,<br/>FSAKEB Admin ~</p>
+                            <p>Thân,<br/>KEB Admin ~</p>
                         </body>
                     </html>";
             public const string AUTODEACTIVEEMAIL = @"
@@ -264,7 +264,7 @@ namespace KEB.Domain.ValueObject
                                 <bold style='color: red'>Vì bạn đã không đổi mật khẩu trong thời gian cho phép, hệ thống đã tự động khóa tài khoản của bạn!!!</bold>
                                 Vui lòng liên hệ Admin để xử lý! 
                             </p>
-                            <p>Thân,<br/>FSAKEB Admin ~</p>
+                            <p>Thân,<br/>KEB Admin ~</p>
                         </body>
                     </html>";
             public const string DEACTIVEEMAIL = @"
@@ -275,7 +275,7 @@ namespace KEB.Domain.ValueObject
                                 <bold style='color: red'>Admin đã khóa tài khoản của bạn vì lý do đặc biệt!!!</bold>
                                 Mọi thắc mắc xin vui lòng liên hệ Admin để xử lý! 
                             </p>
-                            <p>Thân,<br/>FSAKEB Admin ~</p>
+                            <p>Thân,<br/>KEB Admin ~</p>
                         </body>
                     </html>";
             public const string REACTIVATEEMAIL = @"
@@ -298,7 +298,7 @@ namespace KEB.Domain.ValueObject
                                 <span  style='color: Green; font-size: 14px;'>Mật khẩu: </span>
                                 <bold style='text-decoration: underline;'>{4}</bold>
                             </p>
-                            <p>Best regards,<br/>FSAKEB Admin ~</p>
+                            <p>Best regards,<br/>KEB Admin ~</p>
                         </body>
                     </html>";
             public const string RESETPASSWORDEMAIL = @"
@@ -322,7 +322,7 @@ namespace KEB.Domain.ValueObject
                                     <span  style='color: Green; font-size: 14px;'>Mật khẩu: </span>
                                     <bold style='text-decoration: underline;'>{4}</bold>
                                 </p>
-                                <p>Thân,<br/>FSAKEB Admin ~</p>
+                                <p>Thân,<br/>KEB Admin ~</p>
                             </body>
                         </html>";
 

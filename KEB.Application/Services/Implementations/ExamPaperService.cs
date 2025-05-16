@@ -1033,11 +1033,13 @@ namespace KEB.Application.Services.Implementations
                                        "PaperDetails.Question.Answers," +
                                        "PaperDetails.Question.QuestionType"
                                     );
+                    Console.WriteLine($"HostId: {paper.Exam?.HostId}");
+                    Console.WriteLine($"ReviewerId: {paper.Exam?.ReviewerId}");
                     if (paper == null) throw new VersionNotFoundException(AppMessages.TARGET_ITEM_NOTFOUND);
                     var exam = paper.Exam;
                     bool examHidden = exam.IsDeleted; // this means the exam is still visible but the papers is not
                     bool examSuspended = exam.IsSuspended; // this means the exam is canceled or suspended so that it actually did not/will not take place
-                    bool examInEdit = exam.CreatedDate.AddDays(3) > currentTime; // 1 day for team lead to edit exam info & 2 day to edit & review exam paper
+                    bool examInEdit = exam.CreatedDate.AddDays(10) > currentTime; // 1 day for team lead to edit exam info & 2 day to edit & review exam paper
                     bool examInPrepare = currentTime > exam.TakePlaceTime.AddDays(-1) && currentTime < exam.TakePlaceTime; // 24 hours before exam taking place
                     bool examTookPlace = currentTime > exam.TakePlaceTime;
                     bool isTeamLead = requestedUser.RoleId.ToString() == LogicString.Role.TeamLeadRoleId;
@@ -1081,6 +1083,7 @@ namespace KEB.Application.Services.Implementations
                     var mappedResult = _mapper.Map<PaperDetailDisplayDTO>(paper);
                     var source = paper.Exam.ExamType.ExamTypeConstraints.First(x => x.Skill == paper.Skill);
                     mappedResult.PaperConstraint = _mapper.Map<ConstraintToBeDisplayedDTO>(source);
+                    Console.WriteLine($"HostId: {mappedResult.HostId}, ReviewerId: {mappedResult.ReviewerId}");
                     response.Result.Add(mappedResult);
                     response.IsSuccess = true;
                 }

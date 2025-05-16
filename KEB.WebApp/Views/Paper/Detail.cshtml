@@ -1,6 +1,30 @@
 ﻿@model KEB.Application.DTOs.ExamPaperDTO.PaperDetailDisplayDTO
 @using System.Linq
+@using KEB.Domain.Entities
+@using System.IdentityModel.Tokens.Jwt
+@{
+    var token = Context.Request.Cookies["token"];
+    var userId = Guid.Empty;
+    if (!string.IsNullOrEmpty(token))
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
 
+        if (jsonToken != null)
+        {
+            var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+            if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+            {
+                userId = parsedGuid;
+            }
+        }
+    }
+    bool isPaperCreating = Model.PaperStatus.ToString() == "Creating";
+    bool isPaperInReview = Model.PaperStatus.ToString() == "InReview";
+    bool isHost = userId == Model.HostId;
+    bool isReviewer = userId == Model.ReviewerId;
+
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -8,6 +32,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết đề thi</title>
     <link rel="stylesheet" href="~/css/paperDetail.css" />
+    <style>
+        /* Additional styles for the comment section */
+        .comment-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+            .comment-section textarea {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                resize: vertical;
+                min-height: 100px;
+            }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-review {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-suggest {
+            background-color: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-send {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -170,11 +247,35 @@
                 }
             </div>
 
-            <!-- Bottom buttons -->
+            <!-- Comment Section - conditionally displayed based on user role and paper status -->
+            @if ((isPaperInReview) && (isHost || isReviewer))
+            {
+                <div class="comment-section">
+                    <h3>Nhận xét:</h3>
+                    <textarea name="Content" id="commentText" placeholder="Nhập nhận xét của bạn về đề thi này..."></textarea>
+                </div>
+            }
+
+            <!-- Bottom buttons with conditional rendering based on role and status -->
             <div class="button-group" style="text-align: center;">
                 <button class="btn" onclick="history.back()">Quay Lại</button>
                 <button class="btn btn-primary">Xem Trước</button>
                 <button class="btn">Tải Xuống</button>
+
+                @if (isPaperCreating && isHost)
+                {
+                    <button class="btn btn-send" onclick="sendToReviewerAPI('@Model.PaperId', '@userId')">Gửi Cho Reviewer</button>
+                }
+                @if (isPaperInReview && isHost)
+                {
+                    <button class="btn btn-send" onclick="sendToReviewer('@Model.PaperId', '@userId')">Gửi Cho Reviewer</button>
+                }
+
+                @if (isPaperInReview && isReviewer)
+                {
+                    <button class="btn btn-suggest" onclick="suggestChanges('@Model.PaperId', '@userId')">Đề Xuất Chỉnh Sửa</button>
+                    <button class="btn btn-review" onclick="approvePaper('@Model.PaperId', '@userId')">Duyệt Đề Thi</button>
+                }
             </div>
         </div>
 
@@ -322,6 +423,196 @@
         // Function to refresh activities
         function refreshActivities() {
             loadActivities();
+        }
+
+        // Function to leave a comment on the paper
+        function leaveComment(paperId, userId, commentType) {
+            const commentText = document.getElementById('commentText').value.trim();
+            if (!commentText) {
+                alert('Vui lòng nhập nhận xét trước khi thực hiện hành động này.');
+                return Promise.reject('No comment text');
+            }
+
+            // Create the comment request object
+            const commentRequest = {
+                RequestedUserId: userId,
+                TargetObjectId: paperId,
+                Content: commentText,
+                IpAddress: null // Server will capture this
+            };
+
+            console.log('Sending comment request:', commentRequest);
+
+            return fetch('https://localhost:7101/api/ExamPapers/leave-comment-on-paper', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(commentRequest)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể gửi nhận xét. Vui lòng thử lại sau.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Comment submitted successfully:', data);
+                document.getElementById('commentText').value = '';
+                return data;
+            })
+            .catch(error => {
+                console.error('Error submitting comment:', error);
+                alert('Lỗi khi gửi nhận xét: ' + error.message);
+                throw error;
+            });
+        }
+
+        // Function for Host to mark paper as in review
+        function markAsInReview(paperId, userId) {
+            const commentText = document.getElementById('commentText')?.value.trim();
+
+            // Confirm before proceeding
+            if (!confirm('Bạn có chắc chắn muốn gửi đề thi này cho Reviewer không?')) {
+                return;
+            }
+
+            // If comment section exists and has text, submit the comment first
+            if (commentText) {
+                leaveComment(paperId, userId)
+                    .then(() => {
+                        sendToReviewerAPI(paperId, userId);
+                    })
+                    .catch(error => {
+                        console.error('Failed to leave comment:', error);
+                    });
+            } else {
+                sendToReviewerAPI(paperId, userId);
+            }
+        }
+
+        // Function to call the API for changing paper status to InReview
+        function sendToReviewerAPI(paperId, userId) {
+            const params = new URLSearchParams({
+                requestedUserId: userId,
+                paperId: paperId
+            });
+
+            fetch(`https://localhost:7101/api/ExamPapers/mark-paper-as-inreview?${params}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể gửi đề thi cho Reviewer. Vui lòng thử lại sau.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Paper sent to reviewer successfully:', data);
+                alert('Đề thi đã được gửi cho Reviewer thành công!');
+                window.location.reload(); // Reload page to show updated status
+            })
+            .catch(error => {
+                console.error('Error sending paper to reviewer:', error);
+                alert('Lỗi: ' + error.message);
+            });
+        }
+
+        // Function for Host to mark paper as in review and send to reviewer
+        function sendToReviewer(paperId, userId) {
+            const commentText = document.getElementById('commentText')?.value.trim();
+
+            // Confirm before proceeding
+            if (!confirm('Bạn có chắc chắn muốn gửi đề thi này cho Reviewer không?')) {
+                return;
+            }
+
+            // If comment section exists and has text, submit the comment first
+            if (commentText) {
+                leaveComment(paperId, userId)
+                    .then(() => {
+                        sendToReviewerAPI(paperId, userId);
+                    })
+                    .catch(error => {
+                        console.error('Failed to leave comment:', error);
+                    });
+            } else {
+                sendToReviewerAPI(paperId, userId);
+            }
+        }
+
+        // Function for Reviewer to suggest changes
+        function suggestChanges(paperId, userId) {
+            const commentText = document.getElementById('commentText')?.value.trim();
+            if (!commentText) {
+                alert('Vui lòng nhập đề xuất chỉnh sửa của bạn trước khi gửi.');
+                return;
+            }
+
+            leaveComment(paperId, userId)
+                .then(() => {
+                    alert('Đề xuất chỉnh sửa đã được gửi thành công!');
+                    window.location.reload();
+                })
+                .catch(error => {
+                    console.error('Failed to send suggestion:', error);
+                });
+        }
+
+        // Function for Reviewer to approve the paper
+        function approvePaper(paperId, userId) {
+            const commentText = document.getElementById('commentText')?.value.trim();
+
+            // Confirm before proceeding
+            if (!confirm('Bạn có chắc chắn muốn duyệt đề thi này không?')) {
+                return;
+            }
+
+            // If comment section exists and has text, submit the comment first
+            if (commentText) {
+                leaveComment(paperId, userId)
+                    .then(() => {
+                        approveReviewAPI(paperId, userId);
+                    })
+                    .catch(error => {
+                        console.error('Failed to leave comment:', error);
+                    });
+            } else {
+                approveReviewAPI(paperId, userId);
+            }
+        }
+
+        // Function to call the API for approving the paper
+        function approveReviewAPI(paperId, userId) {
+            const params = new URLSearchParams({
+                requestedUserId: userId,
+                paperId: paperId
+            });
+
+            fetch(`https://localhost:7101/api/ExamPapers/mark-paper-as-reviewdone?${params}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể duyệt đề thi. Vui lòng thử lại sau.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Paper approved successfully:', data);
+                alert('Đề thi đã được duyệt thành công!');
+                window.location.reload(); // Reload page to show updated status
+            })
+            .catch(error => {
+                console.error('Error approving paper:', error);
+                alert('Lỗi: ' + error.message);
+            });
         }
     </script>
 </body>
