@@ -55,7 +55,7 @@ namespace KEB.WebAPI.Controllers
                 var response = await _unitOfService.QuestionService.TeamLeadChangeQuestionStatus(request);
                 if (!response.IsSuccess)
                 {
-
+                    return BadRequest(response);
                 }
                 else
                 {

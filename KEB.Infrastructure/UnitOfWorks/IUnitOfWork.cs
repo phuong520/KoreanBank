@@ -1,5 +1,7 @@
-﻿using KEB.Infrastructure.ExternalService.IExternalInterfaces;
+﻿using KEB.Infrastructure.Context;
+using KEB.Infrastructure.ExternalService.IExternalInterfaces;
 using KEB.Infrastructure.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace KEB.Infrastructure.UnitOfWorks
 {
+
     public interface IUnitOfWork
     {
         public ICommonRepository Common { get; }
@@ -33,12 +36,12 @@ namespace KEB.Infrastructure.UnitOfWorks
         public IImageFileRepository ImageFiles { get; }
         public INotificationRepository Notifications { get; }
         public Task<int> SaveChangesAsync();
-
         Task BeginTransactionAsync();
         //Commit the database Transaction
         Task CommitAsync();
         //Rollback the database Transaction
         Task RollbackAsync();
+
 
         void Dispose();
         public string Enqueue<T>(Expression<Func<T, Task>> methodCall);

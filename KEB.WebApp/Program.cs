@@ -1,3 +1,4 @@
+using KEB.WebAPI.SignalR;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +16,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpClient();
 builder.Services.AddSession();
-
+builder.Services.AddSignalR();
 // Add Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -48,13 +49,15 @@ app.UseStaticFiles();
 app.UseSession();
 app.UseRouting();
 app.UseCors(MyAllowSpecificOrigins);
-
+app.MapHub<NotifyHub>("/notifyHub");
 // Add Authentication & Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllerRoute(
     name: "default",
+    pattern: "{controller=Statistics}/{action=Index}/{id?}");
+app.MapControllerRoute(
+    name: "home",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

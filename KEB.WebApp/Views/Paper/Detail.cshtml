@@ -35,54 +35,54 @@
     <style>
         /* Additional styles for the comment section */
         .comment-section {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-            .comment-section textarea {
-                width: 100%;
-                padding: 10px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                resize: vertical;
-                min-height: 100px;
-            }
+        .comment-section textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        resize: vertical;
+        min-height: 100px;
+        }
 
         .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 15px;
         }
 
         .btn-review {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
         }
 
         .btn-suggest {
-            background-color: #ffc107;
-            color: #212529;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
+        background-color: #ffc107;
+        color: #212529;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
         }
 
         .btn-send {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
         }
     </style>
 </head>
@@ -191,12 +191,13 @@
                     <div class="questions-container">
                         <!-- Left Column -->
                         <div class="question-column">
+                            @{int index = 1;}
                             @for (int i = 0; i < halfCount; i++)
                             {
                                 var question = questions[i];
                                 <div class="question-item">
                                     <div class="question-content">
-                                        @question.QuestionContent
+                                        @index. @question.QuestionContent
                                         <span class="search-icon">🔍</span>
                                     </div>
                                     <div class="question-options">
@@ -213,6 +214,7 @@
                                         <a href="#">@question.ReferenceName</a>
                                     </div>
                                 </div>
+                                index ++;
                             }
                         </div>
 
@@ -223,7 +225,7 @@
                                 var question = questions[i];
                                 <div class="question-item">
                                     <div class="question-content">
-                                        @question.QuestionContent
+                                       @(index). @question.QuestionContent
                                         <span class="search-icon">🔍</span>
                                     </div>
                                     <div class="question-options">
@@ -259,7 +261,10 @@
             <!-- Bottom buttons with conditional rendering based on role and status -->
             <div class="button-group" style="text-align: center;">
                 <button class="btn" onclick="history.back()">Quay Lại</button>
-                <button class="btn btn-primary">Xem Trước</button>
+                    <form asp-action="PreviewPaper" asp-controller="Paper" method="get" style="display: inline-block;">
+                        <input type="hidden" name="paperId" value="@Model.PaperId" />
+                        <button type="submit" class="btn btn-primary">Xem trước</button>
+                    </form>
                 <button class="btn">Tải Xuống</button>
 
                 @if (isPaperCreating && isHost)

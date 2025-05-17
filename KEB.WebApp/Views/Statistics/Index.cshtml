@@ -1,0 +1,170 @@
+﻿<h2 style="margin: 12px 0 15px 6px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2c3e50; font-weight: 700;">
+    📊 Thống kê tổng quan
+</h2>
+<!-- Container chính chứa tất cả biểu đồ -->
+<div style="max-width: 80%; height: 70%; margin: 0 auto 20px auto; padding: 12px 15px; background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1);">
+
+    <!-- Biểu đồ tròn (doughnut) -->
+    <div style="margin-bottom: 25px; height: 50%;">
+        <h3 style="text-align: center; color: #34495e; font-weight: 600; margin-bottom: 10px;">Tỷ lệ câu hỏi theo trạng thái</h3>
+        <div style="position: relative; width: 100%; height: 100%;">
+            <canvas id="importedQuestionsStatusChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Biểu đồ cột -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; height: 30%;">
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <h3 style="text-align: center; color: #2d3436; font-weight: 600; margin-bottom: 8px;">Kỳ thi theo tháng</h3>
+            <div style="position: relative; height: 175px;">
+                <canvas id="examChart"></canvas>
+            </div>
+        </div>
+        <div style="background: #f8f9fa; padding: 10px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <h3 style="text-align: center; color: #2d3436; font-weight: 600; margin-bottom: 8px;">Đề thi theo tháng</h3>
+            <div style="position: relative; height: 175px;">
+                <canvas id="examPaperChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const lowerBound = '2025-01-01T00:00:00';
+        const upperBound = '2025-12-31T23:59:59';
+
+        async function fetchData(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.error('Fetch lỗi:', response.status, response.statusText);
+                return [];
+            }
+            const data = await response.json();
+            return data.result || [];
+        }
+
+        // Màu xanh dương chủ đạo cho biểu đồ cột
+        function generateBlueColors(count) {
+            const baseColor = '#3A78F0';
+            return Array(count).fill(baseColor);
+        }
+
+        async function renderBarChart(canvasId, labelText, apiUrl) {
+            const data = await fetchData(apiUrl);
+            const labels = data.map(x => x.statisticName);
+            const values = data.map(x => x.statisticValue);
+
+            new Chart(document.getElementById(canvasId), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelText,
+                        data: values,
+                        backgroundColor: generateBlueColors(values.length),
+                        borderColor: '#2756c9',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: '#222',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: '#555', font: { size: 10 } },
+                            grid: { color: '#eee' }
+                        },
+                        x: {
+                            ticks: { color: '#555', font: { size: 10 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function renderDoughnutChart(canvasId, labelText, apiUrl) {
+            const data = await fetchData(apiUrl);
+            const labels = data.map(x => x.statisticName);
+            const values = data.map(x => x.statisticValue);
+
+            // Màu sắc theo trạng thái Denied (đỏ), Pending (vàng), Ok (xanh lá)
+            // Map tên label sang màu
+            const colorMap = {
+                'Denied': '#E74C3C',  // đỏ
+                'Pending': '#F1C40F', // vàng
+                'Ok': '#27AE60'       // xanh lá
+            };
+            // Nếu có label không có trong map, cho màu xám mặc định
+            const colors = labels.map(l => colorMap[l] || '#BDC3C7');
+
+            new Chart(document.getElementById(canvasId), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: labelText,
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '50%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#333',
+                                font: { size: 12, weight: '400' },
+                                padding: 12,
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: '#222',
+                            titleFont: { size: 13, weight: 'bold' },
+                            bodyFont: { size: 12 }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadCharts() {
+            await renderDoughnutChart(
+                'importedQuestionsStatusChart',
+                'Câu hỏi nhập theo trạng thái',
+                `https://localhost:7101/api/Statistics/imported-questions-by-status?lowerBound=${lowerBound}&upperBound=${upperBound}`
+            );
+            await renderBarChart(
+                'examChart',
+                'Số kỳ thi theo tháng',
+                `https://localhost:7101/api/Statistics/exams-by-month?lowerBound=${lowerBound}&upperBound=${upperBound}`
+            );
+            await renderBarChart(
+                'examPaperChart',
+                'Số đề thi theo tháng',
+                `https://localhost:7101/api/Statistics/exampapers-by-month?lowerBound=${lowerBound}&upperBound=${upperBound}`
+            );
+        }
+
+        loadCharts();
+    </script>
+}

@@ -24,7 +24,6 @@ namespace KEB.Infrastructure.UnitOfWorks
         public UnitOfWork(ExamBankContext context)
         {
             _context = context;
-            //_blobServiceClient = blobServiceClient;
             Common = new CommonRepository(context);
             Users = new UserRepository(_context);
             Roles = new RoleRepository(_context);

@@ -48,7 +48,7 @@ namespace KEB.WebApp.Controllers
                 var token = HttpContext.Request.Cookies["token"];
                 if (string.IsNullOrEmpty(token))
                 {
-                    return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("Create", "Question") });
+                    return RedirectToAction("Login", "Commonweb", new { returnUrl = Url.Action("Create", "Question") });
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -189,7 +189,7 @@ namespace KEB.WebApp.Controllers
                 var token = HttpContext.Request.Cookies["token"];
                 if (string.IsNullOrEmpty(token))
                 {
-                    return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("Create", "Question") });
+                    return RedirectToAction("Login", "Commonweb", new { returnUrl = Url.Action("Create", "Question") });
                 }
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);

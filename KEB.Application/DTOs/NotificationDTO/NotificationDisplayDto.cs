@@ -11,7 +11,7 @@ namespace KEB.Application.DTOs.NotificationDTO
     {
         public Guid Id { get; set; }
         public string Description { get; set; }
-        public string? AnchorLink { get; set; }
+        public bool IsRead { get; set; }
         public DateTime CreatedTime { get; set; }
 
     }

@@ -12,12 +12,13 @@ namespace KEB.Infrastructure.Repository
     public interface IGenericReposistory<T> where T : class
     {
         Task<T?> GetByIdAsync(Guid id);
-        Task<T?> GetAsync(Expression<Func<T, bool>> filter, string includeProperties ="");
+        Task<T?> GetAsync(Expression<Func<T, bool>> filter, string includeProperties ="",bool asTracking = false);
         Task<ICollection<T>> GetAllAsync(
             Expression<Func<T, bool>> filter = null,
             string includeProperties = "",
             int pageNumber = 0,
             int pageSize = 0,
+             bool asTracking = false,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null);
         Task<ICollection<T>> GetPaginatedAsync(
             int pageNumber, int pageSize,

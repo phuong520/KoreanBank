@@ -7,12 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace KEB.WebApp.Controllers
 {
-    public class CommonController : Controller
+   
+    public class CommonwebController : Controller
     {
         private readonly HttpClient _httpClient;
         private const string ApiUrl = "https://localhost:7101/api/Common";
 
-        public CommonController(IHttpClientFactory httpClientFactory)
+        public CommonwebController(IHttpClientFactory httpClientFactory)
         {
             _httpClient = httpClientFactory.CreateClient();
         }
@@ -52,7 +53,7 @@ namespace KEB.WebApp.Controllers
 
                         Response.Cookies.Append("token", apiResponse.Result, cookieOptions);
 
-                        return RedirectToAction("Index", "Home");
+                        return RedirectToAction("Index", "Statistics");
                     }
                 }
             }
@@ -69,7 +70,7 @@ namespace KEB.WebApp.Controllers
         {
             // Clear hết session
             HttpContext.Session.Clear();
-            return RedirectToAction("Login", "Common");
+            return RedirectToAction("Login", "Commonweb");
         }
         [HttpGet]
         public IActionResult ChangePassword()
@@ -95,7 +96,7 @@ namespace KEB.WebApp.Controllers
             if (response.IsSuccessStatusCode)
             {
                 TempData["Success"] = "Đổi mật khẩu thành công!";
-                return RedirectToAction("Profile", "Account");
+                return RedirectToAction("Details", "User");
             }
             else
             {

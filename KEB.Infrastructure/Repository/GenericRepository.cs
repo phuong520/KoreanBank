@@ -63,10 +63,18 @@ namespace KEB.Infrastructure.Repository
             return await query.ToListAsync();
         }
 
-        public async Task<ICollection<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, string includeProperties = "", int pageNumber = 0, int pageSize = 0, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null)
+        public async Task<ICollection<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, string includeProperties = "", int pageNumber = 0, int pageSize = 0, bool asTracking = false, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null)
         {
             IQueryable<T> query = _context.Set<T>();
-            if(filter != null)
+            if (asTracking)
+            {
+                query = query.AsTracking();
+            }
+            else
+            {
+                query = query.AsNoTracking();
+            }
+            if (filter != null)
             {
                 query = query.Where(filter);
             }
@@ -86,10 +94,17 @@ namespace KEB.Infrastructure.Repository
         }
 
 
-        public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, string includeProperties = "")
+        public async Task<T?> GetAsync(Expression<Func<T, bool>> filter, string includeProperties = "", bool asTracking = false)
         {
             IQueryable<T> query = _context.Set<T>();
-           
+            if (asTracking)
+            {
+                query = query.AsTracking();
+            }
+            else
+            {
+                query = query.AsNoTracking();
+            }
 
             if (!string.IsNullOrEmpty(includeProperties))
             {

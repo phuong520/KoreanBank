@@ -221,7 +221,7 @@ namespace KEB.Application.Services.Implementations
                 var idList = request.Requests.Select(x => x.QuestionId).OrderBy(x => x);
                 // Get questions from database
                 var targetQuestions = (await _unitOfWork.Questions.GetAllAsync(filter: x => idList.Contains(x.Id),
-                                                orderBy: x => x.OrderBy(x => x.Id),
+                                                orderBy: x => x.OrderBy(x => x.Id), asTracking: true,
                                                 includeProperties: "Answers"))
                                                 .ToList();
                 // All questions to be processed must exist in the system

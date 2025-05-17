@@ -39,8 +39,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/notification-hub.js"></script>
     <style>
         .dropdown-menu a:hover {
             text-decoration: underline;
@@ -63,6 +64,68 @@
             #examOptions a {
                 color: white;
             }
+
+        .notification-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .notification-header {
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .badge {
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .notification-list {
+            display: none;
+            position: absolute;
+            right: 0;
+            min-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notification-container:hover .notification-list {
+            display: block;
+        }
+
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .notification-item.unread {
+                background-color: #f0f7ff;
+            }
+
+        .notification-content {
+            margin-bottom: 5px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .notification-empty {
+            padding: 10px;
+            text-align: center;
+            color: #777;
+        }
     </style>
 </head>
 <body>
@@ -75,7 +138,7 @@
         </div>
 
         <nav class="flex-column">
-            <a href="#" class="active">Thống Kê</a>
+            <a asp-controller="Statistics" asp-action="Index">Thống Kê</a>
             <a asp-controller="Levels" asp-action="Index">Cấp độ</a>
             <a asp-controller="Topics" asp-action="Index">Chủ đề</a>
             <a asp-controller="References" asp-action="Index">Tài liệu tham khảo</a>
@@ -109,9 +172,6 @@
                 <a asp-controller="Task" asp-action="ReviewQuestion" class="d-block text-decoration-none text-white mb-2">
                     Duyệt câu hỏi
                 </a>
-                <a asp-controller="#" asp-action="Index" class="d-block text-decoration-none text-white mb-2">
-                    Duyệt đề thi
-                </a>
                 <a asp-controller="Task" asp-action="Index" class="d-block text-decoration-none text-white">
                     Quản lý nhiệm vụ
                 </a>
@@ -133,49 +193,19 @@
                         <i class="bi bi-person-circle"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" asp-controller="Common" asp-action="Login">Đăng nhập</a></li>
+                        <li><a class="dropdown-item" asp-controller="Commonweb" asp-action="Login">Đăng nhập</a></li>
                     </ul>
                 </div>
             }
             else
             {
-                <div class="dropdown">
-                    <button class="btn position-relative" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-bell fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                            <span class="visually-hidden">unread messages</span>
-                        </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="width: 300px;">
-                        <li class="dropdown-header fw-bold">Thông báo</li>
-
-                        @if (TempData["Notifications"] != null)
-                        {
-                            var notifications = TempData["Notifications"] as List<NotificationDisplayDto>;
-                            if (notifications != null && notifications.Any())
-                            {
-                                foreach (var notification in notifications)
-                                {
-                                    <li>
-                                        <a class="dropdown-item text-wrap" href="#">
-                                            @notification.Description
-                                        </a>
-                                    </li>
-                                }
-                            }
-                            else
-                            {
-                                <li><span class="dropdown-item text-muted">Không có thông báo</span></li>
-                            }
-                        }
-                        else
-                        {
-                            <li><span class="dropdown-item text-muted">Đang tải thông báo...</span></li>
-                        }
-
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-center text-primary" href="#">Xem tất cả</a></li>
+                <div class="notification-container">
+                    <div class="notification-header">
+                        <span>Thông báo</span>
+                        <span id="notification-badge" class="badge">0</span>
+                    </div>
+                    <ul id="notification-list" class="notification-list">
+                        <li class="notification-empty">Không có thông báo mới</li>
                     </ul>
                 </div>
 
@@ -191,10 +221,10 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" asp-controller="Users" asp-action="Details">Tài Khoản</a></li>
-                        <li><a class="dropdown-item" asp-controller="Common" asp-action="ChangePassword">Đổi Mật Khẩu</a></li>
+                        <li><a class="dropdown-item" asp-controller="Commonweb" asp-action="ChangePassword">Đổi Mật Khẩu</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form asp-controller="Common" asp-action="Logout" method="post">
+                            <form asp-controller="Commonweb" asp-action="Logout" method="post">
                                 <button class="dropdown-item text-danger">Đăng Xuất</button>
                             </form>
                         </li>
@@ -218,6 +248,27 @@
             section.style.display = section.style.display === 'none' ? 'block' : 'none';
         }
     </script>
+    <script>
+        // Thêm hiệu ứng click cho thông báo
+        document.addEventListener("DOMContentLoaded", function() {
+            var notificationHeader = document.querySelector(".notification-header");
+            var notificationList = document.getElementById("notification-list");
 
+            notificationHeader.addEventListener("click", function() {
+                if (notificationList.style.display === "block") {
+                    notificationList.style.display = "none";
+                } else {
+                    notificationList.style.display = "block";
+                }
+            });
+
+            // Đóng thông báo khi click ra ngoài
+            document.addEventListener("click", function(event) {
+                if (!event.target.closest(".notification-container")) {
+                    notificationList.style.display = "none";
+                }
+            });
+        });
+    </script>
 </body>
 </html>

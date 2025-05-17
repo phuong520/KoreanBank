@@ -38,7 +38,7 @@ namespace KEB.Application.Services.Implementations
             try
             {
                 var paper = await _unitOfWork.Papers.GetAsync(x => x.Id == request.PaperId,
-                                        includeProperties: "Exam,Exam.Reviewer,Exam.Reviewer.Role,Exam.Host,Exam.Host.Role");
+                                        includeProperties: "Exam,Exam.Reviewer,Exam.Reviewer.Role,Exam.Host,Exam.Host.Role",asTracking: true);
                 if (paper == null)
                 {
                     response.StatusCode = System.Net.HttpStatusCode.NotFound;
@@ -60,10 +60,20 @@ namespace KEB.Application.Services.Implementations
                         response.StatusCode = System.Net.HttpStatusCode.NoContent;
                         return response;
                     }
-                    bool paperIsDone = paper.PaperStatus == PaperStatus.Done;
-                    bool hostCanAct = exam.HostId == request.RequestedUserId && request.NewStatus == PaperStatus.Done && !paperIsDone;
-                    bool reviewerCanAct = exam.ReviewerId == request.RequestedUserId && request.NewStatus != PaperStatus.Done && !paperIsDone;
-                    isAuthorize = !hostCanAct && !reviewerCanAct;
+                    //isAuthorize = !hostCanAct && !reviewerCanAct;
+                    // Kiểm tra quyền
+                    bool isHost = exam.HostId == request.RequestedUserId;
+                    bool isReviewer = exam.ReviewerId == request.RequestedUserId;
+
+                    bool hostCanChange = isHost &&
+                                         paper.PaperStatus == PaperStatus.Creating &&
+                                         request.NewStatus == PaperStatus.InReview;
+
+                    bool reviewerCanChange = isReviewer &&
+                                             paper.PaperStatus == PaperStatus.InReview &&
+                                             request.NewStatus == PaperStatus.Done;
+
+                    bool isAuthorized = hostCanChange || reviewerCanChange;
                 }
                 if (!isAuthorize)
                 {
@@ -72,8 +82,6 @@ namespace KEB.Application.Services.Implementations
                     return response;
                 }
                 await _unitOfWork.BeginTransactionAsync();
-                paper.PaperStatus = request.NewStatus;
-                await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.AccessLogs.AddAsync(new()
                 {
                     AccessTime = DateTime.Now,
@@ -85,10 +93,15 @@ namespace KEB.Application.Services.Implementations
                     Details = $"{user.UserName} chuyển đề thi {paper.PaperName} từ status {paper.PaperStatus} sang status {request.NewStatus}"
                 });
                 paper.PaperStatus = request.NewStatus;
-                response.IsSuccess = true;
-                response.Result.Add(_mapper.Map<PaperGeneralDisplayDTO>(paper));
+                if (request.NewStatus == PaperStatus.Done)
+                {
+                    paper.IsReviewed = true;
+                }
                 await _unitOfWork.SaveChangesAsync();
                 await _unitOfWork.CommitAsync();
+
+                response.IsSuccess = true;
+                response.Result.Add(_mapper.Map<PaperGeneralDisplayDTO>(paper));
             }
             catch (Exception ex)
             {
@@ -1033,8 +1046,6 @@ namespace KEB.Application.Services.Implementations
                                        "PaperDetails.Question.Answers," +
                                        "PaperDetails.Question.QuestionType"
                                     );
-                    Console.WriteLine($"HostId: {paper.Exam?.HostId}");
-                    Console.WriteLine($"ReviewerId: {paper.Exam?.ReviewerId}");
                     if (paper == null) throw new VersionNotFoundException(AppMessages.TARGET_ITEM_NOTFOUND);
                     var exam = paper.Exam;
                     bool examHidden = exam.IsDeleted; // this means the exam is still visible but the papers is not

@@ -58,7 +58,10 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.TakePlaceTime,
                 opt => opt.MapFrom(src => src.Exam.TakePlaceTime))
                 .ForMember(dest => dest.LevelName,
-                opt => opt.MapFrom(src => src.Exam.ExamType.Levels.LevelName));
+                opt => opt.MapFrom(src => src.Exam.ExamType.Levels.LevelName))
+                .ForMember(dest => dest.PaperStatus,
+                opt => opt.MapFrom(src => src.PaperStatus))
+                ;
 
             CreateMap<Paper, PaperDetailDisplayDTO>()
                 .ForMember(dest => dest.PaperId,
@@ -76,7 +79,9 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.QuestionsList,
                 opt => opt.MapFrom(src => src.PaperDetails))
                 .ForMember(dest => dest.HostId, opt => opt.MapFrom(src => src.Exam.HostId))
-                .ForMember(dest => dest.ReviewerId, opt => opt.MapFrom(src => src.Exam.ReviewerId));
+                .ForMember(dest => dest.ReviewerId, opt => opt.MapFrom(src => src.Exam.ReviewerId))
+                .ForMember(dest => dest.PaperStatus,
+                opt => opt.MapFrom(src => src.PaperStatus));
 
 
             CreateMap<PaperDetail, QuestionInPaperDTO>()

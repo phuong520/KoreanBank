@@ -125,7 +125,6 @@ namespace KEB.WebApp.Controllers
             TempData["ErrorMessage"] = response?.Message ?? "Không thể tải đề thi. Vui lòng thử lại.";
             return RedirectToAction("Index");
         }
-
         public async Task<IActionResult> ViewPaperActivities(Guid paperId)
         {
             var response = await _httpClient.GetFromJsonAsync<APIResponse<AccessLogDisplayDto>>($"{ApiUrl}/view-activities-on-paper");
@@ -135,6 +134,41 @@ namespace KEB.WebApp.Controllers
             }
             ModelState.AddModelError("", "Không thể tạo loại câu hỏi. Vui lòng thử lại.");
             TempData["ErrorMessage"] = "Không thể tạo loại câu hỏi. Vui lòng thử lại.";
+            return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> PreviewPaper(Guid paperId)
+        {
+            // Get the token and extract user ID
+            var token = HttpContext.Request.Cookies["token"];
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            var userId = Guid.Empty;
+
+            if (jsonToken != null)
+            {
+                var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                {
+                    userId = parsedGuid;
+                }
+            }
+
+            // Prepare the request URL with query parameters
+            string requestUrl = $"{ApiUrl}/get-paper-detail?requestedUserId={userId}&paperId={paperId}";
+
+            // Call the API with GET method
+            var apiResponse = await _httpClient.GetAsync(requestUrl);
+            var response = await apiResponse.Content.ReadFromJsonAsync<APIResponse<PaperDetailDisplayDTO>>();
+
+            if (response?.IsSuccess == true && response.Result.Any())
+            {
+                var paperDetail = response.Result.First();
+                return View(paperDetail); // Pass data to the view
+            }
+
+            // Error handling
+            TempData["ErrorMessage"] = response?.Message ?? "Không thể tải đề thi. Vui lòng thử lại.";
             return RedirectToAction("Index");
         }
     }

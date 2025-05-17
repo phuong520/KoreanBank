@@ -1,0 +1,103 @@
+﻿@using System.IdentityModel.Tokens.Jwt
+@model KEB.Application.DTOs.ExamPaperDTO.PaperDetailDisplayDTO
+@{
+    Layout = null;
+    var token = Context.Request.Cookies["token"];
+    var userId = Guid.Empty;
+    if (!string.IsNullOrEmpty(token))
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+        if (jsonToken != null)
+        {
+            var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+            if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+            {
+                userId = parsedGuid;
+            }
+        }
+    }
+    bool isPaperCreating = Model.PaperStatus.ToString() == "Creating";
+    bool isPaperInReview = Model.PaperStatus.ToString() == "InReview";
+    bool isHost = userId == Model.HostId;
+    bool isReviewer = userId == Model.ReviewerId;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem trước đề thi - @Model.PaperName</title>
+    <link rel="stylesheet" href="~/css/Preview.css" />
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="institute-info">
+                <div class="institute-name">Language Training Institute</div>
+            </div>
+            <div class="exam-info">
+                <div class="exam-name">Kỳ thi: @Model.ExamName</div>
+                <div class="paper-name">Bài thi: @Model.PaperName</div>
+                <div class="exam-time">Ngày thi: @Model.TakePlaceTime.ToString("dd/MM/yyyy")</div>
+            </div>
+        </div>
+
+        <div class="content">
+            @{
+                // Group questions by question type
+                var questionsByType = Model.QuestionsList.GroupBy(q => q.QuestionTypeName).ToList();
+                int questionNumber = 1;
+            }
+
+            @foreach (var typeGroup in questionsByType)
+            {
+                <div class="question-type">@typeGroup.Key</div>
+                <div class="questions">
+                    @foreach (var question in typeGroup)
+                    {
+                        <div class="question-item">
+                            <div class="question-content">@questionNumber. @question.QuestionContent</div>
+                            <div class="options">
+                                @for (int i = 0; i < question.Answers.Count(); i++)
+                                {
+                                    var optionLabel = (char)('A' + i);
+                                    <div class="option-item">@optionLabel. @question.Answers.ElementAt(i).Content</div>
+                                }
+                            </div>
+                        </div>
+                        questionNumber++;
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="action-buttons">
+            <button class="print-button" onclick="window.print()">Tải đề thi</button>
+            <button class="close-button" onclick="window.close()">Đóng</button>
+        </div>
+    </div>
+</body>
+
+</html>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const previewButton = document.getElementById('btnPreview');
+        if (previewButton) {
+            previewButton.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Lấy paperId từ Razor Model
+                const paperId = '@Model.PaperId';
+
+                // Gọi đúng route mà bạn đã định nghĩa trong controller
+                const url = `/Paper/PreviewPaper/${paperId}`;
+
+                // Mở popup
+                window.open(url, 'examPreview', 'width=900,height=700');
+            });
+        }
+    });
+</script>

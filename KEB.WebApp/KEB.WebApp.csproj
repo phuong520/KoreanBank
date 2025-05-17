@@ -25,6 +25,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KEB.Application\KEB.Application.csproj" />
+    <ProjectReference Include="..\KEB.WebAPI\KEB.WebAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\css\NewFolder\" />
   </ItemGroup>
 
 </Project>
