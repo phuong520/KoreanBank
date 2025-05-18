@@ -4,7 +4,6 @@
 }
 <header>
     <style>
-        
         .select2-container--default .select2-selection--multiple {
             border: 1px solid #ced4da;
             border-radius: 0.25rem;
@@ -85,12 +84,12 @@
                             <td style="border-right: none;">@level.NumOfQuestions.NumOfReadingQuestions</td>
                             <td style="border-right: none;">@level.NumOfQuestions.NumOfWritingQuestions</td>
                             <td class="text-center">
-                                <a href="@Url.Action("Edit", "Level", new { id = level.LevelId })" class="btn btn-sm btn-outline-primary">
+                                <button class="btn btn-sm btn-outline-primary edit-level-btn" data-level-id="@level.LevelId">
                                     <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="@Url.Action("Delete", "Level", new { id = level.LevelId })" class="btn btn-sm btn-outline-info">
-                                    <i class="bi bi-info-circle"></i>
-                                </a>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-level-btn" data-level-id="@level.LevelId" data-level-name="@level.LevelName">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                         index++;
@@ -151,19 +150,66 @@
     </div>
 </div>
 
+<!-- Modal Chỉnh Sửa Cấp Độ -->
+<div class="modal fade" id="editLevelModal" tabindex="-1" aria-labelledby="editLevelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="editLevelModalLabel">Chỉnh sửa cấp độ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center" id="editLevelLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-2">Đang tải dữ liệu...</p>
+                </div>
+
+                <form id="editLevelForm" method="post" style="display: none;">
+                    <input type="hidden" id="editLevelId" name="TargetLevelId">
+                    <input type="hidden" id="editRequestedUserId" name="RequestedUserId" value="@ViewBag.CurrentUserId">
+                    <div class="mb-3">
+                        <label for="editLevelName" class="form-label">Cấp độ</label>
+                        <input type="text" class="form-control" id="editLevelName" name="NewLevelName" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xác Nhận Xóa -->
+<div class="modal fade" id="deleteLevelModal" tabindex="-1" aria-labelledby="deleteLevelModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteLevelModalLabel">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa cấp độ <strong id="deleteLevelName"></strong>?</p>
+                <form id="deleteLevelForm" method="post">
+                    <input type="hidden" id="deleteTargetObjectId" name="TargetObjectId">
+                    <input type="hidden" id="deleteRequestedUserId" name="RequestedUserId" value="@ViewBag.CurrentUserId">
+                    <input type="hidden" id="deleteIpAddress" name="IpAddress" value="">
+                    <input type="hidden" id="deleteHardDelete" name="HardDelete" value="true">
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xóa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    <script>
-        $(document).ready(function() {
-            // Xử lý tìm kiếm
-            $("#searchInput").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $("table tbody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
-            });
-        });
-    </script>
-    <!-- Thư viện jQuery -->
+    <!-- Thư viện jQuery - Chỉ load một lần -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <!-- Thư viện Select2 -->
@@ -171,8 +217,16 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-         $(document).ready(function() {
-            // Khởi tạo Select2
+        $(document).ready(function() {
+            // Xử lý tìm kiếm trong bảng
+            $("#searchInput").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("table tbody tr").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+
+            // Khởi tạo Select2 cho form thêm mới
             $("#topicSelect").select2({
                 placeholder: "-- Chọn chủ đề --",
                 allowClear: true,
@@ -186,20 +240,27 @@
                 }
             });
 
-            // Xử lý tìm kiếm trong bảng
-            $("#searchInput").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $("table tbody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
+            // Xử lý sự kiện khi nhấn vào nút Edit
+            $(document).on("click", ".edit-level-btn", function() {
+                var levelId = $(this).data("level-id");
+                openEditModal(levelId);
             });
+
+            // Xử lý sự kiện khi nhấn vào nút Delete
+            $(document).on("click", ".delete-level-btn", function() {
+                var levelId = $(this).data("level-id");
+                var levelName = $(this).data("level-name");
+                openDeleteModal(levelId, levelName);
+            });
+
+            // Xử lý submit form thêm mới
             $("#addLevelForm").on("submit", function (e) {
                 e.preventDefault(); // Ngăn form submit mặc định
 
                 let levelName = $("#levelName").val();
                 let topicId = $("select[name='Topics']").val();
 
-                 if (!levelName || !topicId) {
+                if (!levelName || !topicId) {
                     alert("Vui lòng nhập đầy đủ thông tin.");
                     return;
                 }
@@ -218,12 +279,129 @@
                         alert("Tạo cấp độ thành công!");
                         $("#addLevelModal").modal('hide');
                         // TODO: load lại dữ liệu bảng nếu cần
+                        location.reload();
                     },
                     error: function (xhr) {
                         alert("Lỗi khi tạo cấp độ.");
                     }
                 });
             });
+
+            // Xử lý submit form chỉnh sửa
+            $("#editLevelForm").on("submit", function (e) {
+                e.preventDefault(); // Ngăn form submit mặc định
+
+                let levelId = $("#editLevelId").val();
+                let levelName = $("#editLevelName").val();
+                let userId = $("#editRequestedUserId").val();
+
+                if (!levelName) {
+                    alert("Vui lòng nhập tên cấp độ.");
+                    return;
+                }
+
+                // Tạo đối tượng request gửi đi
+                let requestData = {
+                    RequestedUserId: userId,
+                    TargetLevelId: levelId,
+                    NewLevelName: levelName
+                };
+
+                console.log("Sending edit request:", requestData);
+
+                $.ajax({
+                    url: 'https://localhost:7101/api/Levels/rename-level',
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(requestData),
+                    success: function (res) {
+                        alert("Cập nhật cấp độ thành công!");
+                        $("#editLevelModal").modal('hide');
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Ajax error:", xhr, status, error);
+                        alert("Lỗi khi cập nhật cấp độ: " + xhr.responseText);
+                    }
+                });
+            });
+
+            // Xử lý submit form xóa
+            $("#deleteLevelForm").on("submit", function (e) {
+                e.preventDefault(); // Ngăn form submit mặc định
+
+                let targetId = $("#deleteTargetObjectId").val();
+                let userId = $("#deleteRequestedUserId").val();
+
+                // Lấy IP address của người dùng (hoặc để trống nếu không có)
+                let ipAddress = "";
+
+                // Tạo đối tượng request gửi đi
+                let requestData = {
+                    RequestedUserId: userId,
+                    TargetObjectId: targetId,
+                    IpAddress: ipAddress,
+                    HardDelete: true
+                };
+
+                console.log("Sending delete request:", requestData);
+
+                $.ajax({
+                    url: 'https://localhost:7101/api/Levels/delete-level',
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(requestData),
+                    success: function (res) {
+                        alert("Xóa cấp độ thành công!");
+                        $("#deleteLevelModal").modal('hide');
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Ajax error:", xhr, status, error);
+                        alert("Lỗi khi xóa cấp độ: " + xhr.responseText);
+                    }
+                });
+            });
         });
+
+        // Hàm mở modal chỉnh sửa và lấy dữ liệu
+        function openEditModal(levelId) {
+            // Hiển thị modal
+            $("#editLevelModal").modal('show');
+
+            // Hiển thị loading và ẩn form
+            $("#editLevelLoading").show();
+            $("#editLevelForm").hide();
+
+            // Lấy thông tin cấp độ từ API
+            $.ajax({
+                url: `https://localhost:7101/api/Levels/get-level-has-id-${levelId}`,
+                type: "GET",
+                success: function (data) {
+                    // Điền dữ liệu vào form
+                    $("#editLevelId").val(data.levelId);
+                    $("#editLevelName").val(data.levelName);
+
+                    // Ẩn loading và hiện form
+                    $("#editLevelLoading").hide();
+                    $("#editLevelForm").show();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Ajax error:", xhr, status, error);
+                    alert("Lỗi khi tải dữ liệu cấp độ: " + xhr.responseText);
+                    $("#editLevelModal").modal('hide');
+                }
+            });
+        }
+
+        // Hàm mở modal xác nhận xóa
+        function openDeleteModal(levelId, levelName) {
+            // Điền thông tin vào modal
+            $("#deleteTargetObjectId").val(levelId);
+            $("#deleteLevelName").text(levelName);
+
+            // Hiển thị modal
+            $("#deleteLevelModal").modal('show');
+        }
     </script>
-    }
+}

@@ -85,6 +85,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     context.Token = token;
                 }
                 return Task.CompletedTask;
+                //var accessToken = context.Request.Query["access_token"];
+
+                //// Nếu có token và đang kết nối đến hub
+                //var path = context.HttpContext.Request.Path;
+                //if (!string.IsNullOrEmpty(accessToken) &&
+                //    path.StartsWithSegments("/notify")) // Đúng tên Hub
+                //{
+                //    context.Token = accessToken;
+                //}
+                //return Task.CompletedTask;
             }
         };
     }

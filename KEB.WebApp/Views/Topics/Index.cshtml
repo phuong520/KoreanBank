@@ -89,10 +89,21 @@
                             <td style="border-right: none">@topic.NumOfQuestions.NumOfReadingQuestions</td>
                             <td style="border-right: none">@topic.NumOfQuestions.NumOfWritingQuestions</td>
                             <td class="text-center">
-                                <a href="@Url.Action("Edit", "Topics", new { id = topic.TopicId })" class="btn btn-sm btn-outline-primary">
+                                <button type="button" class="btn btn-sm btn-outline-primary edit-topic-btn"
+                                        data-topic-id="@topic.TopicId"
+                                        data-topic-name="@topic.TopicName"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editTopicModal">
                                     <i class="bi bi-pencil"></i>
-                                </a>
-                                <a href="@Url.Action("Delete", "Topics", new { id = topic.TopicId })" class="btn btn-sm btn-outline-info">
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-topic-btn"
+                                        data-topic-id="@topic.TopicId"
+                                        data-topic-name="@topic.TopicName"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteTopicModal">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                                <a href="@Url.Action("Details", "Topics", new { id = topic.TopicId })" class="btn btn-sm btn-outline-info">
                                     <i class="bi bi-info-circle"></i>
                                 </a>
                             </td>
@@ -155,6 +166,60 @@
     </div>
 </div>
 
+<!-- Modal Sửa Chủ Đề -->
+<div class="modal fade" id="editTopicModal" tabindex="-1" aria-labelledby="editTopicModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="editTopicModalLabel">Cập nhật chủ đề</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTopicForm">
+                    <input type="hidden" id="editTopicId" name="TopicId">
+                    <input type="hidden" id="editCreatedBy" name="CreatedBy" value="@ViewBag.CurrentUserId">
+                    <div class="mb-3">
+                        <label for="editTopicName" class="form-label">Chủ đề mới</label>
+                        <input type="text" class="form-control" id="editTopicName" name="NewTopicName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Mô tả mới</label>
+                        <textarea class="form-control" id="editDescription" name="NewDescription" rows="3"></textarea>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xóa Chủ Đề -->
+<div class="modal fade" id="deleteTopicModal" tabindex="-1" aria-labelledby="deleteTopicModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteTopicModalLabel">Xác nhận xóa chủ đề</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa chủ đề "<span id="deleteTopicName"></span>"?</p>
+                <p class="text-danger">Lưu ý: Thao tác này không thể hoàn tác!</p>
+                <form id="deleteTopicForm">
+                    <input type="hidden" id="deleteTopicId" name="TargetObjectId">
+                    <input type="hidden" id="deleteRequestedUserId" name="RequestedUserId" value="@ViewBag.CurrentUserId">
+                    <input type="hidden" name="HardDelete" value="true">
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <!-- Thư viện jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -187,7 +252,7 @@
                 });
             });
 
-            // Xử lý form submit
+            // Xử lý form thêm mới
             $("#addTopicForm").on("submit", function (e) {
                 e.preventDefault(); // Ngăn form submit mặc định
 
@@ -218,6 +283,100 @@
                     },
                     error: function (xhr) {
                         alert("Lỗi khi tạo chủ đề.");
+                        console.log(xhr);
+                    }
+                });
+            });
+
+            // Xử lý khi nhấn nút chỉnh sửa chủ đề
+            $(".edit-topic-btn").on("click", function() {
+                let topicId = $(this).data("topic-id");
+                let topicName = $(this).data("topic-name");
+
+                $("#editTopicId").val(topicId);
+                $("#editTopicName").val(topicName);
+                $("#editDescription").val(""); // Reset description
+            });
+
+            // Xử lý form cập nhật chủ đề
+            $("#editTopicForm").on("submit", function(e) {
+                e.preventDefault();
+
+                let topicId = $("#editTopicId").val();
+                let newTopicName = $("#editTopicName").val();
+                let newDescription = $("#editDescription").val();
+                let createdBy = $("#editCreatedBy").val();
+
+                if (!topicId || !newTopicName) {
+                    alert("Vui lòng nhập đầy đủ thông tin.");
+                    return;
+                }
+
+                // Tạo đối tượng request gửi đi
+                let requestData = {
+                    TopicId: topicId,
+                    NewTopicName: newTopicName,
+                    NewDescription: newDescription,
+                    CreatedBy: createdBy
+                };
+
+                $.ajax({
+                    url: '/api/topics/edit-topic', // API endpoint
+                    type: "PUT",
+                    contentType: "application/json",
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        alert("Cập nhật chủ đề thành công!");
+                        $("#editTopicModal").modal('hide');
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert("Lỗi khi cập nhật chủ đề.");
+                        console.log(xhr);
+                    }
+                });
+            });
+
+            // Xử lý khi nhấn nút xóa chủ đề
+            $(".delete-topic-btn").on("click", function() {
+                let topicId = $(this).data("topic-id");
+                let topicName = $(this).data("topic-name");
+
+                $("#deleteTopicId").val(topicId);
+                $("#deleteTopicName").text(topicName);
+            });
+
+            // Xử lý form xóa chủ đề
+            $("#deleteTopicForm").on("submit", function(e) {
+                e.preventDefault();
+
+                let topicId = $("#deleteTopicId").val();
+                let requestedUserId = $("#deleteRequestedUserId").val();
+
+                if (!topicId || !requestedUserId) {
+                    alert("Dữ liệu không hợp lệ.");
+                    return;
+                }
+
+                // Tạo đối tượng request gửi đi
+                let requestData = {
+                    TargetObjectId: topicId,
+                    RequestedUserId: requestedUserId,
+                    HardDelete: true
+                };
+
+                $.ajax({
+                    url: '/api/topics/delete-topic', // API endpoint
+                    type: "DELETE",
+                    contentType: "application/json",
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        alert("Xóa chủ đề thành công!");
+                        $("#deleteTopicModal").modal('hide');
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert("Lỗi khi xóa chủ đề.");
                         console.log(xhr);
                     }
                 });

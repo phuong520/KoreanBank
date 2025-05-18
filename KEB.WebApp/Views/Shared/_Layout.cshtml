@@ -15,17 +15,21 @@
     {
         var handler = new JwtSecurityTokenHandler();
         var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
-
+        var userId = Guid.Empty;
         if (jsonToken != null)
         {
             // Lấy các claims từ token
             role = jsonToken?.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
             username = jsonToken?.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
             var avatarId = jsonToken.Claims.FirstOrDefault(c => c.Type == "avatar")?.Value;
-             avatarUrl = string.IsNullOrEmpty(avatarId)
-                ? Url.Content("~/images/default-avatar.png")
-               : $"https://localhost:7101/api/ImageFile/Download?id={avatarId}";
-
+            avatarUrl = string.IsNullOrEmpty(avatarId)
+               ? Url.Content("~/images/default-avatar.png")
+              : $"https://localhost:7101/api/ImageFile/Download?id={avatarId}";
+            var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+            if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+            {
+                userId = parsedGuid;
+            }
         }
     }
 }
@@ -39,9 +43,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
-    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
-    <script src="~/js/notification-hub.js"></script>
+
     <style>
         .dropdown-menu a:hover {
             text-decoration: underline;
@@ -68,63 +70,92 @@
         .notification-container {
             position: relative;
             display: inline-block;
+            font-family: Arial, sans-serif;
         }
 
         .notification-header {
             cursor: pointer;
-            padding: 8px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+
+        .bell-icon {
+            width: 28px;
+            height: 28px;
+            fill: #555;
+            transition: fill 0.3s ease;
+        }
+
+        .notification-header:hover .bell-icon {
+            fill: #007bff;
         }
 
         .badge {
-            background-color: red;
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: #dc3545;
             color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
             font-size: 12px;
-            margin-left: 5px;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-weight: bold;
+            min-width: 20px;
+            text-align: center;
+            box-shadow: 0 0 4px rgba(0,0,0,0.2);
         }
 
         .notification-list {
-            display: none;
             position: absolute;
+            top: 38px;
             right: 0;
-            min-width: 300px;
-            max-height: 400px;
+            width: 320px;
+            max-height: 300px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
             overflow-y: auto;
-            background-color: white;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            z-index: 999;
-            list-style: none;
-            padding: 0;
+            padding: 10px 0;
             margin: 0;
+            list-style: none;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            z-index: 100;
+            font-size: 14px;
+            color: #333;
         }
 
-        .notification-container:hover .notification-list {
-            display: block;
-        }
-
-        .notification-item {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-            .notification-item.unread {
-                background-color: #f0f7ff;
+            .notification-list.show {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
             }
 
-        .notification-content {
-            margin-bottom: 5px;
-        }
+            .notification-list li {
+                padding: 10px 20px;
+                border-bottom: 1px solid #eee;
+                cursor: default;
+            }
 
-        .notification-time {
-            font-size: 12px;
-            color: #777;
-        }
+                .notification-list li:last-child {
+                    border-bottom: none;
+                }
+
+                .notification-list li:hover {
+                    background-color: #f0f8ff;
+                }
 
         .notification-empty {
-            padding: 10px;
             text-align: center;
-            color: #777;
+            color: #888;
+            font-style: italic;
+            padding: 20px;
+            cursor: default;
         }
     </style>
 </head>
@@ -185,7 +216,7 @@
     <!-- Main Content -->
     <div class="main-content">
         <div class=" d-flex align-items-center justify-content-end gap-3 pe-4 pt-3">
-           
+
             @if (token == null)
             {
                 <div class="dropdown">
@@ -200,8 +231,10 @@
             else
             {
                 <div class="notification-container">
-                    <div class="notification-header">
-                        <span>Thông báo</span>
+                    <div id="notification-header" class="notification-header" title="Xem thông báo">
+                        <svg class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V6a1.5 1.5 0 1 0-3 0v.68C7.63 7.36 6 9.93 6 13v5l-2 2v1h16v-1l-2-2z" />
+                        </svg>
                         <span id="notification-badge" class="badge">0</span>
                     </div>
                     <ul id="notification-list" class="notification-list">
@@ -247,28 +280,22 @@
             const section = document.getElementById(sectionId);
             section.style.display = section.style.display === 'none' ? 'block' : 'none';
         }
-    </script>
-    <script>
-        // Thêm hiệu ứng click cho thông báo
-        document.addEventListener("DOMContentLoaded", function() {
-            var notificationHeader = document.querySelector(".notification-header");
-            var notificationList = document.getElementById("notification-list");
+                 const notifHeader = document.getElementById('notification-header');
+        const notifList = document.getElementById('notification-list');
 
-            notificationHeader.addEventListener("click", function() {
-                if (notificationList.style.display === "block") {
-                    notificationList.style.display = "none";
-                } else {
-                    notificationList.style.display = "block";
-                }
-            });
+        notifHeader.addEventListener('click', () => {
+          notifList.classList.toggle('show');
+        });
 
-            // Đóng thông báo khi click ra ngoài
-            document.addEventListener("click", function(event) {
-                if (!event.target.closest(".notification-container")) {
-                    notificationList.style.display = "none";
-                }
-            });
+        // Click ra ngoài để đóng notification
+        document.addEventListener('click', (e) => {
+          if (!notifHeader.contains(e.target) && !notifList.contains(e.target)) {
+            notifList.classList.remove('show');
+          }
         });
     </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script src="~/js/notification-hub.js"></script>
 </body>
 </html>

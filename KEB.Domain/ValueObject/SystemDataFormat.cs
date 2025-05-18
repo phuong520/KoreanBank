@@ -122,7 +122,7 @@ namespace KEB.Domain.ValueObject
         public const string INFORM_REMOVEACCESS_FROMTASK_EMAIL_SUBJECT = "KEB - BẠN ĐÃ BỊ XÓA KHỎI NHIỆM VỤ";
 
         /// Từ phần này là cho feature Exam type
-        public const int MINIMUM_DURATION_IN_MINUTES = 10;
+        public const int MINIMUM_DURATION_IN_MINUTES = 1;
         public const int MAXIMUM_NUMOFQUESTIONS_FOR_EACHPAPER = 100;
         public const int MINIMUM_NUMOFQUESTIONS_FOR_EACHPAPER = 2;
         public const int MAXIMUM_NUMOFQUESTIONS_FOR_EACHDETAIL_OF_PAPER = 10;

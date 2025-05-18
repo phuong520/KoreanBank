@@ -571,15 +571,15 @@ namespace KEB.Application.Services.Implementations
                 exam = await _unitOfWork.Exams.GetAsync(x => x.Id == examId,
                                                     includeProperties: "Host,Reviewer,ExamType,Papers")
                         ?? throw new InvalidOperationException("Exam not found ~");
-                //bool inEditingTime = currentTime > exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION)
-                //        && currentTime < exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION + SystemDataFormat.EXAM_PAPERS_EDIT_DURATION);
-                //if (!inEditingTime)
-                //{
-                //    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
-                //    response.Message = "Papers can only be generated within the editing time (within 2 days from exam finish creating)";
-                //    response.IsSuccess = false;
-                //    return response;
-                //}
+                bool inEditingTime = currentTime > exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION)
+                        && currentTime < exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION + SystemDataFormat.EXAM_PAPERS_EDIT_DURATION);
+                if (!inEditingTime)
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                    response.Message = "Papers can only be generated within the editing time (within 2 days from exam finish creating)";
+                    response.IsSuccess = false;
+                    return response;
+                }
                 bool isAuthorized = false;
                 if (requestedUserId == exam.HostId || requestedUserId == exam.ReviewerId)
                 {

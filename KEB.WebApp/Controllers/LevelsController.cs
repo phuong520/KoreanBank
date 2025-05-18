@@ -4,6 +4,7 @@ using KEB.Application.DTOs.UserDTO;
 using KEB.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace KEB.WebApp.Controllers
@@ -54,7 +55,7 @@ namespace KEB.WebApp.Controllers
                         userId = parsedGuid;
                     }
                 }
-             
+
                 request.RequestedUserId = userId;
                 ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/add-new-level", request);
@@ -74,8 +75,26 @@ namespace KEB.WebApp.Controllers
                 return View(request);
             }
         }
+        [HttpPut]
+        public async Task<IActionResult> Update()
+        {
 
+            return View();
+        }
 
+        public async Task<ActionResult> Details(Guid levelId)
+        {
+            var response = await _httpClient.GetFromJsonAsync<APIResponse<LevelDisplayDetailDTO>>($"{ApiUrl}/get-level-has-id-{levelId}");
+
+            if (!response.IsSuccess)
+            {
+                return View("Error"); // hoặc trả về NotFound(), tùy bạn
+            }
+
+            return View(response.Result); // Truyền sang view để hiển thị
+        }
 
     }
+
+
 }

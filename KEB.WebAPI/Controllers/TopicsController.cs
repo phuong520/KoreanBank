@@ -53,26 +53,26 @@ namespace KEB.WebAPI.Controllers
             return Ok(response);
         }
 
-     //   [HttpPut]
-     //   [Route("edit-topic")]
-     // //  [Authorize(Roles = "R2")]
-     //   public async Task<IActionResult> RenameTopic(EditTopicDto request)
-     //   {
-     //       request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
-     //       var response = await _unitOfService.TopicService.RenameTopic(request);
-     //       await _unitOfService.FileTemplateService.UploadExcelTemplate("Rename topic");
-     //       return Ok(response);
-     //   }
-     //   [HttpDelete]
-     //   [Route("delete-topic")]
-     ////   [Authorize(Roles = "R2")]
-     //   public async Task<IActionResult> DeleteTopic(Delete request)
-     //   {
-     //       request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
-     //       var response = await _unitOfService.TopicService.DeleteTopic(request);
-     //       await _unitOfService.FileTemplateService.UploadExcelTemplate("Delete topic");
-     //       return Ok(response);
-     //   }
+        [HttpPut]
+        [Route("edit-topic")]
+        //  [Authorize(Roles = "R2")]
+        public async Task<IActionResult> RenameTopic(EditTopicDto request)
+        {
+            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var response = await _unitOfService.TopicService.RenameTopic(request);
+           // await _unitOfService.FileTemplateService.UploadExcelTemplate("Rename topic");
+            return Ok(response);
+        }
+        [HttpDelete]
+        [Route("delete-topic")]
+        //   [Authorize(Roles = "R2")]
+        public async Task<IActionResult> DeleteTopic(Delete request)
+        {
+            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var response = await _unitOfService.TopicService.DeleteTopic(request);
+            //await _unitOfService.FileTemplateService.UploadExcelTemplate("Delete topic");
+            return Ok(response);
+        }
 
     }
 }

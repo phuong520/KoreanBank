@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using KEB.Application.Services;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace KEB.WebAPI.SignalR
 {
@@ -18,7 +19,7 @@ namespace KEB.WebAPI.SignalR
         {
             if (Context.User?.Identity?.IsAuthenticated ?? false)
             {
-                var userId = Context.User.FindFirst("UserId")?.Value;
+                var userId = Context.User.FindFirst(ClaimTypes.Sid)?.Value;
                 Console.WriteLine($"User connected: UserId = {userId}");
 
                 if (userId == null)
@@ -30,7 +31,7 @@ namespace KEB.WebAPI.SignalR
                 {
                     _connectedUsers.Add(userId, Context.ConnectionId);
                 }
-                await Groups.AddToGroupAsync(Context.ConnectionId, "FSAKEB Noti");
+                await Groups.AddToGroupAsync(Context.ConnectionId, "KEB Noti");
             }
             else
             {
@@ -41,30 +42,32 @@ namespace KEB.WebAPI.SignalR
         }
         public override Task OnDisconnectedAsync(Exception? exception)
         {
-            _connectedUsers.Remove(Context.User?.FindFirst("UserId")?.Value ?? "");
+            _connectedUsers.Remove(Context.User?.FindFirst(ClaimTypes.Sid)?.Value ?? "");
             Console.WriteLine($"Client disconnected: {Context.ConnectionId}");
             return base.OnDisconnectedAsync(exception);
         }
-        public async Task<bool> GetLatestNoti(Guid userId)
+       
+        public async Task<bool> GetLatestNoti()
         {
-            if (Clients == null)
+            try
             {
-                await Console.Out.WriteLineAsync("Null Clients");
-                return false;
-            }
-            var user = Clients.User(userId.ToString());
-            if (user == null)
-            {
-                await Console.Out.WriteLineAsync("Null User");
-                return false;
-            }
-            else
-            {
-                await Console.Out.WriteLineAsync("Called SendLatestNoti");
+                var userIdClaim = Context.User?.FindFirst(ClaimTypes.Sid)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
+                {
+                    await Console.Out.WriteLineAsync("Invalid or missing userId");
+                    return false;
+                }
+
                 var notis = await _unitOfService.NotiService.Get7LatestNoti(userId);
-                await Clients.All.SendLatestNotifications(notis);
+                await Clients.Caller.SendLatestNotifications(notis);
                 return true;
             }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync($"Error in GetLatestNoti: {ex.Message}");
+                throw; // hoặc return false nếu muốn
+            }
         }
+
     }
 }
