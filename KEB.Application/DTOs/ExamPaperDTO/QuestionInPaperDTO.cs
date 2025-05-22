@@ -20,8 +20,9 @@ namespace KEB.Application.DTOs.ExamPaperDTO
         public string QuestionTypeContent { get; set; }
         public Skill Skill { get; set; }
         public string Difficulty { get; set; }
-        public string? AttachmentUrl { get; set; }
-        public IEnumerable<AnswerDTO.AddAnswerDTO> Answers { get; set; }
+        public string? AttachmentImage { get; set; }
+        public string? AttachmentAudio { get; set; }
+        public IEnumerable<AddAnswerDTO> Answers { get; set; }
         public float Mark { get; set; }
         public int OrderInPaper { get; set; }
 

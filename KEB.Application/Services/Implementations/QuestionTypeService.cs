@@ -5,6 +5,7 @@ using KEB.Application.DTOs.QuestionTypeDTO;
 using KEB.Application.Services.Interfaces;
 using KEB.Application.Utils;
 using KEB.Domain.Entities;
+using KEB.Domain.Enums;
 using KEB.Domain.ValueObject;
 using KEB.Infrastructure.UnitOfWorks;
 using System;
@@ -26,7 +27,17 @@ namespace KEB.Application.Services.Implementations
             _unitOfWork = unitOfWork;
              _mapper = mapper;
         }
+        public async Task<APIResponse<QuestionType>> GetQuestionTypesBySkillAsync(Skill skill)
+        {
+            var result = await _unitOfWork.QuestionTypes
+            .GetAllAsync(qt => qt.Skill == skill);
+            var response = new APIResponse<QuestionType>();
+            response.IsSuccess = true;
+            response.Result = result.ToList();
+            response.Message = null;
 
+            return response;
+        }
         public async Task<APIResponse<QuestionTypeDisplayDto>> AddQuestionType(QuestionTypeCreateDto request, string ipAddress)
         {
             APIResponse<QuestionTypeDisplayDto> response = new();

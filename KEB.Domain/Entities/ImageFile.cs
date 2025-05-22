@@ -14,7 +14,9 @@ namespace KEB.Domain.Entities
         public byte[] FileData { get; set; }
         public string ContentType { get; set; }
         public User User { get; set; }
-        public Question Question { get; set; }
-        public PaperDetail PaperDetail { get; set; }
+        public Question QuestionForImage { get; set; }
+        public Question QuestionForAudio { get; set; }
+        public PaperDetail PaperDetailImage { get; set; }
+        public PaperDetail PaperDetailAudio { get; set; }
     }
 }

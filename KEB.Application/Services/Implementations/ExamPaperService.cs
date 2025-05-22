@@ -379,88 +379,6 @@ namespace KEB.Application.Services.Implementations
             //}
             //return response;
         }
-        private async Task<string> AutoGenerateAndSetPaperContentPdf(Paper paper)
-        {
-            Exam exam = paper.Exam;
-            DateTime currentTime = DateTime.Now;
-            var allQuestions = paper.PaperDetails.OrderBy(x => x.OrderInPaper).Select(x => x.Question).ToList();
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "ExternalFiles", "index.html");
-            string logoPath = AzureBlob.SYSTEM_LOGO_URL;
-            StringBuilder questionsHtml = new();
-
-            if (paper.Skill == Skill.Nghe)
-            {
-                int quesIndex = 1;
-                foreach (var question in allQuestions)
-                {
-                    questionsHtml.Append($@"
-                                    <div class='question-title'>
-                                        <p>{question.QuestionType.TypeName}</p>
-                                    </div>");
-                    var tmpQuesContent = GetQuestionHtml(question, quesIndex);
-                    questionsHtml.Append(tmpQuesContent);
-                    quesIndex++;
-                }
-            }
-            else
-            {
-                var groupedQuestions = allQuestions.GroupBy(x => x.QuestionType);
-                int typeIndex = 1;
-                int quesIndex = 1;
-                foreach (var item in groupedQuestions)
-                {
-                    questionsHtml.Append($@"
-                                    <div class='question-title'>
-                                        <p>{CommonUntils.ConvertIntegerToRoman(typeIndex)}. {item.Key.TypeName}</p>
-                                    </div>");
-                    foreach (var question in item)
-                    {
-                        var tmpQuesContent = GetQuestionHtml(question, quesIndex);
-                        questionsHtml.Append(tmpQuesContent);
-                        quesIndex++;
-                    }
-                    typeIndex++;
-                }
-            }
-
-            string htmlContent = File.ReadAllText(templatePath);
-            htmlContent = htmlContent
-                .Replace("{ExamName}", exam.ExamName)
-                .Replace("{LogoPath}", logoPath)
-                .Replace("{ExamDate}", exam.TakePlaceTime.ToString("dd MMM yyyy"))
-                .Replace("{PaperName}", paper.PaperName)
-                .Replace("{Questions}", questionsHtml.ToString());
-
-            var renderer = new ChromePdfRenderer();
-            var pdfFromHtmlFile = renderer.RenderHtmlAsPdf(htmlContent);
-            // Tạo thư mục để lưu các file PDF nếu nó chưa tồn tại
-            string pdfDirectory = Path.Combine(Environment.CurrentDirectory, "GeneratedPapers");
-            if (!Directory.Exists(pdfDirectory))
-            {
-                Directory.CreateDirectory(pdfDirectory);
-            }
-            // Tạo tên file dựa trên thông tin paper
-            string fileName = $"{paper.PaperName}_{paper.Skill}_{currentTime:yyyyMMdd_HHmmss}.pdf";
-            string filePath = Path.Combine(pdfDirectory, fileName);
-
-            // Lưu PDF vào file
-            pdfFromHtmlFile.SaveAs(filePath);
-            // Lưu URL tương đối của file trong database
-            //paper.ExportedContentUrl = $"/GeneratedPapers/{fileName}";
-            await _unitOfWork.SaveChangesAsync();
-            // Log hoạt động
-            await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
-            {
-                AccessTime = currentTime,
-                ActionName = "Generate pdf for exam paper",
-                IpAddress = "",
-                IsSuccess = true,
-                TargetObject = $"{paper.PaperName}",
-                Details = $"Generate pdf for paper {paper.PaperName} and save to local path {filePath}"
-            });
-
-            return filePath;
-        }
         private static string GetQuestionHtml(Question question, int quesIndex)
         {
             StringBuilder tmpAnswersContent = new();
@@ -803,7 +721,10 @@ namespace KEB.Application.Services.Implementations
                         throw new InvalidOperationException("Không đủ câu hỏi");
                     }
 
-                    var groupedByFileNamePool = tempPool.GroupBy(x => x.AttachmentFile).OrderBy(x => rand.Next());
+                    var groupedByFileNamePool = tempPool
+                        .GroupBy(x => new { x.AttachmentFileImage, x.AttachmentFileAudio }) // Giữ cả image và audio
+                        .OrderBy(_ => rand.Next())
+                        .ToList();
                     int step = 0;
                     while (step < detail.NumberOfQuestion)
                     {
@@ -852,7 +773,7 @@ namespace KEB.Application.Services.Implementations
                 }
                 foreach (var newPaper in newPapers)
                 {
-                    newPaper.Item1.PaperDetails = newPaper.Item1.PaperDetails.OrderBy(x => x.Attachment).Select((question, index) =>
+                    newPaper.Item1.PaperDetails = newPaper.Item1.PaperDetails.OrderBy(x => x.AttachmentImage).Select((question, index) =>
                     {
                         question.OrderInPaper = index + 1;
                         return question;
@@ -1044,13 +965,15 @@ namespace KEB.Application.Services.Implementations
                                        "PaperDetails.Question.LevelDetail.Topic," +
                                        "PaperDetails.Question.References," +
                                        "PaperDetails.Question.Answers," +
-                                       "PaperDetails.Question.QuestionType"
+                                       "PaperDetails.Question.QuestionType,"+
+                                       "PaperDetails.AttachmentImage,"+
+                                       "PaperDetails.AttachmentAudio"
                                     );
                     if (paper == null) throw new VersionNotFoundException(AppMessages.TARGET_ITEM_NOTFOUND);
                     var exam = paper.Exam;
                     bool examHidden = exam.IsDeleted; // this means the exam is still visible but the papers is not
                     bool examSuspended = exam.IsSuspended; // this means the exam is canceled or suspended so that it actually did not/will not take place
-                    bool examInEdit = exam.CreatedDate.AddDays(10) > currentTime; // 1 day for team lead to edit exam info & 2 day to edit & review exam paper
+                    bool examInEdit = exam.CreatedDate.AddDays(1) > currentTime; // 1 day for team lead to edit exam info & 2 day to edit & review exam paper
                     bool examInPrepare = currentTime > exam.TakePlaceTime.AddDays(-1) && currentTime < exam.TakePlaceTime; // 24 hours before exam taking place
                     bool examTookPlace = currentTime > exam.TakePlaceTime;
                     bool isTeamLead = requestedUser.RoleId.ToString() == LogicString.Role.TeamLeadRoleId;
@@ -1059,7 +982,7 @@ namespace KEB.Application.Services.Implementations
 
                     if (examTookPlace || examSuspended)
                     {
-                        isAuthorized = examHidden;
+                        isAuthorized = true;
                         // if exam took place or is suspended, everyone can view its papers unless they was locked/hidden
                     }
                     else

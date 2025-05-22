@@ -53,10 +53,10 @@ namespace KEB.WebApp.Controllers
 
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 await LoadDropdownData();
-                
-                    request.PaginationRequest = new Pagination { Page = 1, Size = 20 };
-                    request.SortAscending = false;
-                
+
+                request.PaginationRequest = new Pagination { Page = 1, Size = 20 };
+                request.SortAscending = false;
+
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", request); // request rỗng sẽ trả toàn bộ
                 if (response.IsSuccessStatusCode)
                 {
@@ -263,13 +263,18 @@ namespace KEB.WebApp.Controllers
                     if (request.TaskId != null)
                         formData.Add(new StringContent(request.TaskId.ToString()), nameof(request.TaskId));
                     // Thêm file nếu có
-                    if (request.AttachmentFile != null && request.AttachmentFile.Length > 0)
+                    if (request.AttachmentFileImage != null && request.AttachmentFileImage.Length > 0)
                     {
-                        var streamContent = new StreamContent(request.AttachmentFile.OpenReadStream());
-                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.AttachmentFile.ContentType);
-                        formData.Add(streamContent, nameof(request.AttachmentFile), request.AttachmentFile.FileName);
+                        var streamContent = new StreamContent(request.AttachmentFileImage.OpenReadStream());
+                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.AttachmentFileImage.ContentType);
+                        formData.Add(streamContent, nameof(request.AttachmentFileImage), request.AttachmentFileImage.FileName);
                     }
-
+                    if (request.AttachmentFileAudio != null && request.AttachmentFileAudio.Length > 0)
+                    {
+                        var streamContent = new StreamContent(request.AttachmentFileAudio.OpenReadStream());
+                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.AttachmentFileAudio.ContentType);
+                        formData.Add(streamContent, nameof(request.AttachmentFileAudio), request.AttachmentFileAudio.FileName);
+                    }
                     // Gửi request
                     var response = await _httpClient.PostAsync($"{ApiUrl}/add-single-question", formData);
                     if (!response.IsSuccessStatusCode)
@@ -298,7 +303,269 @@ namespace KEB.WebApp.Controllers
 
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(Guid id)
+        {
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                if (string.IsNullOrEmpty(token))
+                {
+                    return RedirectToAction("Login", "Commonweb", new { returnUrl = Url.Action("Edit", "Question", new { id }) });
+                }
 
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
+                // Load data for the specified question
+                var response = await _httpClient.GetAsync($"{ApiUrl}/get-question-has-id-{id}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var apiResult = await response.Content.ReadFromJsonAsync<APIResponse<QuestionDetailDto>>();
+                if (apiResult?.IsSuccess != true || apiResult.Result.Count == 0)
+                {
+                    TempData["ErrorMessage"] = "Không tìm thấy câu hỏi hoặc bạn không có quyền chỉnh sửa";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var questionDetail = apiResult.Result[0];
+
+                // Map QuestionDetailDto to UpdateQuestionRequest
+                var updateRequest = new UpdateQuestionRequest
+                {
+                    TargetObjectId = questionDetail.Id,
+                    NewQuestionContent = questionDetail.QuestionContent,
+                    NewDifficulty = questionDetail.Difficulty,
+                    NewReferenceId = questionDetail.ReferenceId,
+                    Answers = (List<AddAnswerDTO>)questionDetail.Answers,
+
+                };
+
+                // Store the current question details in ViewBag for comparison in the view
+                ViewBag.CurrentQuestion = questionDetail;
+
+                // Load dropdown data for the form
+                await LoadDropdownData();
+
+                return View(updateRequest);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Có lỗi xảy ra: {ex.Message}");
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        [HttpPost]
+        // [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(UpdateQuestionRequest request)
+        {
+
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+                var userId = Guid.Empty;
+                if (jsonToken != null)
+                {
+                    var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                    if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                    {
+                        userId = parsedGuid;
+                    }
+                }
+
+                // Tạo nội dung multipart/form-data
+                using var formData = new MultipartFormDataContent();
+
+                // Thêm các field dạng text
+                request.RequestedUserId = userId;
+                request.IpAddress = "";
+                formData.Add(new StringContent(request.TargetObjectId.ToString()), nameof(request.TargetObjectId));
+                formData.Add(new StringContent(request.RequestedUserId.ToString()), nameof(request.RequestedUserId));
+
+                // Chỉ gửi các giá trị đã thay đổi
+                if (!string.IsNullOrEmpty(request.NewQuestionContent))
+                {
+                    formData.Add(new StringContent(request.NewQuestionContent), nameof(request.NewQuestionContent));
+                }
+
+                if (request.NewDifficulty.HasValue)
+                {
+                    formData.Add(new StringContent(((int)request.NewDifficulty).ToString()), nameof(request.NewDifficulty));
+                }
+
+                if (request.NewReferenceId.HasValue)
+                {
+                    formData.Add(new StringContent(request.NewReferenceId.ToString()), nameof(request.NewReferenceId));
+                }
+
+                // Xử lý các đáp án nếu có thay đổi
+                if (request.AnswersChanged && request.Answers != null && request.Answers.Any())
+                {
+                    var answersJson = System.Text.Json.JsonSerializer.Serialize(request.Answers);
+                    formData.Add(new StringContent(answersJson), nameof(request.Answers));
+                    formData.Add(new StringContent(request.AnswersChanged.ToString()), nameof(request.AnswersChanged));
+                }
+
+                // Thêm file mới nếu có
+                if (request.AttachmentChanged && request.NewAttachment != null && request.NewAttachment.Length > 0)
+                {
+                    var streamContent = new StreamContent(request.NewAttachment.OpenReadStream());
+                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.NewAttachment.ContentType);
+                    formData.Add(streamContent, nameof(request.NewAttachment), request.NewAttachment.FileName);
+                    formData.Add(new StringContent(request.AttachmentChanged.ToString()), nameof(request.AttachmentChanged));
+                }
+
+                // Thêm địa chỉ IP người dùng (nếu cần)
+                string? ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                if (!string.IsNullOrEmpty(ipAddress))
+                {
+                    formData.Add(new StringContent(ipAddress), nameof(request.IpAddress));
+                }
+
+                // Gửi request
+                var response = await _httpClient.PutAsync($"{ApiUrl}/update-question", formData);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content?.ReadAsStringAsync() ?? "Không có nội dung lỗi.";
+                    ModelState.AddModelError("", $"API trả về lỗi: {(int)response.StatusCode} - {response.ReasonPhrase}\n{errorContent}");
+                }
+
+                var apiResult = await response.Content.ReadFromJsonAsync<APIResponse<object>>();
+
+                // Xử lý kết quả
+                if (response.IsSuccessStatusCode && apiResult?.IsSuccess == true)
+                {
+                    TempData["SuccessMessage"] = "Cập nhật câu hỏi thành công!";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ModelState.AddModelError("", apiResult?.Message ?? "Không thể cập nhật câu hỏi.");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Lỗi hệ thống: {ex.Message}");
+            }
+
+            // Nếu có lỗi, load lại dữ liệu dropdown và hiển thị form
+            await LoadDropdownData();
+            try
+            {
+                var token = HttpContext.Request.Cookies["token"];
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var detailResponse = await _httpClient.GetAsync($"{ApiUrl}//get-question-has-id-{request.TargetObjectId}");
+
+                if (detailResponse.IsSuccessStatusCode)
+                {
+                    var apiDetailResult = await detailResponse.Content.ReadFromJsonAsync<APIResponse<QuestionDetailDto>>();
+                    if (apiDetailResult?.IsSuccess == true && apiDetailResult.Result.Count > 0)
+                    {
+                        ViewBag.CurrentQuestion = apiDetailResult.Result[0];
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            return View(request);
+        }
+
+        public async Task<IActionResult> ImportExcel()
+        {
+            await LoadDropdownData();
+
+            ViewBag.MultiChoiceTemplate = "/templates/multiple_choice_template.xlsx";
+            ViewBag.EssayTemplate = "/templates/essay_template.xlsx";
+            return View(new ImportQuestionFromExcelRequest());
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ImportExcel(ImportQuestionFromExcelRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(request);
+            }
+            var token = HttpContext.Request.Cookies["token"];
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+            var userId = Guid.Empty;
+            if (jsonToken != null)
+            {
+                var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                {
+                    userId = parsedGuid;
+                }
+            }
+            request.RequestedUserId = userId;
+            using var content = new MultipartFormDataContent();
+
+            if (request.ExcelFile != null && request.ExcelFile.Length > 0)
+            {
+                var excelStream = request.ExcelFile.OpenReadStream();
+                var excelContent = new StreamContent(excelStream);
+                excelContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                {
+                    Name = "ExcelFile",
+                    FileName = request.ExcelFile.FileName
+                };
+                content.Add(excelContent);
+            }
+            else
+            {
+                ModelState.AddModelError("ExcelFile", "Excel file is required.");
+                return View(request);
+            }
+            content.Add(new StringContent(request.ForMultipleChoice.ToString()), "ForMultipleChoice");
+            if (request.TaskId.HasValue)
+            {
+                content.Add(new StringContent(request.TaskId.Value.ToString()), "TaskId");
+            }
+            content.Add(new StringContent(request.RequestedUserId.ToString()), "RequestedUserId");
+
+            if (request.Attachments != null)
+            {
+                foreach (var attachment in request.Attachments.Where(a => a != null && a.Length > 0))
+                {
+                    var attachmentStream = attachment.OpenReadStream();
+                    var attachmentContent = new StreamContent(attachmentStream);
+                    attachmentContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                    {
+                        Name = "Attachments",
+                        FileName = attachment.FileName
+                    };
+                    content.Add(attachmentContent);
+                }
+            }
+
+            var response = await _httpClient.PostAsync($"{ApiUrl}/upload-excel", content);
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var apiResponse = System.Text.Json.JsonSerializer.Deserialize<APIResponse<ImportQuestionResultDTO>>(responseJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (response.IsSuccessStatusCode && apiResponse.IsSuccess)
+            {
+                TempData["SuccessMessage"] = apiResponse.Message;
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ModelState.AddModelError("", apiResponse.Message);
+                if (apiResponse.Result.Any())
+                {
+                    ModelState.AddModelError("", string.Join("; ", apiResponse.Result.First().Messages));
+                }
+                return View(request);
+            }
+        
+        }
     }
 }

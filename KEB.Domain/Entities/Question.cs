@@ -12,8 +12,10 @@ namespace KEB.Domain.Entities
     {
         public Difficulty Difficulty { get; set; }
         public string QuestionContent { get; set; }
-        public ImageFile? AttachmentFile { get; set; }
-        public Guid? AttachFileId { get; set; }
+        public ImageFile? AttachmentFileAudio { get; set; }
+        public Guid? AttachFileAudioId { get; set; }
+        public ImageFile? AttachmentFileImage { get; set; }
+        public Guid? AttachFileImageId { get; set; }
         public int? AttachmentDuration { get; set; }
         public bool IsMultipleChoice { get; set; }
         public QuestionStatus Status { get; set; }

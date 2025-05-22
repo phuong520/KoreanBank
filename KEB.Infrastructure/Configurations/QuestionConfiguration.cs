@@ -20,7 +20,8 @@ namespace KEB.Infrastructure.Configurations
             builder.HasOne(x=>x.LevelDetail).WithMany(r=>r.Questions).HasForeignKey(x=>x.LevelDetailId).OnDelete(DeleteBehavior.NoAction);
             builder.HasOne(x=>x.SystemAccessLog).WithMany(r=>r.Questions).HasForeignKey(x=>x.LogId);
             builder.HasOne(x=>x.AddQuestionTask).WithMany(r=>r.Questions).HasForeignKey(x=>x.TaskId).OnDelete(DeleteBehavior.NoAction);
-            builder.HasOne(x => x.AttachmentFile).WithOne(r => r.Question).HasForeignKey<Question>(x=>x.AttachFileId).OnDelete(DeleteBehavior.NoAction);
+            builder.HasOne(x => x.AttachmentFileImage).WithOne(r => r.QuestionForImage).HasForeignKey<Question>(x=>x.AttachFileImageId).OnDelete(DeleteBehavior.NoAction);
+            builder.HasOne(x => x.AttachmentFileAudio).WithOne(r => r.QuestionForAudio).HasForeignKey<Question>(x=>x.AttachFileAudioId).OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

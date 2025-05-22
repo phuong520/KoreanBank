@@ -1,4 +1,6 @@
-﻿using KEB.Domain.Enums;
+﻿using KEB.Application.DTOs.AnswerDTO;
+using KEB.Domain.Entities;
+using KEB.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,7 @@ namespace KEB.Application.DTOs.QuestionDTO
         public Guid RequestedUserId { get; set; }
         public Guid TargetObjectId { get; set; }
         public string? NewQuestionContent { get; set; }
-        public string? Answers { get; set; }
+        public List<AddAnswerDTO>? Answers { get; set; } = new List<AddAnswerDTO>();
         public bool AnswersChanged { get; set; } = false;
         public IFormFile? NewAttachment { get; set; }
         public bool AttachmentChanged { get; set; } = false;

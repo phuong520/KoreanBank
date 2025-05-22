@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
 
 
 // Add services to the container.
-builder.Services.AddDbContext<ExamBankContext>(ops => ops.UseSqlServer(builder.Configuration.GetConnectionString("ExamBankConnection")));
+builder.Services.AddDbContext<ExamBankContext>(ops => ops.UseSqlServer(builder.Configuration.GetConnectionString("ExamBankConnection"),sqlOptions => sqlOptions.CommandTimeout(180)));
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddScoped(typeof(IGenericReposistory<>), typeof(GenericRepository<>));
@@ -85,16 +85,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     context.Token = token;
                 }
                 return Task.CompletedTask;
-                //var accessToken = context.Request.Query["access_token"];
-
-                //// Nếu có token và đang kết nối đến hub
-                //var path = context.HttpContext.Request.Path;
-                //if (!string.IsNullOrEmpty(accessToken) &&
-                //    path.StartsWithSegments("/notify")) // Đúng tên Hub
-                //{
-                //    context.Token = accessToken;
-                //}
-                //return Task.CompletedTask;
             }
         };
     }

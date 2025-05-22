@@ -1,14 +1,13 @@
 ﻿using KEB.Application.DTOs.QuestionTypeDTO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using KEB.Domain.Entities;
+using KEB.Domain.Enums;
+
 
 namespace KEB.Application.Services.Interfaces
 {
     public interface IQuestionTypeService
     {
+        Task<APIResponse<QuestionType>> GetQuestionTypesBySkillAsync(Skill skill);
         Task<APIResponse<QuestionTypeDisplayDto>> GetAllQuestionTypes(GetQuestionType request);
         Task<APIResponse<QuestionTypeDisplayDto>> GetQuestionType(Guid id);
         Task<APIResponse<QuestionTypeDisplayDto>> AddQuestionType(QuestionTypeCreateDto questionTypeCreateDTO, string ipAddress);

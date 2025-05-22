@@ -1,0 +1,88 @@
+﻿@model KEB.Application.DTOs.QuestionAddDTO.ImportQuestionFromExcelRequest
+
+@{
+    ViewData["Title"] = "Upload Questions from Excel";
+}
+
+<h1>Upload Questions from Excel</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group mb-3">
+                <label class="form-label">Question Type</label>
+                <div class="form-check">
+                    <input asp-for="ForMultipleChoice" type="checkbox" class="form-check-input" checked />
+                    <label class="form-check-label">Multiple Choice (Uncheck for Essay)</label>
+                </div>
+                <span asp-validation-for="ForMultipleChoice" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="TaskId" class="form-label">Task</label>
+                <select asp-for="TaskId" class="form-select" asp-items="ViewBag.Tasks">
+                    <option value="">-- Chọn nhiệm vụ --</option>
+                </select>
+                <span asp-validation-for="TaskId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="ExcelFile" class="form-label">Excel File</label>
+                <input asp-for="ExcelFile" type="file" accept=".xlsx" class="form-control" />
+                <span asp-validation-for="ExcelFile" class="text-danger"></span>
+                <small class="form-text text-muted">
+                    Download templates:
+                    <a href="@ViewBag.MultipleChoiceTemplateUrl">Multiple Choice</a> |
+                    <a href="@ViewBag.EssayTemplateUrl">Essay</a>
+                </small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label">Attachments (Audio/Image)</label>
+                <div id="attachmentInputs">
+                    <div class="input-group mb-2">
+                        <input type="file" name="Attachments" accept=".mp3,.jpg,.png" class="form-control" multiple/>
+                        <button type="button" class="btn btn-danger remove-attachment">Remove</button>
+                    </div>
+                </div>
+                <button type="button" id="addAttachment" class="btn btn-secondary">Add Another Attachment</button>
+            </div>
+
+            <div class="form-group mb-3">
+                <button type="submit" class="btn btn-primary">Upload</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $('#addAttachment').click(function () {
+                var newInput = `
+                    <div class="input-group mb-2">
+                        <input type="file" name="Attachments" accept=".mp3,.jpg,.png" class="form-control" />
+                        <button type="button" class="btn btn-danger remove-attachment">Remove</button>
+                    </div>`;
+                $('#attachmentInputs').append(newInput);
+            });
+
+            $('#attachmentInputs').on('click', '.remove-attachment', function () {
+                if ($('#attachmentInputs .input-group').length > 1) {
+                    $(this).closest('.input-group').remove();
+                }
+            });
+        });
+    </script>
+}

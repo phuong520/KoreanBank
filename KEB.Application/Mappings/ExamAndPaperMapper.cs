@@ -107,8 +107,10 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.Question.References.ReferenceName))
                 .ForMember(dest => dest.Difficulty,
                 opt => opt.MapFrom(src => src.Question.Difficulty.ToString()))
-                .ForMember(dest => dest.AttachmentUrl,
-                opt => opt.MapFrom(src => src.Attachment))
+               .ForMember(dest => dest.AttachmentImage,
+                opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentImage.FileData)))
+                .ForMember(dest => dest.AttachmentImage,
+                opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentAudio.FileData)))
                 .ForMember(dest => dest.Mark,
                 opt => opt.MapFrom(src => src.Mark))
                 .ForMember(dest => dest.OrderInPaper,
@@ -135,8 +137,10 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.References.ReferenceName))
                 .ForMember(dest => dest.Difficulty,
                 opt => opt.MapFrom(src => src.Difficulty.ToString()))
-                .ForMember(dest => dest.AttachmentUrl,
-                opt => opt.MapFrom(src => src.AttachmentFile));
+                .ForMember(dest => dest.AttachmentImage,
+                opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileImage.FileData)))
+                .ForMember(dest => dest.AttachmentImage,
+                opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileAudio.FileData)));
         }
 
     }

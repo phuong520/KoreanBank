@@ -12,54 +12,54 @@
 <header>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
     <style>
-            .filter-item label {
-                font-size: 0.9rem;
-            }
+        .filter-item label {
+        font-size: 0.9rem;
+        }
 
-            .dropdown-toggle {
-                background-color: white;
-                border: 1px solid #ced4da;
-                text-align: left;
-                font-size: 0.9rem;
-            }
+        .dropdown-toggle {
+        background-color: white;
+        border: 1px solid #ced4da;
+        text-align: left;
+        font-size: 0.9rem;
+        }
 
-                .dropdown-toggle::after {
-                    float: right;
-                    margin-top: 8px;
-                }
+        .dropdown-toggle::after {
+        float: right;
+        margin-top: 8px;
+        }
 
-            .card {
-                border-radius: 8px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            }
+        .card {
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
 
-            .page-link {
-                color: #007bff;
-            }
+        .page-link {
+        color: #007bff;
+        }
 
-            .page-item.active .page-link {
-                background-color: #343a40;
-                border-color: #343a40;
-            }
+        .page-item.active .page-link {
+        background-color: #343a40;
+        border-color: #343a40;
+        }
 
-            .search-box input {
-                border-right: none;
-            }
+        .search-box input {
+        border-right: none;
+        }
 
-            .search-box .input-group-text {
-                background-color: white;
-                border-left: none;
-            }
+        .search-box .input-group-text {
+        background-color: white;
+        border-left: none;
+        }
 
-            .nav-tabs .nav-link {
-                color: #007bff;
-            }
+        .nav-tabs .nav-link {
+        color: #007bff;
+        }
 
-                .nav-tabs .nav-link.active {
-                    font-weight: 500;
-                }
-        </style>
-        
+        .nav-tabs .nav-link.active {
+        font-weight: 500;
+        }
+    </style>
+
 </header>
 <div class="container-fluid">
     <div class="row">
@@ -68,89 +68,90 @@
             <h2>Ngân hàng câu hỏi</h2>
 
             <form id="filterForm" method="get" asp-controller="Question" asp-action="Index">
-            <div class="mt-4">
-                <h6>Filter</h6>
-                <div class="search-box mt-3">
-                    <div class="input-group">
-                        <input name="Search" type="text" class="form-control" placeholder="Tìm kiếm">
-                        <div class="input-group-append">
-                            <span class="input-group-text bg-white">
-                                <i class="fa fa-search"></i>
-                            </span>
+                <div class="mt-4">
+                    <h6>Filter</h6>
+                    <div class="search-box mt-3">
+                        <div class="input-group">
+                            <input name="Search" type="text" class="form-control" placeholder="Tìm kiếm">
+                            <div class="input-group-append">
+                                <span class="input-group-text bg-white">
+                                    <i class="fa fa-search"></i>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Trình Độ -->
-                <div class="filter-item mt-3">
-                    <label class="text-primary mb-1">Trình Độ</label>
-                    <div class="dropdown">
-                        <select name="LevelIds" class="form-select" asp-items="ViewBag.Levels">
-                            <option value="">-- Chọn trình độ --</option>
-                        </select>
+
+                    <!-- Trình Độ -->
+                    <div class="filter-item mt-3">
+                        <label class="text-primary mb-1">Trình Độ</label>
+                        <div class="dropdown">
+                            <select name="LevelIds" class="form-select" asp-items="ViewBag.Levels">
+                                <option value="">-- Chọn trình độ --</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Dạng Câu Hỏi -->
-                <div class="filter-item mt-3">
-                    <label class="text-primary mb-1">Dạng Câu Hỏi</label>
-                    <div class="dropdown">
-                        <select name="QuestionTypeIds" class="form-select" asp-items="ViewBag.QuestionTypes">
-                            <option value="">-- Chọn dạng câu hỏi --</option>
-                        </select>
+
+                    <!-- Dạng Câu Hỏi -->
+                    <div class="filter-item mt-3">
+                        <label class="text-primary mb-1">Dạng Câu Hỏi</label>
+                        <div class="dropdown">
+                            <select name="QuestionTypeIds" class="form-select" asp-items="ViewBag.QuestionTypes">
+                                <option value="">-- Chọn dạng câu hỏi --</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Mức Độ -->
-                <div class="filter-item mt-3">
-                    <label class="text-primary mb-1">Độ khó</label>
-                    <div class="dropdown">
-                        <select class="form-select" name="Difficulty">
-                            <option value="">-- Chọn dạng độ khó --</option>
-                            @foreach (var diff in difficulties)
-                            {
+
+                    <!-- Mức Độ -->
+                    <div class="filter-item mt-3">
+                        <label class="text-primary mb-1">Độ khó</label>
+                        <div class="dropdown">
+                            <select class="form-select" name="Difficulty">
+                                <option value="">-- Chọn dạng độ khó --</option>
+                                @foreach (var diff in difficulties)
+                                {
                                     <option value="@((int)diff)">@diff</option>
-                            }
-                        </select>
+                                }
+                            </select>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Loại Câu Hỏi -->
-                <div class="filter-item mt-3">
-                    <label class="text-primary mb-1">Loại Câu Hỏi</label>
-                    <div class="dropdown">
-                        <select name="IsMultipleChoice" class="form-select">
-                            <option value="">-- Chọn loại câu hỏi -- </option>
-                            <option value="True">Trắc nghiệm</option>
-                            <option value="False">Tự luận</option>
-                        </select>
+
+                    <!-- Loại Câu Hỏi -->
+                    <div class="filter-item mt-3">
+                        <label class="text-primary mb-1">Loại Câu Hỏi</label>
+                        <div class="dropdown">
+                            <select name="IsMultipleChoice" class="form-select">
+                                <option value="">-- Chọn loại câu hỏi -- </option>
+                                <option value="True">Trắc nghiệm</option>
+                                <option value="False">Tự luận</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Nguồn Tham Khảo -->
-                <div class="filter-item mt-3">
-                    <label class="text-primary mb-1">Nguồn Tham Khảo</label>
-                    <div class="dropdown">
-                        <select name="ReferenceIds" class="form-select" asp-items="ViewBag.References">
-                            <option value="">-- Chọn nguồn tham khảo --</option>
-                        </select>
+
+                    <!-- Nguồn Tham Khảo -->
+                    <div class="filter-item mt-3">
+                        <label class="text-primary mb-1">Nguồn Tham Khảo</label>
+                        <div class="dropdown">
+                            <select name="ReferenceIds" class="form-select" asp-items="ViewBag.References">
+                                <option value="">-- Chọn nguồn tham khảo --</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                
-                <!-- Chủ Đề -->
-                <div class="filter-item mt-3">
-                    <label class="text-primary mb-1">Chủ Đề</label>
-                    <div class="dropdown">
-                        <select name="TopicIds" class="form-select" asp-items="ViewBag.Topics">
-                            <option value="">-- Chọn chủ đề --</option>
-                        </select>
+
+                    <!-- Chủ Đề -->
+                    <div class="filter-item mt-3">
+                        <label class="text-primary mb-1">Chủ Đề</label>
+                        <div class="dropdown">
+                            <select name="TopicIds" class="form-select" asp-items="ViewBag.Topics">
+                                <option value="">-- Chọn chủ đề --</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
                     <input type="submit" class="btn btn-primary mt-3" value="Lọc câu hỏi" />
                 </div>
             </form>
         </div>
-        
+
+        <!-- Right content with question list -->
         <!-- Right content with question list -->
         <div class="col-md-9" style="padding: 20px;">
             <!-- Tabs -->
@@ -163,19 +164,41 @@
                     </li>
                 }
             </ul>
-            
+
             <div class="tab-content mt-3">
                 <div class="tab-pane active" id="nghe">
                     <h5 class="mb-4">Danh Sách Câu Hỏi</h5>
-                    
-                    @foreach(var question in Model){
-                         <div class="card mb-3">
-                              <div class="card-body">
-                                  <div class="d-flex justify-content-between">
+
+                    @foreach (var question in Model)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <!-- Handle attachments -->
+                                @if (question.AttachmentAudio != null)
+                                {
+
+                                    <div class="mb-2">
+                                        <audio controls class="audio-preview mb-3">
+                                            <source src="data:audio/*;base64,@question.AttachmentAudio" type="audio/mpeg">
+                                            Trình duyệt của bạn không hỗ trợ audio.
+                                        </audio>
+                                    </div>
+                                }
+                                @if ((question.AttachmentImage != null))
+                                {
+                                    <div class="mb-2">
+                                        <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 100%; max-height: 100px;" />
+                                    </div>
+
+                                }
+
+                                <div class="d-flex justify-content-between">
                                     <h6 class="card-title">@question.QuestionContent</h6>
                                     <div>
                                         <a href="#" class="btn btn-sm btn-outline-secondary mr-1"><i class="fa fa-search"></i></a>
-                                        <a href="#" class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></a>
+                                        <a href="@Url.Action("Edit", "Question", new { id = question.Id })" class="btn btn-sm btn-outline-primary">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
                                     </div>
                                 </div>
                                 <div class="mt-2">
@@ -196,52 +219,28 @@
                                         <p class="text-danger">Không có đáp án nào.</p>
                                     }
                                 </div>
-                                 <div class="mt-3 text-muted">
+                                <div class="mt-3 text-muted">
                                     <small>
                                         @question.LevelName | @question.QuestionTypeName | @question.SkillName | @question.ReferenceName | @question.TopicName
                                     </small>
                                 </div>
-
                             </div>
-                         </div>
-                    }                    
-                    @* <!-- Phân trang --> *@
-                    @* <nav aria-label="Question pagination"> *@
-                    @*     <ul class="pagination justify-content-center"> *@
-                    @*         @if (Model.Pagination.Page > 1) *@
-                    @*         { *@
-                    @*             <li class="page-item"> *@
-                    @*                 <a class="page-link" href="?page=@(Model.Pagination.Page - 1)">Previous</a> *@
-                    @*             </li> *@
-                    @*         } *@
-
-                    @*         <!-- Trang hiện tại --> *@
-                    @*         <li class="page-item active"> *@
-                    @*             <span class="page-link">@Model.Pagination.Page</span> *@
-                    @*         </li> *@
-
-                    @*         @if (Model.Pagination.Page < Model.Pagination.TotalPages) *@
-                    @*         { *@
-                    @*             <li class="page-item"> *@
-                    @*                 <a class="page-link" href="?page=@(Model.Pagination.Page + 1)">Next</a> *@
-                    @*             </li> *@
-                    @*         } *@
-                    @*     </ul> *@
-                    @* </nav> *@
+                        </div>
+                    }
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-   
+
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             // Initialize dropdowns
             $('.dropdown-toggle').dropdown();
-            
+
             // Add active class to selected dropdown items
             $('.dropdown-item').on('click', function() {
                 const selected = $(this).text();

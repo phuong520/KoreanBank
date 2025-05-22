@@ -1,4 +1,5 @@
 ﻿using KEB.Application.DTOs.AnswerDTO;
+using KEB.Domain.Entities;
 using KEB.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -18,13 +19,13 @@ namespace KEB.Application.DTOs.QuestionAddDTO
         public Guid RequestedUserId { get; set; }
         public Difficulty Difficulty { get; set; }
         public string? QuestionContent { get; set; }
-        
-        //public string AnswersJson { get; set; } = string.Empty;
-        public List<AddAnswerDTO> Answers { get; set; } = new();
-        public IFormFile? AttachmentFile { get; set; }
+        public List<AddAnswerDTO>? Answers { get; set; } = new();
+        public IFormFile? AttachmentFileImage { get; set; }
+        public IFormFile? AttachmentFileAudio { get; set; }
         public int? AttachmentDuration { get; set; } = 0;
         public bool IsMultipleChoice { get; set; } = true;
         public Guid? TaskId { get; set; }
+        public Skill Skill { get; set; }
 
     }
 

@@ -17,7 +17,8 @@ namespace KEB.Infrastructure.Configurations
             builder.HasKey(pd => new { pd.PaperId, pd.QuestionId });
             builder.HasOne(x=>x.Paper).WithMany(r=>r.PaperDetails).HasForeignKey(x=>x.PaperId);
             builder.HasOne(x=>x.Question).WithMany(r=>r.PaperDetails).HasForeignKey(x=>x.QuestionId).OnDelete(DeleteBehavior.NoAction);
-            builder.HasOne(x => x.Attachment).WithOne(r => r.PaperDetail).HasForeignKey<PaperDetail>(x => x.AttachmentId).OnDelete(DeleteBehavior.NoAction);
+            builder.HasOne(x => x.AttachmentImage).WithOne(f => f.PaperDetailImage).HasForeignKey<PaperDetail>(x => x.AttachmentImageId).OnDelete(DeleteBehavior.NoAction);
+            builder.HasOne(x => x.AttachmentAudio).WithOne(aud => aud.PaperDetailAudio).HasForeignKey<PaperDetail>(x => x.AttachmentAudioId).OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -48,7 +48,16 @@ namespace KEB.WebAPI.Controllers
            // await _unitOfService.FileTemplateService.UploadExcelTemplate();
             return Ok(response);
         }
-
+        [HttpGet("by-skill/{skill}")]
+        public async Task<IActionResult> GetBySkill(Skill skill)
+        {
+            var response = await _unitOfService.QuestionTypeService.GetQuestionTypesBySkillAsync(skill);
+            if (response.IsSuccess)
+            {
+                return Ok(response);
+            }
+            return BadRequest(response);
+        }
         //[HttpDelete]
         //[Route("delete-questiontype")]
         //[Authorize(Roles = "R2")]

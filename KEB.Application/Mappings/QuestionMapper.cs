@@ -19,14 +19,16 @@ namespace KEB.Application.Mappings
         public QuestionMapper()
         {
             CreateMap<(object? AddedQuestion, List<string> Message), ImportQuestionResultDTO>()
-        .ForMember(dest => dest.Question,
-        opt => opt.MapFrom(src => src.AddedQuestion))
-        .ForMember(dest => dest.Messages,
-        opt => opt.MapFrom(src => src.Message));
+                .ForMember(dest => dest.Question,
+                opt => opt.MapFrom(src => src.AddedQuestion))
+                .ForMember(dest => dest.Messages,
+                opt => opt.MapFrom(src => src.Message));
 
             CreateMap<Question, QuestionDisplayDto>()
-                .ForMember(dest => dest.AttachmentUrl,
-                opt => opt.MapFrom(src => src.AttachmentFile))
+                .ForMember(dest => dest.AttachmentImage,
+                opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileImage.FileData)))//
+                .ForMember(dest => dest.AttachmentAudio,
+                opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileAudio.FileData)))
                 .ForMember(dest => dest.QuestionTypeId,
                 opt => opt.MapFrom(src => src.QuestionType.Id))
                 .ForMember(dest => dest.QuestionTypeName,
@@ -58,8 +60,10 @@ namespace KEB.Application.Mappings
                      opt => opt.MapFrom(src => src.QuestionTypeId))
                  .ForMember(dest => dest.QuestionTypeName,
                      opt => opt.MapFrom(src => src.QuestionType.TypeName))
-                 .ForMember(dest => dest.AttachmentUrl,
-                      opt => opt.Ignore())
+                 .ForMember(dest => dest.AttachmentImage,
+                      opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileImage.FileData)))//
+                 .ForMember(dest => dest.AttachmentAudio,
+                      opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileAudio.FileData)))//
                  .ForMember(dest => dest.SkillName,
                      opt => opt.MapFrom(src => src.QuestionType.Skill.ToString())) // Đảm bảo Skill có thể chuyển thành chuỗi
                  .ForMember(dest => dest.Status,
@@ -85,14 +89,14 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.QuestionTypeId, opt => opt.MapFrom(src => src.QuestionTypeId))
                 .ForMember(dest => dest.Difficulty, opt => opt.MapFrom(src => src.Difficulty))
                 .ForMember(dest => dest.QuestionContent, opt => opt.MapFrom(src => src.QuestionContent))
-               // .ForMember(dest => dest.Answers, opt => opt.Ignore())
-                .ForMember(dest => dest.Answers, opt => opt.MapFrom(src=> src.Answers))
+                .ForMember(dest => dest.Answers, opt => opt.Ignore())
+                //.ForMember(dest => dest.Answers, opt => opt.MapFrom(src=> src.Answers))
                 .ForMember(dest => dest.AttachmentDuration, opt => opt.MapFrom(src => src.AttachmentDuration))
-                .ForMember(dest => dest.AttachmentFile, opt => opt.Ignore())
+                .ForMember(dest => dest.AttachmentFileImage, opt => opt.Ignore())
+                .ForMember(dest => dest.AttachmentFileAudio, opt => opt.Ignore())
                 .ForMember(dest => dest.IsMultipleChoice, opt => opt.MapFrom(src => src.IsMultipleChoice))
-               // .ForMember(dest => dest.LogId, opt => opt.MapFrom(src => src.LogId))
                 .ForMember(dest => dest.TaskId, opt => opt.MapFrom(src => src.TaskId))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => QuestionStatus.Pending));
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => QuestionStatus.Ok));
 
             CreateMap<AddAnswerDTO, Answer>();
 

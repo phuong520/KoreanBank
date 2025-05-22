@@ -17,7 +17,9 @@ namespace KEB.Domain.Entities
         public float Mark {  get; set; }
         public int OrderInPaper { get; set; }
         [NotMapped]
-        public ImageFile? Attachment {  get; set; }
-        public Guid? AttachmentId { get; set; }
+        public ImageFile? AttachmentImage {  get; set; }
+        public Guid? AttachmentImageId { get; set; }
+        public ImageFile? AttachmentAudio { get; set; }
+        public Guid? AttachmentAudioId { get; set; }
     }
 }

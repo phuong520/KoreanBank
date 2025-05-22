@@ -27,7 +27,7 @@ namespace KEB.Infrastructure.Repository.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
-
+  
         public async Task<QuestionType?> GetQuestionTypeHasNameAndSkill(string name, Skill skill)
         {
             return await _context.QuestionTypes

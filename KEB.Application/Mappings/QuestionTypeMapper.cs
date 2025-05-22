@@ -23,7 +23,7 @@ namespace KEB.Application.Mappings
                 .ForMember(dest => dest.QuestionTypeName, opt => opt.MapFrom(src => src.TypeName))
                 .ForMember(dest => dest.QuestionTypeContent, opt => opt.MapFrom(src => src.TypeContent))
                 .ForMember(dest => dest.Skill, opt => opt.MapFrom(src => src.Skill))
-                .ForMember(dest => dest.NumOfQuestions, opt => opt.MapFrom(src => src.Questions.Count(x => x.Status == Domain.Enums.QuestionStatus.Pending)));
+                .ForMember(dest => dest.NumOfQuestions, opt => opt.MapFrom(src => src.Questions.Count(x => x.Status == Domain.Enums.QuestionStatus.Ok)));
         }
     }
 }

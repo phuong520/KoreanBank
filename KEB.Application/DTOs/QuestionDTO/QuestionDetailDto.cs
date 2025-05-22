@@ -29,7 +29,8 @@ namespace KEB.Application.DTOs.QuestionDTO
         public string? Status { get; set; }
 
         public IFormFile? AttachmentUrl { get; set; }
-
+        public string? AttachmentImage { get; set; }
+        public string? AttachmentAudio { get; set; }
         public IEnumerable<AddAnswerDTO> Answers { get; set; }
 
         public ShortUserDTO? CreatedUser { get; set; }

@@ -4,6 +4,7 @@
     ViewBag.Title = "Nhập Câu Hỏi";
     Layout = "_Layout";
     var difficulties = Enum.GetValues(typeof(Difficulty)).Cast<Difficulty>().ToList();
+    var skills = Enum.GetValues(typeof(Skill)).Cast<Skill>().ToList(); // Assuming Skill is the enum with Nghe, Đọc, Nói, Viết
 }
 
 <div class="container mt-4">
@@ -16,120 +17,144 @@
         </div>
     }
 
-    <form asp-action="Create" method="post" enctype="multipart/form-data">
-        <div class="row">
-            <div class="col-md-6">
-                <!-- Cấp độ -->
-                <div class="form-group mb-3">
-                    <label class="form-label">Trình độ</label>
-                    <select class="form-select" asp-items="ViewBag.Levels" id="levelSelect">
-                        <option value="">-- Chọn trình độ --</option>
-                    </select>
-                    <span asp-validation-for="LevelDetailId" class="text-danger"></span>
-                </div>
+    <!-- Skill Tabs -->
+    <ul class="nav nav-tabs mb-3" id="skillTabs" role="tablist">
+        @foreach (var skill in skills)
+        {
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(skill == skills.First() ? "active" : "")" id="@skill-tab" data-bs-toggle="tab" data-bs-target="#skill-content" type="button" role="tab" aria-controls="skill-content" aria-selected="@(skill == skills.First() ? "true" : "false")" onclick="updateSkill('@skill')">@skill</button>
+            </li>
+        }
+    </ul>
 
-                <!-- Nguồn tham khảo -->
-                <div class="form-group mb-3">
-                    <label asp-for="ReferenceId" class="form-label">Nguồn Tham Khảo</label>
-                    <select asp-for="ReferenceId" class="form-select" asp-items="ViewBag.References">
-                        <option value="">-- Chọn nguồn --</option>
-                    </select>
-                    <span asp-validation-for="ReferenceId" class="text-danger"></span>
-                </div>
+    <form asp-action="Create" method="post" enctype="multipart/form-data" id="questionForm">
+        <div class="tab-content" id="skill-content">
+            <div class="tab-pane fade show active" id="skill-content" role="tabpanel" aria-labelledby="skill-tab">
+                <div class="row">
+                    <div class="col-md-6">
+                        <!-- Skill Hidden Input -->
+                        <input type="hidden" asp-for="Skill" id="Skill" />
 
-                <!-- Nhiệm vụ -->
-                <div class="form-group mb-3">
-                    <label asp-for="TaskId" class="form-label">Nhiệm Vụ</label>
-                    <select asp-for="TaskId" class="form-select" asp-items="ViewBag.Tasks">
-                        <option value="">-- Chọn nhiệm vụ --</option>
-                    </select>
-                </div>
-
-                <!-- Câu hỏi -->
-                <div class="form-group mb-3">
-                    <label asp-for="QuestionContent" class="form-label">Câu hỏi</label>
-                    <textarea asp-for="QuestionContent" class="form-control" rows="4"></textarea>
-                    <span asp-validation-for="QuestionContent" class="text-danger"></span>
-                </div>
-
-                <!-- Đáp án trắc nghiệm -->
-                <div id="multipleChoiceAnswers" class="form-group mb-3">
-                    <label class="form-label">Đáp án trắc nghiệm:</label>
-                    <div id="answers">
-                        <div class="form-group mb-2 d-flex align-items-center">
-                            <input name="Answers[0].Content" class="form-control me-2" placeholder="Đáp án 1" required />
-                            <input type="checkbox" name="Answers[0].IsCorrect" class="form-check-input" value="true" />
-                            <label class="ms-1">Đúng</label>
+                        <!-- Cấp độ -->
+                        <div class="form-group mb-3">
+                            <label class="form-label">Trình độ</label>
+                            <select class="form-select" asp-items="ViewBag.Levels" id="levelSelect">
+                                <option value="">-- Chọn trình độ --</option>
+                            </select>
+                            <span asp-validation-for="LevelDetailId" class="text-danger"></span>
                         </div>
-                        <div class="form-group mb-2 d-flex align-items-center">
-                            <input name="Answers[1].Content" class="form-control me-2" placeholder="Đáp án 2" required />
-                            <input type="checkbox" name="Answers[1].IsCorrect" class="form-check-input" value="true" />
-                            <label class="ms-1">Đúng</label>
+
+                        <!-- Nguồn tham khảo -->
+                        <div class="form-group mb-3">
+                            <label asp-for="ReferenceId" class="form-label">Nguồn Tham Khảo</label>
+                            <select asp-for="ReferenceId" class="form-select" asp-items="ViewBag.References">
+                                <option value="">-- Chọn nguồn --</option>
+                            </select>
+                            <span asp-validation-for="ReferenceId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Nhiệm vụ -->
+                        <div class="form-group mb-3">
+                            <label asp-for="TaskId" class="form-label">Nhiệm Vụ</label>
+                            <select asp-for="TaskId" class="form-select" asp-items="ViewBag.Tasks">
+                                <option value="">-- Chọn nhiệm vụ --</option>
+                            </select>
+                        </div>
+
+                        <!-- Câu hỏi -->
+                        <div class="form-group mb-3">
+                            <label asp-for="QuestionContent" class="form-label">Câu hỏi</label>
+                            <textarea asp-for="QuestionContent" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="QuestionContent" class="text-danger"></span>
+                        </div>
+
+                        <!-- Đáp án trắc nghiệm -->
+                        <div id="multipleChoiceAnswers" class="form-group mb-3">
+                            <label class="form-label">Đáp án trắc nghiệm:</label>
+                            <div id="answers">
+                                <div class="form-group mb-2 d-flex align-items-center">
+                                    <input name="Answers[0].Content" class="form-control me-2" placeholder="Đáp án 1" required />
+                                    <input type="checkbox" name="Answers[0].IsCorrect" class="form-check-input" value="true" />
+                                    <label class="ms-1">Đúng</label>
+                                </div>
+                                <div class="form-group mb-2 d-flex align-items-center">
+                                    <input name="Answers[1].Content" class="form-control me-2" placeholder="Đáp án 2" required />
+                                    <input type="checkbox" name="Answers[1].IsCorrect" class="form-check-input" value="true" />
+                                    <label class="ms-1">Đúng</label>
+                                </div>
+                            </div>
+                            <button type="button" id="addAnswerBtn" onclick="addAnswer()" class="btn btn-sm btn-success mt-2">Thêm Đáp Án</button>
+                        </div>
+
+                        <!-- Đáp án tự luận -->
+                        <div id="essayAnswer" class="form-group mb-3" style="display: none;">
+                            <label class="form-label">Đáp án tự luận:</label>
+                            <textarea name="Answers[0].Content" class="form-control" rows="4" placeholder="Nhập đáp án mẫu cho câu hỏi tự luận"></textarea>
+                            <input type="hidden" name="Answers[0].IsCorrect" value="true" />
                         </div>
                     </div>
-                    <button type="button" id="addAnswerBtn" onclick="addAnswer()" class="btn btn-sm btn-success mt-2">Thêm Đáp Án</button>
+
+                    <div class="col-md-6">
+                        <!-- Dạng câu hỏi -->
+                        <div class="form-group mb-3">
+                            <label asp-for="QuestionTypeId" class="form-label">Dạng câu hỏi</label>
+                            <select asp-for="QuestionTypeId" class="form-select" asp-items="ViewBag.QuestionTypes">
+                                <option value="">-- Chọn dạng câu hỏi --</option>
+                            </select>
+                            <span asp-validation-for="QuestionTypeId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Chủ đề -->
+                        <div class="form-group mb-3">
+                            <label asp-for="LevelDetailId" class="form-label">Chủ đề</label>
+                            <select asp-for="LevelDetailId" class="form-select" id="topicSelect" name="LevelDetailId">
+                                <option value="">-- Chọn chủ đề --</option>
+                            </select>
+                            <span asp-validation-for="LevelDetailId" class="text-danger"></span>
+                        </div>
+
+                        <!-- Mức độ -->
+                        <div class="form-group mb-3">
+                            <label asp-for="Difficulty" class="form-label">Mức độ</label>
+                            <select asp-for="Difficulty" class="form-select">
+                                @foreach (var diff in difficulties)
+                                {
+                                    <option value="@((int)diff)">@diff</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Difficulty" class="text-danger"></span>
+                        </div>
+
+                        <!-- Loại câu hỏi -->
+                        <div class="form-group mb-3">
+                            <label asp-for="IsMultipleChoice" class="form-label">Loại câu hỏi</label>
+                            <select asp-for="IsMultipleChoice" id="IsMultipleChoice" class="form-select" onchange="toggleAnswerType()">
+                                <option value="true">Trắc nghiệm</option>
+                                <option value="false">Tự luận</option>
+                            </select>
+                        </div>
+
+                        <!-- File Uploads -->
+                        <div id="fileUploads">
+                            <div id="audioUpload" class="form-group mb-3" style="display: none;">
+                                <label asp-for="AttachmentFileAudio" class="form-label">File Âm Thanh</label>
+                                <input asp-for="AttachmentFileAudio" type="file" class="form-control" accept="audio/*" />
+                                <span asp-validation-for="AttachmentFileAudio" class="text-danger"></span>
+                            </div>
+                            <div id="imageUpload" class="form-group mb-3" style="display: none;">
+                                <label asp-for="AttachmentFileImage" class="form-label">File Ảnh</label>
+                                <input asp-for="AttachmentFileImage" type="file" class="form-control" accept="image/*" />
+                                <span asp-validation-for="AttachmentFileImage" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Đáp án tự luận -->
-                <div id="essayAnswer" class="form-group mb-3" style="display: none;">
-                    <label class="form-label">Đáp án tự luận:</label>
-                    <textarea name="Answers[0].Content" class="form-control" rows="4" placeholder="Nhập đáp án mẫu cho câu hỏi tự luận"></textarea>
-                    <input type="hidden" name="Answers[0].IsCorrect" value="true" />
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">Lưu câu hỏi</button>
+                    <a asp-action="Index" class="btn btn-secondary">Hủy</a>
                 </div>
             </div>
-
-            <div class="col-md-6">
-                <!-- Dạng câu hỏi -->
-                <div class="form-group mb-3">
-                    <label asp-for="QuestionTypeId" class="form-label">Dạng câu hỏi</label>
-                    <select asp-for="QuestionTypeId" class="form-select" asp-items="ViewBag.QuestionTypes">
-                        <option value="">-- Chọn dạng câu hỏi --</option>
-                    </select>
-                    <span asp-validation-for="QuestionTypeId" class="text-danger"></span>
-                </div>
-
-                <!-- topic -->
-                <div class="form-group mb-3">
-                    <label asp-for="LevelDetailId" class="form-label">Chủ đề</label>
-                    <select asp-for="LevelDetailId" class="form-select" id="topicSelect" name="LevelDetailId">
-                        <option value="">-- Chọn chủ đề --</option>
-                    </select>
-                    <span asp-validation-for="LevelDetailId" class="text-danger"></span>
-                </div>
-
-                <!-- Mức độ -->
-                <div class="form-group mb-3">
-                    <label asp-for="Difficulty" class="form-label">Mức độ</label>
-                    <select asp-for="Difficulty" class="form-select">
-                        @foreach (var diff in difficulties)
-                        {
-                            <option value="@((int)diff)">@diff</option>
-                        }
-                    </select>
-                    <span asp-validation-for="Difficulty" class="text-danger"></span>
-                </div>
-
-                <!-- Loại câu hỏi -->
-                <div class="form-group mb-3">
-                    <label asp-for="IsMultipleChoice" class="form-label">Loại câu hỏi</label>
-                    <select asp-for="IsMultipleChoice" id="IsMultipleChoice" class="form-select" onchange="toggleAnswerType()">
-                        <option value="true">Trắc nghiệm</option>
-                        <option value="false">Tự luận</option>
-                    </select>
-                </div>
-
-                <!-- Upload File -->
-                <div class="form-group mb-3">
-                    <label asp-for="AttachmentFile" class="form-label">File Âm Thanh</label>
-                    <input asp-for="AttachmentFile" type="file" class="form-control" accept="audio/*" />
-                    <span asp-validation-for="AttachmentFile" class="text-danger"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group mt-4">
-            <button type="submit" class="btn btn-primary">Lưu câu hỏi</button>
-            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
         </div>
     </form>
 </div>
@@ -143,7 +168,7 @@
             const div = document.createElement('div');
             div.classList.add('form-group', 'mb-2', 'd-flex', 'align-items-center');
             div.innerHTML = `
-                <input name="Answers[${answerIndex}].Content" class="form-control me-2" placeholder="Đáp án ${answerIndex + 1}"  />
+                <input name="Answers[${answerIndex}].Content" class="form-control me-2" placeholder="Đáp án ${answerIndex + 1}" />
                 <input type="checkbox" name="Answers[${answerIndex}].IsCorrect" class="form-check-input" value="true" />
                 <label class="ms-1">Đúng</label>
             `;
@@ -155,59 +180,126 @@
             const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
             const multipleChoiceContainer = document.getElementById('multipleChoiceAnswers');
             const essayContainer = document.getElementById('essayAnswer');
+            const currentSkill = document.getElementById('Skill').value;
 
-            if (isMultipleChoice) {
-                // Hiển thị phần trắc nghiệm, ẩn phần tự luận
-                multipleChoiceContainer.style.display = 'block';
-                essayContainer.style.display = 'none';
-
-                // Bỏ thuộc tính required cho textarea của câu hỏi tự luận
-                const essayTextarea = essayContainer.querySelector('textarea');
-                if (essayTextarea) {
-                    essayTextarea.removeAttribute('required');
-                }
-
-                // Kích hoạt required cho các trường đáp án trắc nghiệm
-                const multipleChoiceInputs = multipleChoiceContainer.querySelectorAll('input[name$="].Content"]');
-                multipleChoiceInputs.forEach(input => {
-                    input.setAttribute('required', 'required');
-                });
-            } else {
-                // Hiển thị phần tự luận, ẩn phần trắc nghiệm
+            // For Nói and Viết, default to essay (tự luận)
+            if (currentSkill === 'Nói' || currentSkill === 'Viết') {
+                document.getElementById('IsMultipleChoice').value = 'false';
                 multipleChoiceContainer.style.display = 'none';
                 essayContainer.style.display = 'block';
-
-                // Thêm thuộc tính required cho textarea của câu hỏi tự luận
+                const essayTextarea = essayContainer.querySelector('textarea');
+                if (essayTextarea) essayTextarea.setAttribute('required', 'required');
+                const multipleChoiceInputs = multipleChoiceContainer.querySelectorAll('input[name$="].Content"]');
+                multipleChoiceInputs.forEach(input => input.removeAttribute('required'));
+            } else {
+                multipleChoiceContainer.style.display = isMultipleChoice ? 'block' : 'none';
+                essayContainer.style.display = isMultipleChoice ? 'none' : 'block';
                 const essayTextarea = essayContainer.querySelector('textarea');
                 if (essayTextarea) {
-                    essayTextarea.setAttribute('required', 'required');
+                    if (isMultipleChoice) {
+                        essayTextarea.removeAttribute('required');
+                    } else {
+                        essayTextarea.setAttribute('required', 'required');
+                    }
                 }
-
-                // Bỏ required cho các trường đáp án trắc nghiệm
                 const multipleChoiceInputs = multipleChoiceContainer.querySelectorAll('input[name$="].Content"]');
                 multipleChoiceInputs.forEach(input => {
-                    input.removeAttribute('required');
+                    if (isMultipleChoice) {
+                        input.setAttribute('required', 'required');
+                    } else {
+                        input.removeAttribute('required');
+                    }
                 });
             }
         }
 
-        // Xử lý khi submit form
+        function updateSkill(skill) {
+            document.getElementById('Skill').value = skill;
+            const audioUpload = document.getElementById('audioUpload');
+            const imageUpload = document.getElementById('imageUpload');
+            const isMultipleChoiceSelect = document.getElementById('IsMultipleChoice');
+            const questionTypeSelect = document.getElementById('QuestionTypeId');
+
+            // Reset file inputs
+            document.getElementById('AttachmentFileAudio').value = '';
+            document.getElementById('AttachmentFileImage').value = '';
+
+            // Reset question type dropdown
+            questionTypeSelect.innerHTML = '<option value="">-- Đang tải dạng câu hỏi... --</option>';
+
+            // Fetch question types based on skill
+            fetch(`https://localhost:7101/api/questiontypes/by-skill/${skill}`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Không lấy được dữ liệu dạng câu hỏi");
+                return response.json();
+            })
+            .then(data => {
+                questionTypeSelect.innerHTML = '<option value="">-- Chọn dạng câu hỏi --</option>';
+                const questionTypes = data.result ?? data;
+                questionTypes.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id; // Assuming the API returns an object with `id` and `name`
+                    option.text = item.typeName; // Adjust based on your API response structure
+                    questionTypeSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Lỗi:", error);
+                questionTypeSelect.innerHTML = '<option value="">-- Không có dạng câu hỏi --</option>';
+            });
+
+            // Adjust UI based on skill
+            if (skill === 'Nghe') {
+                audioUpload.style.display = 'block';
+                imageUpload.style.display = 'block';
+                isMultipleChoiceSelect.disabled = false; // Allow both question types
+            } else if (skill === 'Đọc') {
+                audioUpload.style.display = 'none';
+                imageUpload.style.display = 'block';
+                isMultipleChoiceSelect.disabled = false; // Allow both question types
+            } else if (skill === 'Nói' || skill === 'Viết') {
+                audioUpload.style.display = 'none';
+                imageUpload.style.display = 'block';
+                isMultipleChoiceSelect.value = 'false'; // Default to tự luận
+                isMultipleChoiceSelect.disabled = true; // Lock to tự luận
+                toggleAnswerType();
+            }
+        }
+
         function validateAndSubmitForm(e) {
             const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
+            const skill = document.getElementById('Skill').value;
+            const questionType = document.getElementById('QuestionTypeId').value;
 
-            // Kiểm tra xem có ít nhất một đáp án đúng cho câu hỏi trắc nghiệm
-            if (isMultipleChoice) {
+            // Validate skill selection
+            if (!skill) {
+                alert('Vui lòng chọn một kỹ năng (Nghe, Đọc, Nói, Viết).');
+                e.preventDefault();
+                return false;
+            }
+
+            // Validate question type selection
+            if (!questionType) {
+                alert('Vui lòng chọn một dạng câu hỏi.');
+                e.preventDefault();
+                return false;
+            }
+
+            // Validate multiple choice answers
+            if (isMultipleChoice && skill !== 'Nói' && skill !== 'Viết') {
                 const correctAnswers = document.querySelectorAll('input[name$="].IsCorrect"]:checked');
                 if (correctAnswers.length === 0) {
-                    alert('Vui lòng chọn ít nhất một đáp án đúng');
+                    alert('Vui lòng chọn ít nhất một đáp án đúng cho câu hỏi trắc nghiệm.');
                     e.preventDefault();
                     return false;
                 }
             } else {
-                // Đảm bảo rằng đáp án tự luận không trống
                 const essayAnswer = document.querySelector('#essayAnswer textarea');
                 if (!essayAnswer.value.trim()) {
-                    alert('Vui lòng nhập đáp án mẫu cho câu hỏi tự luận');
+                    alert('Vui lòng nhập đáp án mẫu cho câu hỏi tự luận.');
                     e.preventDefault();
                     essayAnswer.focus();
                     return false;
@@ -218,17 +310,16 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Set default skill to first tab
+            updateSkill('@skills.First()');
             toggleAnswerType();
 
-            // Thêm sự kiện kiểm tra validate trước khi submit form
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', validateAndSubmitForm);
             }
         });
-    </script>
 
-    <script>
         document.getElementById('levelSelect').addEventListener('change', function () {
             const levelId = this.value;
             const topicSelect = document.getElementById('topicSelect');
@@ -238,18 +329,13 @@
                 topicSelect.innerHTML = '<option value="">-- Chọn chủ đề --</option>';
                 return;
             }
-            console.log(levelId);
+
             fetch(`/Question/GetTopic?levelId=${levelId}`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                }
+                headers: { "Content-Type": "application/json" }
             })
             .then(response => {
-                if (!response.ok) {
-                    console.log("Goi api that bai");
-                    throw new Error("Không lấy được dữ liệu");
-                }
+                if (!response.ok) throw new Error("Không lấy được dữ liệu");
                 return response.json();
             })
             .then(data => {
@@ -269,92 +355,6 @@
         });
     </script>
 
-    <!-- Script debug và xử lý form -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-
-            // Thêm id cho form nếu chưa có
-            if (!form.id) {
-                form.id = 'questionForm';
-            }
-
-            // Hàm để hiển thị các dữ liệu sẽ được gửi đi
-            function logFormData() {
-                console.group('Form Data Preview:');
-
-                // Log thông tin cơ bản
-                console.log('Question Type:', document.getElementById('IsMultipleChoice').value === 'true' ? 'Trắc nghiệm' : 'Tự luận');
-                console.log('Question Content:', document.querySelector('[name="QuestionContent"]').value);
-
-                // Log các đáp án
-                if (document.getElementById('IsMultipleChoice').value === 'true') {
-                    // Trắc nghiệm
-                    const answers = document.querySelectorAll('#multipleChoiceAnswers input[name$="].Content"]');
-                    const correctAnswers = document.querySelectorAll('#multipleChoiceAnswers input[name$="].IsCorrect"]:checked');
-
-                    console.log('Multiple Choice Answers:', Array.from(answers).map(a => a.value));
-                    console.log('Correct Answers Count:', correctAnswers.length);
-                } else {
-                    // Tự luận
-                    const essayAnswer = document.querySelector('#essayAnswer textarea').value;
-                    console.log('Essay Answer:', essayAnswer);
-                }
-
-                console.groupEnd();
-            }
-
-            // Xử lý form submit bằng AJAX nếu là câu hỏi tự luận
-            form.addEventListener('submit', function(e) {
-                // Log thông tin trước khi submit
-                console.log('Form submit triggered');
-                logFormData();
-
-                const isMultipleChoice = document.getElementById('IsMultipleChoice').value === 'true';
-                if (!isMultipleChoice) {
-                    // Đảm bảo đáp án tự luận có trong mảng Answers
-                    const essayAnswer = document.querySelector('#essayAnswer textarea');
-                    if (!essayAnswer.value.trim()) {
-                        e.preventDefault();
-                        alert('Vui lòng nhập đáp án mẫu cho câu hỏi tự luận');
-                        essayAnswer.focus();
-                        return false;
-                    }
-
-                    // Sử dụng AJAX để submit form với câu hỏi tự luận
-                    e.preventDefault();
-
-                    const formData = new FormData(form);
-
-                    // Thêm các trường ẩn để đảm bảo cấu trúc dữ liệu đúng
-                    if (!formData.has('Answers[1].Content')) {
-                        formData.append('Answers[1].Content', '');
-                        formData.append('Answers[1].IsCorrect', 'false');
-                    }
-
-                    fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Lỗi khi gửi form');
-                        }
-                        return response;
-                    })
-                    .then(data => {
-                        console.log('Form submitted successfully');
-                        // Chuyển hướng về trang danh sách hoặc hiển thị thông báo thành công
-                        window.location.href = '/Question/Index';
-                    })
-                    .catch(error => {
-                        console.error('Submit error:', error);
-                        alert('Có lỗi xảy ra khi lưu câu hỏi. Vui lòng thử lại.');
-                    });
-
-                    return false;
-                }
-            });
-        });
-    </script>
+    <!-- Bootstrap 5 JS for tabs -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 }

@@ -6,6 +6,8 @@ using KEB.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Security.Claims;
 
 namespace KEB.WebAPI.Controllers
 {
@@ -93,15 +95,43 @@ namespace KEB.WebAPI.Controllers
 
             return Ok(result);
         }
-        //[HttpPost]
-        //[Route("add-multiple-questions")]
-        //[Authorize(Roles = "R2,R3")]
-        //public async Task<IActionResult> AddMultipleQuestions([FromForm] ImportQuestionByWordRequest request)
-        //{
-        //    //var respone = await _unitOfService.QuestionComplexService
-        //    //        .UploadQuestionFromWord(request, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+        [HttpPost("upload-excel")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadExcel([FromForm] ImportQuestionFromExcelRequest request)
+        {
+            try
+            {
+                // Get RequestedUserId from claims
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var requestedUserId))
+                {
+                    return Unauthorized(new APIResponse<ImportQuestionResultDTO>
+                    {
+                        IsSuccess = false,
+                        StatusCode = HttpStatusCode.Unauthorized,
+                        Message = "Invalid user authentication."
+                    });
+                }
 
-        //    //return Ok(respone);
-        //}
+                request.RequestedUserId = requestedUserId;
+
+                // Get client IP address
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+
+                // Call service
+                var response = await _unitOfService.QuestionService.UploadQuestionFromExcel(request, ipAddress);
+
+                return StatusCode((int)response.StatusCode, response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, new APIResponse<ImportQuestionResultDTO>
+                {
+                    IsSuccess = false,
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    Message = $"Error processing request: {ex.Message}"
+                });
+            }
+        }
     }
 }

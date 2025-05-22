@@ -17,8 +17,7 @@ namespace KEB.Application.Mappings
         {
             CreateMap<References, ReferenceDisplayDto>()
                 .ForMember(dest => dest.NumOfQuestions,
-                opt => opt.MapFrom(src => src.Questions.Count(x => x.Status == QuestionStatus.Pending)))
-                //opt => opt.MapFrom(src => src.Questions.Count));
+                opt => opt.MapFrom(src => src.Questions.Count(x => x.Status == QuestionStatus.Ok)))
                 .ForMember(dest => dest.NumOfQuestions, opt => opt.Ignore());
 
             CreateMap<AddReferenceDto, References>()

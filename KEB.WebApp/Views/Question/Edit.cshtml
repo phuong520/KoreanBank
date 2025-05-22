@@ -1,0 +1,251 @@
+﻿@using KEB.Domain.Enums
+@model KEB.Application.DTOs.QuestionDTO.UpdateQuestionRequest
+@{
+    // var current = ViewBag.CurrentQuestion as KEB.Application.DTOs.QuestionDTO.QuestionDetailDto;
+    var current = ViewBag.CurrentQuestion ;
+    ViewData["Title"] = "Chỉnh sửa câu hỏi";
+}
+
+<div class="container mt-4">
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        @Html.HiddenFor(m => m.TargetObjectId)
+        @Html.HiddenFor(m => m.RequestedUserId)
+        @Html.HiddenFor(m => m.IpAddress)
+        <input type="hidden" asp-for="AnswersChanged" value="true" />
+        <input type="hidden" asp-for="AttachmentChanged" id="attachmentChanged" value="false" />
+
+        <div class="row">
+            <!-- Left column for question content and answers -->
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label for="NewQuestionContent" class="fw-bold">Câu hỏi:</label>
+                    <input asp-for="NewQuestionContent" class="form-control" value="@current?.QuestionContent" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="questionType" class="fw-bold">Loại câu hỏi:</label>
+                    <select id="questionType" class="form-select">
+                        <option value="multipleChoice" selected>Trắc nghiệm</option>
+                        <option value="essay">Tự luận</option>
+                    </select>
+                </div>
+                @{
+                    
+                    var answersList = current.Answers;
+                    
+                }
+
+                <!-- Đáp án trắc nghiệm -->
+                <div id="multipleChoiceAnswers" class="form-group mb-3">
+                    <label class="form-label fw-bold">Đáp án trắc nghiệm:</label>
+                    <div id="answers">
+                        @if (answersList != null)
+                        {
+                            @for (var i = 0; i < answersList.Count; i++)
+                            {
+                                var answer = answersList[i];
+                                <div class="form-group mb-2 d-flex align-items-center">
+                                    <input name="Answers[@i].Content" class="form-control me-2" value="@answer.Content" required />
+                                    <input type="checkbox" name="Answers[@i].IsCorrect" class="form-check-input" value="true" @(answer.IsCorrect ? "checked" : "") />
+                                    <label class="ms-1">Đúng</label>
+                                    @if (i > 1) // Allow removing extra answers but keep at least 2
+                                    {
+                                        <button type="button" class="btn btn-sm btn-danger ms-2 remove-answer"><i class="fas fa-times"></i></button>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Default answers if none exist -->
+                            <div class="form-group mb-2 d-flex align-items-center">
+                                <input name="Answers[0].Content" class="form-control me-2" required />
+                                <input type="checkbox" name="Answers[0].IsCorrect" class="form-check-input" value="true" checked />
+                                <label class="ms-1">Đúng</label>
+                            </div>
+                            <div class="form-group mb-2 d-flex align-items-center">
+                                <input name="Answers[1].Content" class="form-control me-2" value="중고 서점에서는 판매해 주일 이다." required />
+                                <input type="checkbox" name="Answers[1].IsCorrect" class="form-check-input" value="true" />
+                                <label class="ms-1">Đúng</label>
+                            </div>
+                        }
+                    </div>
+                    <button type="button" id="addAnswerBtn" class="btn btn-sm btn-success mt-2">Thêm Đáp Án</button>
+                </div>
+
+                <!-- Đáp án tự luận -->
+                <div id="essayAnswer" class="form-group mb-3" style="display: none;">
+                    <label class="form-label fw-bold">Đáp án tự luận:</label>
+                    <textarea name="Answers[0].Content" class="form-control" rows="4" placeholder="Nhập đáp án mẫu cho câu hỏi tự luận"></textarea>
+                    <input type="hidden" name="Answers[0].IsCorrect" value="true" />
+                </div>
+
+                <div class="form-group mt-4">
+                    <label for="NewAttachment" class="fw-bold">Tệp đính kèm:</label>
+                    <div class="border border-dashed p-4 text-center">
+                        <div class="d-flex flex-column align-items-center">
+                            <i class="fas fa-cloud-upload-alt fs-2 mb-2"></i>
+                            <p>Kéo hoặc Thả File</p>
+                            <p>Hoặc</p>
+                            <button type="button" class="btn btn-primary" id="chooseFileBtn">Chọn File</button>
+                            <input type="file" id="fileInput" name="NewAttachment" style="display: none;" />
+                        </div>
+                    </div>
+                    @if (current?.AttachmentUrl != null)
+                    {
+                        <div class="mt-2">
+                            <p><strong>File hiện tại:</strong>  @System.IO.Path.GetFileName(current.AttachmentUrl.FileName)</p>
+
+                            @{
+                                var lowerUrl = current.AttachmentUrl.FileName.ToLowerInvariant();
+
+                            }
+
+                            @if (lowerUrl.EndsWith(".jpg") || lowerUrl.EndsWith(".png") || lowerUrl.EndsWith(".jpeg"))
+                            {
+                                <img src="@current.AttachmentUrl" class="img-fluid mt-2" style="max-height: 150px;" />
+                            }
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <!-- Right column for metadata -->
+            <div class="col-md-6">
+                <div class="form-group row mb-3">
+                    <label class="col-4 fw-bold">Trình độ:</label>
+                    <div class="col-8">
+                        <input type="text" class="form-control" value="@current.Level" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-4 fw-bold">Kỹ năng:</label>
+                    <div class="col-8">
+                        <input type="text" class="form-control" value="Đọc" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-4 fw-bold">Dạng câu hỏi:</label>
+                    <div class="col-8">
+                        <input type="text" class="form-control" value="Nhìn hình ảnh và trả lời câu hỏi" readonly />
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-4 fw-bold">Mức độ:</label>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <select class="form-select" asp-for="NewDifficulty">
+                                <option value="0" selected="@(current.Difficulty == Difficulty.Dễ)">Dễ</option>
+                                <option value="1" selected="@(current.Difficulty == Difficulty.Vừa)">Trung bình</option>
+                                <option value="2" selected="@(current.Difficulty == Difficulty.Khó)">Khó</option>
+                            </select>
+                            <span class="input-group-text">
+                                <i class="fas fa-chevron-down"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group row mb-3">
+                    <label class="col-4 fw-bold">Nguồn tham khảo:</label>
+                    <div class="col-8">
+                        <div class="input-group">
+                            <select class="form-select" asp-for="NewReferenceId">
+                                <option value="">-- Chọn nguồn --</option>
+                                @foreach (var reference in ViewBag.References)
+                                {
+                                    <option value="@reference.Value" selected="@(reference.Value == current.ReferenceId.ToString())">@reference.Text</option>
+                                }
+                            </select>
+                            <span class="input-group-text">
+                                <i class="fas fa-chevron-down"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-5">
+                    <button type="button" class="btn btn-secondary me-2">Quay Lại</button>
+                    <button type="submit" class="btn btn-primary">Cập Nhật</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        $(document).ready(function() {
+            // File upload handling
+            $('#chooseFileBtn').click(function() {
+                $('#fileInput').click();
+            });
+
+            $('#fileInput').change(function() {
+                // Set the hidden field to indicate attachment changed
+                $('#attachmentChanged').val('true');
+
+                // Display selected filename if needed
+                const fileName = $(this).val().split('\\').pop();
+                if (fileName) {
+                    // Optional: show file name somewhere
+                    // $('#selectedFileName').text(fileName);
+                }
+            });
+
+            // Question type toggle
+            $('#questionType').change(function() {
+                const value = $(this).val();
+                if (value === 'multipleChoice') {
+                    $('#multipleChoiceAnswers').show();
+                    $('#essayAnswer').hide();
+                } else if (value === 'essay') {
+                    $('#multipleChoiceAnswers').hide();
+                    $('#essayAnswer').show();
+                }
+            });
+
+            // Add answer button
+            $('#addAnswerBtn').click(function() {
+                const answerCount = $('#answers > div').length;
+                const newAnswer = `
+                    <div class="form-group mb-2 d-flex align-items-center">
+                        <input name="Answers[${answerCount}].Content" class="form-control me-2" placeholder="Đáp án ${answerCount + 1}" required />
+                        <input type="checkbox" name="Answers[${answerCount}].IsCorrect" class="form-check-input" value="true" />
+                        <label class="ms-1">Đúng</label>
+                        <button type="button" class="btn btn-sm btn-danger ms-2 remove-answer"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+                $('#answers').append(newAnswer);
+            });
+
+            // Remove answer button (using event delegation)
+            $(document).on('click', '.remove-answer', function() {
+                $(this).closest('.form-group').remove();
+                // Update the AnswersChanged field
+                $('input[name="AnswersChanged"]').val('true');
+
+                // Reindex remaining answers if needed
+                reindexAnswers();
+            });
+
+            // Function to reindex answers after removal
+            function reindexAnswers() {
+                $('#answers > div').each(function(index) {
+                    $(this).find('input[name^="Answers["]').each(function() {
+                        const oldName = $(this).attr('name');
+                        const newName = oldName.replace(/Answers\[\d+\]/, `Answers[${index}]`);
+                        $(this).attr('name', newName);
+                    });
+                });
+            }
+        });
+    </script>
+}

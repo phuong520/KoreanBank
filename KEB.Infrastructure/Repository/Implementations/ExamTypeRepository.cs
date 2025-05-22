@@ -16,7 +16,7 @@ namespace KEB.Infrastructure.Repository.Implementations
         {
 
         }
-
+        
         public async Task DeleteExamType(ExamType examType, bool deleteConstraintOnly)
         {
             // Load các Constraint kèm ConstraintDetails
