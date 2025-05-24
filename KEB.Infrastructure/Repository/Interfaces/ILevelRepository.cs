@@ -12,6 +12,6 @@ namespace KEB.Infrastructure.Repository.Interfaces
         Task<Level?> GetLevelById(Guid id);
         Task<Level?> GetLevelByName(string name);
         Task<(bool IsSuccess, int RelatedQuestions, int RelatedExamTypes, int RelatedTopics)> DeleteLevel(Guid id);
-
+       
     }
 }

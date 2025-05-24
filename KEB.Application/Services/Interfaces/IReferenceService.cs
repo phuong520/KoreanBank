@@ -14,6 +14,7 @@ namespace KEB.Application.Services.Interfaces
         Task<APIResponse<ReferenceDisplayDto>> AddNewReference(AddReferenceDto request);
         Task<APIResponse<ReferenceDisplayDto>> UpdateReference(UpdateReference request);
         Task<APIResponse<ReferenceDisplayDto>> DeleteReference(Delete request);
+        Task<APIResponse<ReferenceDisplayDto>> GetReference(Guid referenceId);
 
     }
 }

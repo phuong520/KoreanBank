@@ -1,15 +1,113 @@
-﻿
+﻿@model KEB.Application.DTOs.ReferenceDTO.UpdateReference
 @{
-    Layout = null;
+    ViewData["Title"] = "Chỉnh sửa tài liệu tham khảo";
+}
+<head>
+    <style>
+        .form-control.bg-light {
+            background-color: #f8f9fa !important;
+            border: none;
+            padding: 0.7rem 1rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #024b94;
+            border-color: #024b94;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .btn-primary:hover {
+            background-color: #3b1674;
+            border-color: #024b94;
+        }
+    </style>
+</head>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-4">
+        <h5 class="mb-0">Chỉnh sửa tài liệu tham khảo</h5>
+    </div>
+
+    <form asp-action="Edit" asp-controller="References" method="post">
+        <input type="hidden" asp-for="TargetObjectId" />
+        <input type="hidden" asp-for="CreatedBy" value="@ViewBag.CurrentUserId" />
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="ReferenceName" class="form-label">Tên tài liệu</label>
+                    <input asp-for="ReferenceName" class="form-control bg-light border border-dark" required />
+                    <span asp-validation-for="ReferenceName" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="PublishedYear" class="form-label">Năm xuất bản</label>
+                    <div class="position-relative">
+                        <input asp-for="PublishedYear" class="form-control bg-light border border-dark" type="number" required />
+                        <button type="button" class="btn btn-sm position-absolute end-0 top-0 mt-1 me-2" style="background: none; border: none;">
+                            <i class="bi bi-calendar"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="PublishedYear" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="form-label">Mô tả</label>
+                    <input asp-for="Description" class="form-control bg-light border border-dark" />
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group mb-3">
+                    <label asp-for="ReferenceLink" class="form-label">Link nguồn trích dẫn</label>
+                    <input asp-for="ReferenceLink" class="form-control bg-light border border-dark" />
+                    <span asp-validation-for="ReferenceLink" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="ReferenceAuthor" class="form-label">Tác giả</label>
+                    <input asp-for="ReferenceAuthor" class="form-control bg-light border border-dark" />
+                    <span asp-validation-for="ReferenceAuthor" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        @if (ViewData.ModelState.Any(x => x.Key == ""))
+        {
+            <div class="alert alert-danger" role="alert">
+                @Html.ValidationSummary(false)
+            </div>
+        }
+
+        <div class="text-center">
+            <div class="d-inline-block">
+                <a asp-action="Index" asp-controller="References" class="btn btn-secondary px-4 me-2" style="min-width: 100px;">Hủy</a>
+                <button type="submit" class="btn btn-primary px-4" style="min-width: 100px; background-color: #024b94;">Cập nhật</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Edit</title>
-</head>
-<body>
-</body>
-</html>

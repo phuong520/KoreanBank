@@ -37,12 +37,16 @@
                             <td style="border-right: none;">@reference.Description</td>
                             <td style="border-right: none; text-align: center;">@reference.NumOfQuestions</td>
                              <td class="text-center">
-                                <a href="@Url.Action("Edit", "Level", new { id = reference.Id })" class="btn btn-sm btn-outline-primary">
+                                <a href="@Url.Action("Edit", "References", new { id = reference.Id })" class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="@Url.Action("Delete", "Level", new { id =  reference.Id })" class="btn btn-sm btn-outline-info">
-                                    <i class="bi bi-info-circle"></i>
-                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-reference-btn"
+                                        data-reference-id="@reference.Id"
+                                        data-reference-name="@reference.ReferenceName"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteReferenceModal">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                         index++;
@@ -71,6 +75,30 @@
         </nav>
     </div>
 </div>
+<!-- Modal Xóa Tài Liệu -->
+<div class="modal fade" id="deleteReferenceModal" tabindex="-1" aria-labelledby="deleteReferenceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteReferenceModalLabel">Xác nhận xóa tài liệu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa tài liệu "<span id="deleteReferenceName"></span>"?</p>
+                <p class="text-danger">Lưu ý: Thao tác này không thể hoàn tác!</p>
+                <form id="deleteReferenceForm">
+                    <input type="hidden" id="deleteReferenceId" name="TargetObjectId">
+                    <input type="hidden" id="deleteRequestedUserId" name="RequestedUserId" value="@ViewBag.CurrentUserId">
+                    <input type="hidden" name="HardDelete" value="true">
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script>
         $(document).ready(function() {
@@ -81,5 +109,59 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
+             // Xử lý khi nhấn nút xóa
+            $(document).on("click", ".delete-reference-btn", function() {
+                let referenceId = $(this).data("reference-id");
+                let referenceName = $(this).data("reference-name");
+                $("#deleteReferenceId").val(referenceId);
+                $("#deleteReferenceName").text(referenceName);
+            });
+            // Xử lý khi nhấn nút xóa
+            $(document).on("click", ".delete-reference-btn", function() {
+                let referenceId = $(this).data("reference-id");
+                let referenceName = $(this).data("reference-name");
+                $("#deleteReferenceId").val(referenceId);
+                $("#deleteReferenceName").text(referenceName);
+            });
+
+            // Xử lý form xóa
+            $("#deleteReferenceForm").on("submit", function(e) {
+                e.preventDefault();
+
+                let referenceId = $("#deleteReferenceId").val();
+                let requestedUserId = $("#deleteRequestedUserId").val();
+
+                if (!referenceId || !requestedUserId) {
+                    alert("Dữ liệu không hợp lệ.");
+                    return;
+                }
+
+                let requestData = {
+                    TargetObjectId: referenceId,
+                    RequestedUserId: requestedUserId,
+                    HardDelete: true
+                };
+
+                $.ajax({
+                    url: 'https://localhost:7101/api/References/delete-reference',
+                    type: "DELETE",
+                    contentType: "application/json",
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        if (res.isSuccess) {
+                            alert(res.message || "Xóa tài liệu thành công!");
+                            $("#deleteReferenceModal").modal('hide');
+                            location.reload();
+                        } else {
+                            alert(res.message || "Lỗi khi xóa tài liệu.");
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = xhr.responseJSON?.message || "Lỗi khi xóa tài liệu.";
+                        alert(errorMessage);
+                    }
+                });
+            });
+        });
     </script>
 }

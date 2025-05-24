@@ -312,8 +312,9 @@ namespace KEB.Application.Services.Implementations
             }
             try
             {
+                await _unitOfWork.BeginTransactionAsync();
                 targetLevel.LevelName = request.NewLevelName;
-                //await _unitOfWork.Levels.UpdateAsync(targetLevel);
+                await _unitOfWork.Levels.UpdateWithNoCommitAsync(targetLevel);
                 await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
                 {
                     ActionName = string.Format(AccessLogConstant.UPDATE_ACTION, "trình độ"),

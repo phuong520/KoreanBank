@@ -81,6 +81,7 @@
                             <td style="border-right: none;">@level.LevelName</td>
                             <td style="border-right: none;">@level.NumOfRelatedTopics</td>
                             <td style="border-right: none;">@level.NumOfQuestions.NumOfListeningQuestions</td>
+                            <td style="border-right: none">@level.NumOfQuestions.NumOfSpeakingQuestions</td>
                             <td style="border-right: none;">@level.NumOfQuestions.NumOfReadingQuestions</td>
                             <td style="border-right: none;">@level.NumOfQuestions.NumOfWritingQuestions</td>
                             <td class="text-center">
@@ -311,7 +312,7 @@
 
                 $.ajax({
                     url: 'https://localhost:7101/api/Levels/rename-level',
-                    type: "POST",
+                    type: "PUT",
                     contentType: "application/json",
                     data: JSON.stringify(requestData),
                     success: function (res) {
@@ -334,21 +335,22 @@
                 let userId = $("#deleteRequestedUserId").val();
 
                 // Lấy IP address của người dùng (hoặc để trống nếu không có)
-                let ipAddress = "";
+                let ipAddress = $("#deleteIpAddress").val();
+                let hardDelete = $("#deleteHardDelete").val() === "true";
 
                 // Tạo đối tượng request gửi đi
                 let requestData = {
                     RequestedUserId: userId,
                     TargetObjectId: targetId,
                     IpAddress: ipAddress,
-                    HardDelete: true
+                    HardDelete: hardDelete
                 };
 
                 console.log("Sending delete request:", requestData);
 
                 $.ajax({
                     url: 'https://localhost:7101/api/Levels/delete-level',
-                    type: "POST",
+                    type: "DELETE",
                     contentType: "application/json",
                     data: JSON.stringify(requestData),
                     success: function (res) {
@@ -377,14 +379,17 @@
             $.ajax({
                 url: `https://localhost:7101/api/Levels/get-level-has-id-${levelId}`,
                 type: "GET",
-                success: function (data) {
-                    // Điền dữ liệu vào form
-                    $("#editLevelId").val(data.levelId);
-                    $("#editLevelName").val(data.levelName);
-
-                    // Ẩn loading và hiện form
-                    $("#editLevelLoading").hide();
-                    $("#editLevelForm").show();
+                success: function (res) {
+                    if (res.isSuccess && res.result && res.result.length > 0) {
+                        let level = res.result[0];
+                        $("#editLevelId").val(level.levelId);
+                        $("#editLevelName").val(level.levelName);
+                        $("#editLevelLoading").hide();
+                        $("#editLevelForm").show();
+                    } else {
+                        alert(res.message || "Không tìm thấy cấp độ.");
+                        $("#editLevelModal").modal('hide');
+                    }
                 },
                 error: function (xhr, status, error) {
                     console.error("Ajax error:", xhr, status, error);

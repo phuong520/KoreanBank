@@ -31,7 +31,7 @@ namespace KEB.Infrastructure.Repository.Implementations
                 .CountAsync(cd => cd.TopicId == topic.Id);
 
             // Nếu có ràng buộc, không cho xóa
-            if (relatedQuestions > 0 || relatedLevels > 0 || relatedConstraints > 0)
+            if (relatedQuestions > 0 ||relatedConstraints > 0)
             {
                 return (false, relatedQuestions, relatedLevels, relatedConstraints);
             }

@@ -103,9 +103,6 @@
                                         data-bs-target="#deleteTopicModal">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                                <a href="@Url.Action("Details", "Topics", new { id = topic.TopicId })" class="btn btn-sm btn-outline-info">
-                                    <i class="bi bi-info-circle"></i>
-                                </a>
                             </td>
                         </tr>
                         index++;
@@ -321,7 +318,7 @@
                 };
 
                 $.ajax({
-                    url: '/api/topics/edit-topic', // API endpoint
+                    url: 'https://localhost:7101/api/Topics/edit-topic', // API endpoint
                     type: "PUT",
                     contentType: "application/json",
                     data: JSON.stringify(requestData),
@@ -366,7 +363,7 @@
                 };
 
                 $.ajax({
-                    url: '/api/topics/delete-topic', // API endpoint
+                    url: 'https://localhost:7101/api/Topics/delete-topic', // API endpoint
                     type: "DELETE",
                     contentType: "application/json",
                     data: JSON.stringify(requestData),

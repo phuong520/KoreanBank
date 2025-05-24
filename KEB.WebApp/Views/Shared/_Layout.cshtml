@@ -53,7 +53,7 @@
             text-decoration: underline;
         }
 
-        #examOptions, #questionBankOptions, #taskOptions {
+        #examOptions, #questionBankOptions, #taskOptions, #importOptions {
             display: none;
             margin-top: 10px;
             text-align: right;
@@ -161,6 +161,10 @@
             padding: 20px;
             cursor: default;
         }
+
+        .dropdown-menu {
+            z-index: 1001; 
+        }
     </style>
 </head>
 <body>
@@ -189,8 +193,8 @@
             </div>
 
             @* <a asp-controller="Question" asp-action="Create">Nhập Câu Hỏi</a> *@
-            <button class="btn btn-primary" style="background-color: #024b94;" onclick="toggleSection('taskOptions')">Nhập câu hỏi ▼</button>
-            <div id="taskOptions">
+            <button class="btn btn-primary" style="background-color: #024b94;" onclick="toggleSection('importOptions')">Nhập câu hỏi ▼</button>
+            <div id="importOptions">
                 <a asp-controller="Question" asp-action="Create" class="d-block text-decoration-none text-white mb-2">
                     Nhập thủ công
                 </a>
@@ -262,10 +266,10 @@
                 </div>
 
                 <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <button id="userDropdown" class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle"></i>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" asp-controller="Users" asp-action="Details">Tài Khoản</a></li>
                         <li><a class="dropdown-item" asp-controller="Commonweb" asp-action="ChangePassword">Đổi Mật Khẩu</a></li>
                         <li><hr class="dropdown-divider"></li>
@@ -291,21 +295,36 @@
     <script>
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
-            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            if (section) {
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            }
         }
-                 const notifHeader = document.getElementById('notification-header');
+
+        const notifHeader = document.getElementById('notification-header');
         const notifList = document.getElementById('notification-list');
 
-        notifHeader.addEventListener('click', () => {
-          notifList.classList.toggle('show');
-        });
+        if (notifHeader && notifList) {
+             // Click vào header để toggle notification
+             notifHeader.addEventListener('click', (e) => {
+                 e.stopPropagation();
+                 e.preventDefault();
 
-        // Click ra ngoài để đóng notification
-        document.addEventListener('click', (e) => {
-          if (!notifHeader.contains(e.target) && !notifList.contains(e.target)) {
-            notifList.classList.remove('show');
-          }
-        });
+                 // Đóng tất cả dropdown khác trước khi mở notification
+                 const allDropdowns = document.querySelectorAll('.dropdown-menu.show');
+                 allDropdowns.forEach(dropdown => {
+                     dropdown.classList.remove('show');
+                 });
+
+                 notifList.classList.toggle('show');
+             });
+
+            // Click ra ngoài để đóng notification
+            document.addEventListener('click', (e) => {
+                 if (!notifHeader.contains(e.target) && !notifList.contains(e.target)) {
+                    notifList.classList.remove('show');
+                }
+            });
+        }
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>

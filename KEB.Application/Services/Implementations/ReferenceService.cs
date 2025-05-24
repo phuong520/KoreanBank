@@ -94,7 +94,7 @@ namespace KEB.Application.Services.Implementations
             APIResponse<ReferenceDisplayDto> response = new() { IsSuccess = false };
 
             var requestedUser = await _unitOfWork.Users.GetUserById(request.RequestedUserId);
-            if (requestedUser == null || requestedUser.RoleId.ToString().Equals(LogicString.Role.AdminRoleId) || requestedUser.RoleId.ToString().Equals(LogicString.Role.LecturerRoleId))
+            if (requestedUser == null || requestedUser.RoleId.ToString().Equals(LogicString.Role.AdminRoleId) || requestedUser.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
             {
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
                 response.Message = AppMessages.NO_PERMISSION;
@@ -180,7 +180,7 @@ namespace KEB.Application.Services.Implementations
             APIResponse<ReferenceDisplayDto> response = new() { IsSuccess = false };
 
             var requestedUser = await _unitOfWork.Users.GetUserById(request.CreatedBy);
-            if (requestedUser == null || requestedUser.RoleId.ToString().Equals(LogicString.Role.AdminRoleId) || requestedUser.RoleId.ToString().Equals(LogicString.Role.LecturerRoleId))
+            if (requestedUser == null || requestedUser.RoleId.ToString().Equals(LogicString.Role.AdminRoleId) || requestedUser.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
             {
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
                 response.Message = AppMessages.NO_PERMISSION;
@@ -213,6 +213,7 @@ namespace KEB.Application.Services.Implementations
                 response.Message = AppMessages.REFERENCE_EXISTED;
                 return response;
             }
+            await _unitOfWork.BeginTransactionAsync();
             DateTime currentTime = DateTime.Now;
             string changeDetails = $"{requestedUser.UserName} đã chỉnh sửa ";
             bool changed = false;
@@ -252,7 +253,8 @@ namespace KEB.Application.Services.Implementations
                 targetRef.UpdatedDate = currentTime;
                 try
                 {
-                    await _unitOfWork.SaveChangesAsync();
+                    //await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.References.UpdateWithNoCommitAsync(targetRef);
                     await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
                     {
                         AccessTime = currentTime,
@@ -263,6 +265,7 @@ namespace KEB.Application.Services.Implementations
                         IsSuccess = true,
                         Details = changeDetails
                     });
+                    await _unitOfWork.CommitAsync();
                     response.Result.Add(_mapper.Map<ReferenceDisplayDto>(targetRef));
                     response.StatusCode = System.Net.HttpStatusCode.OK;
                     response.Message = AppMessages.REFERENCE_UPDATE_SUCCESS;
@@ -270,6 +273,7 @@ namespace KEB.Application.Services.Implementations
                 }
                 catch (Exception)
                 {
+                    await _unitOfWork.RollbackAsync();
                     response.StatusCode = System.Net.HttpStatusCode.Conflict;
                     response.Result = [];
                     response.Message = AppMessages.INTERNAL_SERVER_ERROR;
@@ -281,6 +285,21 @@ namespace KEB.Application.Services.Implementations
                 response.IsSuccess = true;
                 response.Message = AppMessages.NO_CHANGES_DETECTED;
             }
+            return response;
+        }
+        public async Task<APIResponse<ReferenceDisplayDto>> GetReference(Guid referenceId)
+        {
+            var response = new APIResponse<ReferenceDisplayDto> { IsSuccess = false };
+            var reference = await _unitOfWork.References.GetByIdAsync(referenceId);
+            if (reference == null)
+            {
+                response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
+                return response;
+            }
+            response.IsSuccess = true;
+            response.StatusCode = System.Net.HttpStatusCode.OK;
+            response.Result.Add(_mapper.Map<ReferenceDisplayDto>(reference));
             return response;
         }
     }

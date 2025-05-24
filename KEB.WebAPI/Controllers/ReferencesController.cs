@@ -51,5 +51,12 @@ namespace KEB.WebAPI.Controllers
             var response = await _unitOfService.ReferenceService.DeleteReference(request);
             return Ok(response);
         }
+        [HttpGet]
+        [Route("get-reference-details-id-{referenceId}")]
+        public async Task<IActionResult> GetReference(Guid referenceId)
+        {
+            var response = await _unitOfService.ReferenceService.GetReference(referenceId);
+            return Ok(response);
+        }
     }
 }

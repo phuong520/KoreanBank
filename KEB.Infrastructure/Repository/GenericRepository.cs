@@ -136,5 +136,12 @@ namespace KEB.Infrastructure.Repository
             query = query.Skip((pageNumber-1)*pageSize).Take(pageSize);
             return await query.ToListAsync();
         }
+
+        public Task UpdateWithNoCommitAsync(T entity)
+        {
+            _context.Set<T>().Attach(entity);
+            _context.Entry(entity).State = EntityState.Modified;
+            return Task.CompletedTask;
+        }
     }
 }

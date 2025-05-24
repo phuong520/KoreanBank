@@ -110,9 +110,69 @@ namespace KEB.Application.Services.Implementations
             }
         }
 
-        public Task<APIResponse<QuestionTypeDisplayDto>> DeleteQuestionType(QuestionTypeDeleteDto questionTypeDeleteDTO, string ipAddress)
+        public async Task<APIResponse<QuestionTypeDisplayDto>> DeleteQuestionType(QuestionTypeDeleteDto questionTypeDeleteDto, string ipAddress)
         {
-            throw new NotImplementedException();
+            APIResponse<QuestionTypeDisplayDto> response = new() { IsSuccess = false };
+
+            try
+            {
+                // Kiểm tra người dùng tồn tại
+                var requestedUser = await _unitOfWork.Users.GetAsync(x => x.Id == questionTypeDeleteDto.CreatedBy, "Role");
+                if (requestedUser == null || requestedUser.RoleId.ToString().Equals(LogicString.Role.AdminRoleId) || requestedUser.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                    response.Message = AppMessages.NO_PERMISSION;
+                    return response;
+                }
+
+                // Kiểm tra QuestionType tồn tại và không có câu hỏi liên quan
+                var targetQuestionType = await _unitOfWork.QuestionTypes.GetAsync(x => x.Id == questionTypeDeleteDto.QuestionTypeId, "Questions");
+                if (targetQuestionType == null)
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
+                    return response;
+                }
+
+                if (targetQuestionType.Questions.Any())
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.Conflict;
+                    response.Message = AppMessages.QUESTION_TYPE_DELETE_FAILED;
+                    return response;
+                }
+
+                // Thực hiện xóa QuestionType
+                await _unitOfWork.QuestionTypes.DeleteAsync(targetQuestionType);
+
+                // Ghi log hoạt động
+                await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
+                {
+                    AccessTime = DateTime.Now,
+                    ActionName = string.Format(AccessLogConstant.DELETE_ACTION, "loại câu hỏi"),
+                    TargetObject = nameof(QuestionType),
+                    IpAddress = ipAddress ?? "",
+                    IsSuccess = true,
+                    UserId = questionTypeDeleteDto.CreatedBy,
+                    Details = $"{requestedUser.UserName} xóa loại câu hỏi: {targetQuestionType.TypeName}"
+                });
+
+                // Lưu thay đổi
+                await _unitOfWork.SaveChangesAsync();
+
+                // Chuẩn bị response
+                var result = _mapper.Map<QuestionTypeDisplayDto>(targetQuestionType);
+                response.IsSuccess = true;
+                response.StatusCode = System.Net.HttpStatusCode.OK;
+                response.Message = AppMessages.QUESTION_TYPE_DELETE_SUCCESS;
+                response.Result.Add(result);
+            }
+            catch (Exception)
+            {
+                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                response.Message = AppMessages.INTERNAL_SERVER_ERROR;
+            }
+
+            return response;
         }
 
         public async Task<APIResponse<QuestionTypeDisplayDto>> GetAllQuestionTypes(GetQuestionType request)
@@ -214,8 +274,6 @@ namespace KEB.Application.Services.Implementations
         public async Task<APIResponse<QuestionTypeDisplayDto>> UpdateQuestionType(QuestionTypeUpdateDto request, string ipAddress)
         {
             APIResponse<QuestionTypeDisplayDto> response = new();
-            // Validate
-            // QuestionType fields not null
             var questionTypeValidator = new UpdateQuestionTypeValidator();
             var validatorResult = questionTypeValidator.Validate(request);
             if (!validatorResult.IsValid)
@@ -227,7 +285,7 @@ namespace KEB.Application.Services.Implementations
             }
             // CreatedUser existed
             var updatedUser = await _unitOfWork.Users.GetUserById(request.UpdatedUserId);
-            if (updatedUser == null || updatedUser.RoleId.ToString() != LogicString.Role.TeamLeadRoleId)
+            if (updatedUser == null || updatedUser.RoleId.ToString() != LogicString.Role.LecturerRoleId)
             {
                 response.IsSuccess = false;
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
@@ -243,7 +301,7 @@ namespace KEB.Application.Services.Implementations
                 response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
                 return response;
             }
-
+            await _unitOfWork.BeginTransactionAsync();
             List<string> changes = [];
             if (!request.QuestionTypeName.Equals(targetQuestionType.TypeName, StringComparison.OrdinalIgnoreCase))
             {
@@ -279,7 +337,8 @@ namespace KEB.Application.Services.Implementations
                 // Perform update
                 targetQuestionType.UpdatedDate = DateTime.Now;
                 targetQuestionType.UpdatedBy = request.UpdatedUserId;
-                await _unitOfWork.SaveChangesAsync();
+                //await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.QuestionTypes.UpdateWithNoCommitAsync(targetQuestionType);
                 // Access logging
                 await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
                 {
@@ -292,6 +351,7 @@ namespace KEB.Application.Services.Implementations
                     Details = string.Join("<br/>", changes)
                 }
                 );
+                await _unitOfWork.CommitAsync();
                 response.IsSuccess = true;
                 response.StatusCode = System.Net.HttpStatusCode.OK;
                 response.Message = AppMessages.QUESTION_TYPE_UPDATE_SUCCESS;
@@ -300,6 +360,7 @@ namespace KEB.Application.Services.Implementations
             }
             catch (Exception)
             {
+                await _unitOfWork.RollbackAsync();
                 response.IsSuccess = false;
                 response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
                 response.Message = AppMessages.INTERNAL_SERVER_ERROR;

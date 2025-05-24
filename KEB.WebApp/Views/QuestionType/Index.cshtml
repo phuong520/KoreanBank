@@ -19,6 +19,7 @@
             <th style="border-right: none;">Mô tả</th>
             <th style="border-right: none;">Kỹ năng</th>
             <th style="border-right: none;">Số lượng câu hỏi</th>
+            <th style="border-right: none;">Hoạt động</th>
         </tr>
     </thead>
     <tbody>
@@ -39,6 +40,21 @@
                     <td style="border-right: none;">@item.QuestionTypeContent</td>
                     <td style="border-right: none;">@item.Skill</td>
                     <td style="border-right: none;">@item.NumOfQuestions</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary edit-questiontype-btn"
+                                data-questiontype-id="@item.QuestionTypeId"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editQuestionTypeModal">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-questiontype-btn"
+                                data-questiontype-id="@item.QuestionTypeId"
+                                data-questiontype-name="@item.QuestionTypeName"
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteQuestionTypeModal">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
                 </tr>
                 index++;
             }
@@ -87,15 +103,73 @@
         </div>
     </div>
 </div>
+<!-- Modal Sửa loại câu hỏi -->
+<div class="modal fade" id="editQuestionTypeModal" tabindex="-1" aria-labelledby="editQuestionTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editQuestionTypeModalLabel">Chỉnh sửa loại câu hỏi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center" id="editQuestionTypeLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Đang tải...</span>
+                    </div>
+                    <p class="mt-2">Đang tải dữ liệu...</p>
+                </div>
+                <form id="editQuestionTypeForm" style="display: none;">
+                    <input type="hidden" id="editQuestionTypeId" name="QuestionTypeId">
+                    <input type="hidden" id="editUpdatedUserId" name="UpdatedUserId" value="@ViewBag.CurrentUserId">
+                    <div class="mb-3">
+                        <label for="editQuestionTypeName" class="form-label">Tên loại câu hỏi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editQuestionTypeName" name="QuestionTypeName" required />
+                        <div class="invalid-feedback">Vui lòng nhập tên loại câu hỏi</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQuestionTypeContent" class="form-label">Mô tả loại câu hỏi <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editQuestionTypeContent" name="QuestionTypeContent" rows="3" required></textarea>
+                        <div class="invalid-feedback">Vui lòng nhập mô tả cho loại câu hỏi</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Xóa loại câu hỏi -->
+<div class="modal fade" id="deleteQuestionTypeModal" tabindex="-1" aria-labelledby="deleteQuestionTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="deleteQuestionTypeModalLabel">Xác nhận xóa loại câu hỏi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa loại câu hỏi "<span id="deleteQuestionTypeName"></span>"?</p>
+                <p class="text-danger">Lưu ý: Thao tác này không thể hoàn tác!</p>
+                <form id="deleteQuestionTypeForm">
+                    <input type="hidden" id="deleteQuestionTypeId" name="QuestionTypeId">
+                    <input type="hidden" id="deleteCreatedBy" name="CreatedBy" value="@ViewBag.CurrentUserId">
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-danger">Xác nhận xóa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts
 {
-    <!-- Bao gồm Bootstrap Bundle JS (bao gồm Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Script xử lý form validation và submit -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Đợi tài liệu HTML được tải xong
+       
         document.addEventListener('DOMContentLoaded', function () {
             // Lấy form element
             const form = document.getElementById('addQuestionTypeForm');
@@ -139,6 +213,122 @@
                     }
                 });
             });
+             // Xử lý nút sửa
+            $('.edit-questiontype-btn').on('click', function() {
+                const questionTypeId = $(this).data('questiontype-id');
+                openEditModal(questionTypeId);
+            });
+            // Xử lý form sửa
+            $('#editQuestionTypeForm').on('submit', function(e) {
+                e.preventDefault();
+                const questionTypeId = $('#editQuestionTypeId').val();
+                const updatedUserId = $('#editUpdatedUserId').val();
+                const questionTypeName = $('#editQuestionTypeName').val();
+                const questionTypeContent = $('#editQuestionTypeContent').val();
+
+                if (!questionTypeId || !updatedUserId || !questionTypeName || !questionTypeContent) {
+                    alert('Vui lòng nhập đầy đủ thông tin.');
+                    return;
+                }
+
+                const requestData = {
+                    QuestionTypeId: questionTypeId,
+                    UpdatedUserId: updatedUserId,
+                    QuestionTypeName: questionTypeName,
+                    QuestionTypeContent: questionTypeContent
+                };
+
+                $.ajax({
+                    url: 'https://localhost:7101/api/QuestionTypes/edit-questiontype',
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        if (res.isSuccess) {
+                            alert(res.message || 'Cập nhật loại câu hỏi thành công!');
+                            $('#editQuestionTypeModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert(res.message || 'Lỗi khi cập nhật loại câu hỏi.');
+                        }
+                    },
+                    error: function(xhr) {
+                        const errorMessage = xhr.responseJSON?.message || 'Lỗi khi cập nhật loại câu hỏi.';
+                        alert(errorMessage);
+                    }
+                });
+            });
+            // Xử lý nút xóa
+            $('.delete-questiontype-btn').on('click', function() {
+                const questionTypeId = $(this).data('questiontype-id');
+                const questionTypeName = $(this).data('questiontype-name');
+                $('#deleteQuestionTypeId').val(questionTypeId);
+                $('#deleteQuestionTypeName').text(questionTypeName);
+            });
+            // Xử lý form xóa
+            $('#deleteQuestionTypeForm').on('submit', function(e) {
+                e.preventDefault();
+                const questionTypeId = $('#deleteQuestionTypeId').val();
+                const createdBy = $('#deleteCreatedBy').val();
+
+                if (!questionTypeId || !createdBy) {
+                    alert('Dữ liệu không hợp lệ.');
+                    return;
+                }
+
+                const requestData = {
+                    QuestionTypeId: questionTypeId,
+                    CreatedBy: createdBy
+                };
+
+                $.ajax({
+                    url: 'https://localhost:7101/api/QuestionTypes/delete-questiontype',
+                    type: 'DELETE',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function(res) {
+                        if (res.isSuccess) {
+                            alert(res.message || 'Xóa loại câu hỏi thành công!');
+                            $('#deleteQuestionTypeModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert(res.message || 'Lỗi khi xóa loại câu hỏi.');
+                        }
+                    },
+                    error: function(xhr) {
+                        const errorMessage = xhr.responseJSON?.message || 'Lỗi khi xóa loại câu hỏi.';
+                        alert(errorMessage);
+                    }
+                });
+            });
         });
+        function openEditModal(questionTypeId) {
+            $('#editQuestionTypeModal').modal('show');
+            $('#editQuestionTypeLoading').show();
+            $('#editQuestionTypeForm').hide();
+
+            $.ajax({
+                url: `https://localhost:7101/api/QuestionTypes/get-questiontype-${questionTypeId}`,
+                type: 'GET',
+                success: function(res) {
+                    if (res.isSuccess && res.result && res.result.length > 0) {
+                        const questionType = res.result[0];
+                        $('#editQuestionTypeId').val(questionType.questionTypeId);
+                        $('#editQuestionTypeName').val(questionType.questionTypeName);
+                        $('#editQuestionTypeContent').val(questionType.questionTypeContent);
+                        $('#editQuestionTypeLoading').hide();
+                        $('#editQuestionTypeForm').show();
+                    } else {
+                        alert(res.message || 'Không tìm thấy loại câu hỏi.');
+                        $('#editQuestionTypeModal').modal('hide');
+                    }
+                },
+                error: function(xhr) {
+                    const errorMessage = xhr.responseJSON?.message || 'Lỗi khi tải dữ liệu loại câu hỏi.';
+                    alert(errorMessage);
+                    $('#editQuestionTypeModal').modal('hide');
+                }
+            });
+        }
     </script>
 }

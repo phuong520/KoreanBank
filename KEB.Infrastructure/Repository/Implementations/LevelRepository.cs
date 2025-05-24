@@ -56,5 +56,7 @@ namespace KEB.Infrastructure.Repository.Implementations
         {
             return await _context.Levels.FirstOrDefaultAsync(l => l.LevelName.Trim().ToLower().Equals(name.Trim().ToLower()));
         }
+
+        
     }
 }

@@ -37,7 +37,7 @@ namespace KEB.Application.Services.Implementations
             {
                 user = await _unitOfWork.Users.GetUserById(request.CreatedBy);
                 if (user == null || user.RoleId.ToString().Equals(LogicString.Role.AdminRoleId)
-                             || user.RoleId.ToString().Equals(LogicString.Role.LecturerRoleId))
+                             || user.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
                 {
                     response.StatusCode = System.Net.HttpStatusCode.Forbidden;
                     response.Message = AppMessages.NO_PERMISSION;
@@ -116,9 +116,76 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
 
-        public Task<APIResponse<TopicDisplayDto>> DeleteTopic(Delete request)
+        public async Task<APIResponse<TopicDisplayDto>> DeleteTopic(Delete request)
         {
-            throw new NotImplementedException();
+            APIResponse<TopicDisplayDto> response = new() { IsSuccess = false };
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(request.RequestedUserId);
+                if (user == null || user.RoleId.ToString().Equals(LogicString.Role.AdminRoleId)
+                             || user.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                    response.Message = AppMessages.NO_PERMISSION;
+                    return response;
+                }
+                var targetTopic = await _unitOfWork.Topics.GetByIdAsync(request.TargetObjectId);
+                if (targetTopic == null)
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
+                    return response;
+                }
+                if (!request.HardDelete)
+                {
+                    targetTopic.IsDeleted = true;
+                    targetTopic.UpdatedDate = DateTime.Now;
+                    targetTopic.UpdatedBy = request.RequestedUserId;
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
+                    {
+                        AccessTime = DateTime.Now,
+                        ActionName = "Tạm ẩn",
+                        TargetObject = nameof(Topic),
+                        IpAddress = request.IpAddress ?? "",
+                        IsSuccess = true,
+                        UserId = request.RequestedUserId,
+                        Details = $"{user.UserName} đã ẩn chủ đề: {targetTopic.TopicName}"
+                    });
+                }
+                else
+                {
+                    var (IsSuccess, RelatedQuestions, RelatedLevels, RelatedConstraints) = await _unitOfWork.Topics.DeleteTopicAsync(targetTopic);
+                    SystemAccessLog log = new()
+                    {
+                        AccessTime = DateTime.Now,
+                        ActionName = string.Format(AccessLogConstant.DELETE_ACTION, "chủ đề"),
+                        TargetObject = nameof(Topic),
+                        IpAddress = request.IpAddress ?? "",
+                        IsSuccess = IsSuccess,
+                        UserId = request.RequestedUserId
+                    };
+                    if (IsSuccess)
+                    {
+                        log.Details = $"{user.UserName} đã xóa chủ đề: {targetTopic.TopicName}";
+                        await _unitOfWork.AccessLogs.AddAsync(log);
+                        response.IsSuccess = true;
+                        response.StatusCode = System.Net.HttpStatusCode.OK;
+                        response.Message = AppMessages.TOPIC_DELETE_SUCCESS;
+                    }
+                    else
+                    {
+                        response.StatusCode = System.Net.HttpStatusCode.Conflict;
+                        response.Message = AppMessages.TOPIC_DELETE_FAILED;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Message = AppMessages.INTERNAL_SERVER_ERROR;
+                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+            }
+            return response;
         }
 
         public async Task<APIResponse<TopicDisplayDto>> GetAllTopics(Guid? levelId = null, bool includedSoftDeleted = false)
@@ -223,9 +290,88 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
 
-        public Task<APIResponse<TopicDisplayDto>> RenameTopic(EditTopicDto request)
+        public async Task<APIResponse<TopicDisplayDto>> RenameTopic(EditTopicDto request)
         {
-            throw new NotImplementedException();
+            APIResponse<TopicDisplayDto> response = new() { IsSuccess = false };
+            try
+            {
+                var user = await _unitOfWork.Users.GetByIdAsync(request.CreatedBy);
+                if (user == null || user.RoleId.ToString().Equals(LogicString.Role.AdminRoleId)
+                             || user.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                    response.Message = AppMessages.NO_PERMISSION;
+                    return response;
+                }
+                if (string.IsNullOrEmpty(request.NewTopicName))
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                    response.Message = AppMessages.TOPIC_EMPTY_NAME;
+                    return response;
+                }
+                var targetTopic = await _unitOfWork.Topics.GetByIdAsync(request.TopicId);
+                if (targetTopic == null)
+                {
+                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
+                    return response;
+                }
+                string oldName = targetTopic.TopicName;
+                bool nameChanged = !request.NewTopicName.Equals(targetTopic.TopicName, StringComparison.OrdinalIgnoreCase);
+                bool descChanged = !request.NewDescription.Equals(targetTopic.Description, StringComparison.OrdinalIgnoreCase);
+                if (!nameChanged && !descChanged)
+                {
+                    response.IsSuccess = true;
+                    response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                    response.Message = AppMessages.NO_CHANGES_DETECTED;
+                    return response;
+                }
+                var duplicate = await _unitOfWork.Topics
+                .GetAsync(x => x.Id != request.TopicId && x.TopicName.Trim().ToLower().Equals(request.NewTopicName.Trim().ToLower()));
+                if (duplicate != null)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                    //response.Message = $"Tên chủ đề {request.NewTopicName} đã tồn tại";
+                    response.Message = AppMessages.TOPIC_EXISTED;
+                }
+                else
+                {
+                    await _unitOfWork.BeginTransactionAsync();
+                    DateTime currentTime = DateTime.Now;
+                    string logDetails = $"{user.UserName} chỉnh sửa chủ đề {oldName}:"
+                                    + (nameChanged ? $" đổi tên chủ đề thành {request.NewTopicName}," : "")
+                                    + (descChanged ? " thay đổi mô tả chủ đề" : "");
+                    targetTopic.TopicName = request.NewTopicName;
+                    targetTopic.Description = request.NewDescription;
+                    targetTopic.UpdatedDate = currentTime;
+                    targetTopic.UpdatedBy = request.CreatedBy;
+                    //await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.Topics.UpdateWithNoCommitAsync(targetTopic);
+                    await _unitOfWork.AccessLogs.AddAsync(new()
+                    {
+                        AccessTime = currentTime,
+                        ActionName = string.Format(AccessLogConstant.UPDATE_ACTION, "tên chủ đề"),
+                        TargetObject = nameof(Topic),
+                        IpAddress = request.IpAddress ?? "",
+                        IsSuccess = true,
+                        UserId = request.CreatedBy,
+                        Details = logDetails
+                    });
+                    await _unitOfWork.CommitAsync();
+                    response.IsSuccess = true;
+                    //response.Message = logDetails;
+                    response.Message = AppMessages.TOPIC_UPDATE_SUCCESS;
+
+                }
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                response.Message = AppMessages.INTERNAL_SERVER_ERROR;
+            }
+            return response;
         }
     }
 }

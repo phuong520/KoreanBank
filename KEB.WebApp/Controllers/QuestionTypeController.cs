@@ -20,6 +20,20 @@ namespace KEB.WebApp.Controllers
         }
         public async Task<IActionResult> Index()
         {
+            var token = HttpContext.Request.Cookies["token"];
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+            var userId = Guid.Empty;
+            if (jsonToken != null)
+            {
+                var sidClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/sid");
+                if (sidClaim != null && Guid.TryParse(sidClaim.Value, out var parsedGuid))
+                {
+                    userId = parsedGuid;
+                }
+            }
+            ViewBag.CurrentUserId = userId;
             var result = await _httpClient.GetFromJsonAsync<APIResponse<QuestionTypeDisplayDto>>($"{ApiUrl}/get-all-questiontypes");
             return View(result.Result);
         }

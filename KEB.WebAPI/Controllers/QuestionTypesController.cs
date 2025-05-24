@@ -58,28 +58,28 @@ namespace KEB.WebAPI.Controllers
             }
             return BadRequest(response);
         }
-        //[HttpDelete]
-        //[Route("delete-questiontype")]
+        [HttpDelete]
+        [Route("delete-questiontype")]
         //[Authorize(Roles = "R2")]
-        //public async Task<IActionResult> DeleteQuestionType(QuestionTypeDeleteDto request)
-        //{
-        //    var response = await _unitOfService.QuestionTypeService
-        //            .DeleteQuestionType(request, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
-        //    // Xóa loại câu hỏi nên cũng chỉnh sửa lại cái template
-        //    await _unitOfService.FileTemplateService.UploadExcelTemplate();
-        //    return Ok(response);
-        //}
+        public async Task<IActionResult> DeleteQuestionType(QuestionTypeDeleteDto request)
+        {
+            var response = await _unitOfService.QuestionTypeService
+                    .DeleteQuestionType(request, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+            // Xóa loại câu hỏi nên cũng chỉnh sửa lại cái template
+            //await _unitOfService.FileTemplateService.UploadExcelTemplate();
+            return Ok(response);
+        }
 
-        //[HttpPut]
-        //[Route("edit-questiontype")]
+        [HttpPut]
+        [Route("edit-questiontype")]
         //[Authorize(Roles = "R2")]
-        //public async Task<IActionResult> EditQuestionType(QuestionTypeUpdateDto questionTypeUpdateDTO)
-        //{
-        //    var response = await _unitOfService.QuestionTypeService
-        //            .UpdateQuestionType(questionTypeUpdateDTO, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
-        //    // Chỉnh sửa loại câu hỏi nên cũng chỉnh sửa lại cái template
-        //    await _unitOfService.FileTemplateService.UploadExcelTemplate();
-        //    return Ok(response);
-        //}
+        public async Task<IActionResult> EditQuestionType(QuestionTypeUpdateDto questionTypeUpdateDTO)
+        {
+            var response = await _unitOfService.QuestionTypeService
+                    .UpdateQuestionType(questionTypeUpdateDTO, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "");
+            // Chỉnh sửa loại câu hỏi nên cũng chỉnh sửa lại cái template
+            //await _unitOfService.FileTemplateService.UploadExcelTemplate();
+            return Ok(response);
+        }
     }
 }

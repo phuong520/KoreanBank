@@ -8,6 +8,7 @@ namespace KEB.Application.DTOs.QuestionTypeDTO
 {
     public class QuestionTypeDeleteDto
     {
+      
         public Guid QuestionTypeId { get; set; }
         public Guid CreatedBy { get; set; }
     

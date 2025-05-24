@@ -17,8 +17,7 @@ namespace KEB.Application.Mappings
         {
             CreateMap<References, ReferenceDisplayDto>()
                 .ForMember(dest => dest.NumOfQuestions,
-                opt => opt.MapFrom(src => src.Questions.Count(x => x.Status == QuestionStatus.Ok)))
-                .ForMember(dest => dest.NumOfQuestions, opt => opt.Ignore());
+                opt => opt.MapFrom(src => src.Questions.Count(x => x.Status == QuestionStatus.Ok)));
 
             CreateMap<AddReferenceDto, References>()
                 .ForMember(dest => dest.ReferenceName,
@@ -32,13 +31,17 @@ namespace KEB.Application.Mappings
 
             CreateMap<UpdateReference, References>()
                 .ForMember(dest => dest.ReferenceName,
-                opt => opt.MapFrom(src => src.ReferenceName.Trim()))
-                .ForMember(dest => dest.ReferencesLink,
-                opt => opt.MapFrom(src => src.ReferenceLink.Trim()))
+                    opt => opt.MapFrom(src => src.ReferenceName.Trim()))
                 .ForMember(dest => dest.ReferenceAuthor,
-                opt => opt.MapFrom(src => src.ReferenceAuthor.Trim()))
+                    opt => opt.MapFrom(src => src.ReferenceAuthor.Trim()))
                 .ForMember(dest => dest.Description,
-                opt => opt.MapFrom(src => src.Description.Trim()));
+                    opt => opt.MapFrom(src => src.Description.Trim()))
+                .ForMember(dest => dest.ReferencesLink,
+                    opt => opt.MapFrom(src => src.ReferenceLink.Trim()))
+                .ForMember(dest => dest.PublishedYear,
+                    opt => opt.MapFrom(src => src.PublishedYear));
+
+
         }
 
     }
