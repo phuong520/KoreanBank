@@ -58,6 +58,13 @@
                 <div class="questions">
                     @foreach (var question in typeGroup)
                     {
+                        @if ((question.AttachmentImage != null))
+                        {
+                            <div class="mb-2">
+                                <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 100%; max-height: 100px;" />
+                            </div>
+
+                        }
                         <div class="question-item">
                             <div class="question-content">@questionNumber. @question.QuestionContent</div>
                             <div class="options">

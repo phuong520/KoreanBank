@@ -170,6 +170,7 @@
                     <th>Thời gian</th>
                 </tr>
             </thead>
+
             <tbody>
                 @{int index = 1;}
                 @foreach(var log in Model){
@@ -184,15 +185,9 @@
                     index++;
                 }
             </tbody>
+            
         </table>
-
-        <div class="pagination">
-            <div class="page-item active">1</div>
-            <div class="page-item">2</div>
-            <div class="page-item">3</div>
-            <div class="page-item">...</div>
-            <div class="page-item">20</div>
-        </div>
+        <div class="pagination" id="pagination"></div>
     </div>
 
     <!-- Adding Font Awesome for icons -->

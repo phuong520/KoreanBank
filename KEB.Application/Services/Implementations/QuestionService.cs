@@ -388,7 +388,7 @@ namespace KEB.Application.Services.Implementations
             {
                 var question = await _unitOfWork.Questions.GetAsync(
                     x => x.Id == request.TargetObjectId,
-                    includeProperties: "QuestionType,Answers,LevelDetail,Reference,LevelDetail.Level,LevelDetail.Topic");
+                    includeProperties: "QuestionType,Answers,LevelDetail,References,LevelDetail.Level,LevelDetail.Topic");
 
                 if (question == null)
                 {
@@ -409,6 +409,8 @@ namespace KEB.Application.Services.Implementations
                     response.StatusCode = HttpStatusCode.Forbidden;
                     return response;
                 }
+
+                await _unitOfWork.BeginTransactionAsync();
                 var changes = new List<string>();
                 var now = DateTime.Now;
 
@@ -441,6 +443,94 @@ namespace KEB.Application.Services.Implementations
                     changes.Add("Đổi tài liệu tham khảo");
                 }
 
+                // Xử lý Answers
+                if (request.AnswersChanged && request.Answers != null && request.Answers.Any())
+                {
+                    // Xóa các câu trả lời cũ
+                    var oldAnswers = question.Answers.ToList();
+                    foreach (var oldAnswer in oldAnswers)
+                    {
+                        _unitOfWork.Answers.RemoveAsync(oldAnswer);
+                    }
+
+                    // Thêm các câu trả lời mới
+                    foreach (var answerDto in request.Answers)
+                    {
+                        var newAnswer = _mapper.Map<Answer>(answerDto);
+                        newAnswer.QuestionId = question.Id;
+                        newAnswer.CreatedBy = request.RequestedUserId;
+                        newAnswer.CreatedDate = now;
+                        await _unitOfWork.Answers.AddAsync(newAnswer);
+                    }
+                    changes.Add("Cập nhật danh sách câu trả lời");
+                }
+
+                // Xử lý Attachments (Image và Audio)
+                if (request.AttachmentChanged)
+                {
+                    // Xử lý Image Attachment
+                    if (request.AttachmentFileImage != null)
+                    {
+                        // Xóa file ảnh cũ nếu có
+                        if (question.AttachFileImageId.HasValue)
+                        {
+                            var oldImage = await _unitOfWork.ImageFiles.GetAsync(x => x.Id == question.AttachFileImageId);
+                            if (oldImage != null)
+                            {
+                                _unitOfWork.ImageFiles.RemoveAsync(oldImage);
+                            }
+                        }
+
+                        // Thêm file ảnh mới
+                        var newImage = await GetAttachFile.GetImageFile(request.AttachmentFileImage);
+                        await _unitOfWork.ImageFiles.AddAsync(newImage);
+                        question.AttachFileImageId = newImage.Id;
+                        changes.Add("Cập nhật tệp ảnh");
+                    }
+                    else if (request.AttachmentFileImage == null && question.AttachFileImageId.HasValue)
+                    {
+                        // Xóa file ảnh nếu AttachmentChanged = true và không có file mới
+                        var oldImage = await _unitOfWork.ImageFiles.GetAsync(x => x.Id == question.AttachFileImageId);
+                        //if (oldImage != null)
+                        //{
+                        //    _unitOfWork.ImageFiles.Remove(oldImage);
+                        //}
+                        question.AttachFileImageId = null;
+                        changes.Add("Xóa tệp ảnh");
+                    }
+
+                    // Xử lý Audio Attachment
+                    if (request.AttachmentFileAudio != null)
+                    {
+                        // Xóa file audio cũ nếu có
+                        if (question.AttachFileAudioId.HasValue)
+                        {
+                            var oldAudio = await _unitOfWork.ImageFiles.GetAsync(x => x.Id == question.AttachFileAudioId);
+                            if (oldAudio != null)
+                            {
+                                _unitOfWork.ImageFiles.RemoveAsync(oldAudio);
+                            }
+                        }
+
+                        // Thêm file audio mới
+                        var newAudio = await GetAttachFile.GetImageFile(request.AttachmentFileAudio);
+                        await _unitOfWork.ImageFiles.AddAsync(newAudio);
+                        question.AttachFileAudioId = newAudio.Id;
+                        changes.Add("Cập nhật tệp âm thanh");
+                    }
+                    else if (request.AttachmentFileAudio == null && question.AttachFileAudioId.HasValue)
+                    {
+                        // Xóa file audio nếu AttachmentChanged = true và không có file mới
+                        var oldAudio = await _unitOfWork.ImageFiles.GetAsync(x => x.Id == question.AttachFileAudioId);
+                        if (oldAudio != null)
+                        {
+                            _unitOfWork.ImageFiles.RemoveAsync(oldAudio);
+                        }
+                        question.AttachFileAudioId = null;
+                        changes.Add("Xóa tệp âm thanh");
+                    }
+                }
+
                 if (!changes.Any())
                 {
                     response.IsSuccess = true;
@@ -463,18 +553,21 @@ namespace KEB.Application.Services.Implementations
                     TargetObject = nameof(Question),
                     UserId = request.RequestedUserId
                 });
-                await _unitOfWork.SaveChangesAsync();
 
+                await _unitOfWork.Questions.UpdateWithNoCommitAsync(question);
                 var result = _mapper.Map<QuestionDetailDto>(question);
+                await _unitOfWork.CommitAsync();
+
                 response.Result.Add(result);
                 response.IsSuccess = true;
                 response.Message = "Cập nhật thành công";
                 response.StatusCode = HttpStatusCode.OK;
                 return response;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                response.Message = "Có lỗi xảy ra khi cập nhật câu hỏi";
+                await _unitOfWork.RollbackAsync();
+                response.Message = $"Có lỗi xảy ra khi cập nhật câu hỏi: {ex.Message}";
                 response.StatusCode = HttpStatusCode.InternalServerError;
                 return response;
             }
@@ -482,814 +575,369 @@ namespace KEB.Application.Services.Implementations
 
         public async Task<APIResponse<ImportQuestionResultDTO>> UploadQuestionFromExcel(ImportQuestionFromExcelRequest request, string ipAddress)
         {
-            APIResponse<ImportQuestionResultDTO> response = new()
+            var response = new APIResponse<ImportQuestionResultDTO> { IsSuccess = false };
+            var result = new ImportQuestionResultDTO
             {
-                IsSuccess = false,
-                StatusCode = HttpStatusCode.BadRequest
+                Question = new List<QuestionDetailDto>(),
+                Messages = new List<string>()
             };
 
             try
             {
-                var requestedUser = await _unitOfWork.Users.GetAsync(x => x.Id == request.RequestedUserId);
-                if (requestedUser == null || requestedUser.RoleId.ToString() == LogicString.Role.AdminRoleId)
+                if (request.ExcelFile == null || request.ExcelFile.Length == 0)
                 {
-                    response.StatusCode = HttpStatusCode.Forbidden;
-                    response.Message = AppMessages.NO_PERMISSION;
+                    response.Message = "Vui lòng chọn file Excel";
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Result = new List<ImportQuestionResultDTO> { result };
                     return response;
                 }
-            }
-            catch (Exception)
-            {
-                response.StatusCode = HttpStatusCode.InternalServerError;
-                response.Message = AppMessages.INTERNAL_SERVER_ERROR;
-                return response;
-            }
-
-            if (request.ExcelFile == null || request.ExcelFile.Length == 0)
-            {
-                response.StatusCode = HttpStatusCode.BadRequest;
-                response.Message = AppMessages.QUESTION_EXCELFILE_REQUIRED;
-                return response;
-            }
-
-            var filePath = Path.GetTempFileName();
-            try
-            {
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var excelExtension = Path.GetExtension(request.ExcelFile.FileName).ToLower();
+                if (excelExtension != ".xlsx")
                 {
-                    await request.ExcelFile.CopyToAsync(stream);
+                    response.Message = "Chỉ hỗ trợ file Excel (.xlsx)";
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Result = new List<ImportQuestionResultDTO> { result };
+                    return response;
                 }
-
+                var attachmentDict = new Dictionary<string, IFormFile>(StringComparer.OrdinalIgnoreCase);
+                foreach (var file in request.Attachments ?? Enumerable.Empty<IFormFile>())
+                {
+                    if (file != null && file.Length > 0)
+                    {
+                        attachmentDict[file.FileName] = file;
+                    }
+                }
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                using var xlPackage = new ExcelPackage(filePath);
-
-                ExcelWorksheet? excelWorksheet = null;
-                try
+                using var stream = request.ExcelFile.OpenReadStream();
+                using var excel = new ExcelPackage(stream);
+                await _unitOfWork.BeginTransactionAsync();
+                var changes = new List<string>();
+                var now = DateTime.Now;
+                var sheet = request.ForMultipleChoice ? excel.Workbook.Worksheets["TRẮC NGHIỆM"] : excel.Workbook.Worksheets["TỰ LUẬN"];
+                if (sheet == null)
                 {
-                    excelWorksheet = xlPackage.Workbook.Worksheets[
-                        request.ForMultipleChoice
-                            ? QuestionConstant.MULTIPLECHOICE_QUESTION_SHEETNAME
-                            : QuestionConstant.ESSAY_QUESTION_SHEETNAME
-                    ] ?? throw new Exception(string.Format(ExceptionMessage.SHEET_NAME_NOTFOUND,
-                        request.ForMultipleChoice
-                            ? QuestionConstant.MULTIPLECHOICE_QUESTION_SHEETNAME
-                            : QuestionConstant.ESSAY_QUESTION_SHEETNAME));
-                }
-                catch (Exception ex)
-                {
-                    response.Message = ex.Message;
+                    response.Message = $"Không tìm thấy sheet {(request.ForMultipleChoice ? "TRẮC NGHIỆM" : "TỰ LUẬN")} trong file Excel";
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    result.Messages.Add(response.Message);
+                    await _unitOfWork.RollbackAsync();
+                    response.Result = new List<ImportQuestionResultDTO> { result };
                     return response;
                 }
-                var uploadedFiles = new Dictionary<string, IFormFile?>();
-                try
+                for (int row = 3; row <= sheet.Dimension.End.Row; row++)
                 {
-                    foreach (var file in request.Attachments)
+                    if (string.IsNullOrWhiteSpace(sheet.Cells[row, 5].Text)) continue;
+                    AddSingleQuestionRequest questionRequest;
+                    if (request.ForMultipleChoice)
                     {
-                        if (file.Length > 0)
-                        {
-                            var extension = Path.GetExtension(file.FileName).ToLower();
-                            var contentType = extension switch
-                            {
-                                ".mp3" => "audio/mpeg",
-                                ".jpg" => "image/jpeg",
-                                ".png" => "image/png",
-                                _ => null
-                            };
-
-                            if (contentType == null)
-                            {
-                                response.Result.Add(new ImportQuestionResultDTO
-                                {
-                                    Messages = new List<string> { $"File '{file.FileName}' has unsupported format. Only .mp3, .jpg, .png allowed." }
-                                });
-                                continue;
-                            }
-
-                            using var memoryStream = new MemoryStream();
-                            await file.CopyToAsync(memoryStream);
-                            var fileData = memoryStream.ToArray();
-
-                            var imageFile = new ImageFile
-                            {
-                                Id = Guid.NewGuid(),
-                                FileName = file.FileName,
-                                FileData = fileData,
-                                ContentType = contentType,
-                                User = new User { Id = request.RequestedUserId }
-                            };
-
-                            await _unitOfWork.ImageFiles.AddAsync(imageFile);
-                           // uploadedFiles[file.FileName] = imageFile;
-                        }
-                    }
-                    await _unitOfWork.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    response.Message = $"Failed to process attachments: {ex.Message}";
-                    return response;
-                }
-                // Process questions
-                var questions = new List<Question>();
-                var errors = new List<string>();
-                int rowCount = excelWorksheet.Dimension?.Rows ?? 0;
-
-                for (int row = 3; row <= rowCount; row++)
-                {
-                    try
-                    {
-                        var singleRequest = new AddSingleQuestionRequest
-                        {
-                            RequestedUserId = request.RequestedUserId,
-                            TaskId = request.TaskId,
-                            IsMultipleChoice = request.ForMultipleChoice,
-                            QuestionContent = excelWorksheet.Cells[row, 5].Text.Trim(),
-                            Difficulty = Enum.TryParse<Difficulty>(excelWorksheet.Cells[row, 4].Text.Trim(), true, out var diff) ? diff : Difficulty.Dễ,
-                            Answers = new List<AddAnswerDTO>()
-                        };
-
-                        // Parse Reference
-                        var refValue = excelWorksheet.Cells[row, 1].Text.Trim();
-                        var refParts = refValue.Split('-');
-                        if (refParts.Length < 2 || !int.TryParse(refParts.Last(), out var year))
-                            errors.Add($"Row {row}: Invalid Reference format '{refValue}'.");
-                        else
-                        {
-                            var refName = string.Join("-", refParts.Take(refParts.Length - 1));
-                            var reference = await _unitOfWork.References.GetAsync(r => r.ReferenceName == refName && r.PublishedYear == year);
-                            if (reference == null)
-                                errors.Add($"Row {row}: Reference '{refValue}' not found.");
-                            else
-                                singleRequest.ReferenceId = reference.Id;
-                        }
-
-                        // Parse LevelDetail
-                        var levelValue = excelWorksheet.Cells[row, 2].Text.Trim();
-                        var levelParts = levelValue.Split('-');
-                        if (levelParts.Length < 2)
-                            errors.Add($"Row {row}: Invalid Level-Topic format '{levelValue}'.");
-                        else
-                        {
-                            var levelName = levelParts[0];
-                            var topicName = string.Join("-", levelParts.Skip(1));
-                            var levelDetail = await _unitOfWork.LevelDetails.GetAsync(ld => ld.Level.LevelName == levelName && ld.Topic.TopicName == topicName, "Level,Topic");
-                            if (levelDetail == null)
-                                errors.Add($"Row {row}: Level-Topic '{levelValue}' not found.");
-                            else
-                                singleRequest.LevelDetailId = levelDetail.Id;
-                        }
-
-                        // Parse QuestionType
-                        var typeValue = excelWorksheet.Cells[row, 3].Text.Trim();
-                        var typeParts = typeValue.Split('-');
-                        if (typeParts.Length < 2)
-                            errors.Add($"Row {row}: Invalid QuestionType format '{typeValue}'.");
-                        else
-                        {
-                            var skill = typeParts[0];
-                            var typeName = string.Join("-", typeParts.Skip(1));
-                            var questionType = await _unitOfWork.QuestionTypes.GetAsync(qt => qt.Skill.ToString() == skill && qt.TypeName == typeName);
-                            if (questionType == null)
-                                errors.Add($"Row {row}: QuestionType '{typeValue}' not found.");
-                            else
-                                singleRequest.QuestionTypeId = questionType.Id;
-                        }
-
-                        // Parse Answers
-                        if (request.ForMultipleChoice)
-                        {
-                            var correctAnswers = excelWorksheet.Cells[row, 6].Text.Trim().Split(',', StringSplitOptions.RemoveEmptyEntries);
-                            var answerLetters = new[] { "A", "B", "C", "D" };
-                            for (int i = 0; i < 4; i++)
-                            {
-                                var content = excelWorksheet.Cells[row, 7 + i].Text.Trim();
-                                if (!string.IsNullOrEmpty(content))
-                                {
-                                    singleRequest.Answers.Add(new AddAnswerDTO
-                                    {
-                                        Content = content,
-                                        IsCorrect = correctAnswers.Contains(answerLetters[i])
-                                    });
-                                }
-                            }
-                        }
-                        else
-                        {
-                            var answerContent = excelWorksheet.Cells[row, 6].Text.Trim();
-                            if (!string.IsNullOrEmpty(answerContent))
-                            {
-                                singleRequest.Answers.Add(new AddAnswerDTO
-                                {
-                                    Content = answerContent,
-                                    IsCorrect = true
-                                });
-                            }
-                        }
-
-                        // Parse Attachments
-                        var audioFileName = excelWorksheet.Cells[row, request.ForMultipleChoice ? 11 : 7].Text.Trim();
-                        if (!string.IsNullOrEmpty(audioFileName))
-                        {
-                            if (uploadedFiles.TryGetValue(audioFileName, out var imageFile) && imageFile.ContentType == "audio/mpeg")
-                                singleRequest.AttachmentFileAudio = imageFile;
-                            else
-                                errors.Add($"Row {row}: Audio file '{audioFileName}' not uploaded or invalid format (must be .mp3).");
-                        }
-
-                        var imageFileName = excelWorksheet.Cells[row, request.ForMultipleChoice ? 12 : 8].Text.Trim();
-                        if (!string.IsNullOrEmpty(imageFileName))
-                        {
-                            if (uploadedFiles.TryGetValue(imageFileName, out var imageFile) && (imageFile.ContentType == "image/jpeg" || imageFile.ContentType == "image/png"))
-                                singleRequest.AttachmentFileImage = imageFile;
-                            else
-                                errors.Add($"Row {row}: Image file '{imageFileName}' not uploaded or invalid format (must be .jpg or .png).");
-                        }
-
-                        // Validate Nghe skill
-                        var skillValue = typeParts.Length > 0 ? typeParts[0] : "";
-                        if (skillValue == "Nghe" && singleRequest.AttachmentFileAudio == null)
-                            errors.Add($"Row {row}: Audio file is required for Nghe skill.");
-
-                        // Add question using AddSingleQuestionAsync
-                        var singleResult = await AddSingleQuestionAsync(singleRequest);
-                        if (singleResult.IsSuccess)
-                        {
-                            var question = await _unitOfWork.Questions.GetAsync(q => q.Id == singleResult.Result.First().Id);
-                            if (question != null)
-                                questions.Add(question);
-                        }
-                        else
-                        {
-                            errors.Add($"Row {row}: {singleResult.Message}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        errors.Add($"Row {row}: Error processing row - {ex.Message}");
-                    }
-                }
-
-                var result = new ImportQuestionResultDTO
-                {
-                    Question = questions,
-                    Messages = errors.Any() ? errors : new List<string> { $"{questions.Count} questions imported successfully." }
-                };
-
-                response.Result.Add(result);
-                response.IsSuccess = !errors.Any();
-                response.StatusCode = errors.Any() ? HttpStatusCode.BadRequest : HttpStatusCode.Created;
-                response.Message = errors.Any() ? AppMessages.UPLOAD_QUESTION_FAILED : AppMessages.UPLOAD_QUESTION_FROM_EXCEL_SUCCESS;
-                response.Pagination = null;
-
-                if (errors.Any())
-                {
-                    foreach (var imageFile in uploadedFiles.Values)
-                    {
-                       // _unitOfWork.ImageFiles.Remove(imageFile);
-                    }
-                    await _unitOfWork.SaveChangesAsync();
-
-                    await _unitOfWork.AccessLogs.AddAsync(new Domain.Entities.SystemAccessLog
-                    {
-                        AccessTime = DateTime.Now,
-                        ActionName = "Import questions from Excel",
-                        IsSuccess = false,
-                        TargetObject = "Questions",
-                        Details = $"Failed to import questions by user {request.RequestedUserId} from IP {ipAddress}. Errors: {string.Join("; ", errors)}. TaskId: {request.TaskId?.ToString() ?? "None"}",
-                        UserId = request.RequestedUserId
-                    });
-                    await _unitOfWork.SaveChangesAsync();
-                }
-            }
-            finally
-            {
-                if (File.Exists(filePath))
-                    File.Delete(filePath);
-            }
-
-            return response;
-        }
-        
-        private async Task<string> ComputeFileHashAsync(IFormFile file)
-        {
-            using var sha256 = SHA256.Create();
-            using var stream = file.OpenReadStream();
-            var hashBytes = await sha256.ComputeHashAsync(stream);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-        }
-        //private async Task<(List<Question> Questions, List<string> Errors)> ProcessQuestionsAsync(
-        //     ExcelWorksheet worksheet,
-        //     bool isMultipleChoice,
-        //     IEnumerable<IFormFile> attachments,
-        //     Guid requestedUserId,
-        //     Guid? taskId,
-        //     string ipAddress)
-        //{
-        //    var questions = new List<Question>();
-        //    var errors = new List<string>();
-        //    var uploadedFiles = new Dictionary<string, ImageFile>();
-
-        //    try
-        //    {
-        //        // Save attachments
-        //        foreach (var file in attachments)
-        //        {
-        //            if (file.Length > 0)
-        //            {
-        //                var extension = Path.GetExtension(file.FileName).ToLower();
-        //                var contentType = extension switch
-        //                {
-        //                    ".mp3" => "audio/mpeg",
-        //                    ".jpg" => "image/jpeg",
-        //                    ".png" => "image/png",
-        //                    _ => null
-        //                };
-        //                if (contentType == null)
-        //                {
-        //                    errors.Add($"File '{file.FileName}' has unsupported format. Only .mp3, .jpg, .png allowed.");
-        //                    continue;
-        //                }
-        //                using var memoryStream = new MemoryStream();
-        //                await file.CopyToAsync(memoryStream);
-        //                var fileData = memoryStream.ToArray();
-
-        //                var imageFile = new ImageFile
-        //                {
-        //                    Id = Guid.NewGuid(),
-        //                    FileName = file.FileName,
-        //                    FileData = fileData,
-        //                    ContentType = contentType,
-        //                    User = new User { Id = requestedUserId }
-        //                };
-
-        //                _unitOfWork.ImageFiles.Add(imageFile);
-        //                uploadedFiles[file.FileName] = imageFile;
-        //            }
-        //        }
-        //        await _unitOfWork.SaveChangesAsync();
-        //        // Parse Excel
-        //        int rowCount = worksheet.Dimension?.Rows ?? 0;
-        //        for (int row = 3; row <= rowCount; row++)
-        //        {
-        //            try
-        //            {
-        //                var question = new Question
-        //                {
-        //                    Id = Guid.NewGuid(),
-        //                    Status = QuestionStatus.Draft,
-        //                    Description = string.Empty,
-        //                    LogId = Guid.NewGuid(),
-        //                    CreatedBy = requestedUserId
-        //                };
-
-        //                // Parse Reference
-        //                var refValue = worksheet.Cells[row, 1].Text.Trim();
-        //                var refParts = refValue.Split('-');
-        //                if (refParts.Length < 2 || !int.TryParse(refParts.LasT(), out var year))
-        //                    errors.Add($"Row {row}: Invalid Reference format '{refValue}'.");
-        //                else
-        //                {
-        //                    var refName = string.Join("-", refParts.Take(refParts.Length - 1));
-        //                    var reference = await _unitOfWork.References.GetAsync(r => r.ReferenceName == refName && r.PublishedYear == year);
-        //                    if (reference == null)
-        //                        errors.Add($"Row {row}: Reference '{refValue}' not found.");
-        //                    else
-        //                        question.ReferenceId = reference.Id;
-        //                }
-        //                // Parse LevelDetail
-        //                var levelValue = worksheet.Cells[row, 2].Text.Trim();
-        //                var levelParts = levelValue.Split('-');
-        //                if (levelParts.Length < 2)
-        //                    errors.Add($"Row {row}: Invalid Level-Topic format '{levelValue}'.");
-        //                else
-        //                {
-        //                    var levelName = levelParts[0];
-        //                    var topicName = string.Join("-", levelParts.Skip(1));
-        //                    var levelDetail = await _unitOfWork.LevelDetails.GetAsync(ld => ld.Level.LevelName == levelName && ld.Topic.TopicName == topicName, "Level,Topic");
-        //                    if (levelDetail == null)
-        //                        errors.Add($"Row {row}: Level-Topic '{levelValue}' not found.");
-        //                    else
-        //                        question.LevelDetailId = levelDetail.Id;
-        //                }
-
-        //                // Parse QuestionType
-        //                var typeValue = worksheet.Cells[row, 3].Text.Trim();
-        //                var typeParts = typeValue.Split('-');
-        //                if (typeParts.Length < 2)
-        //                    errors.Add($"Row {row}: Invalid QuestionType format '{typeValue}'.");
-        //                else
-        //                {
-        //                    var skill = typeParts[0];
-        //                    var typeName = string.Join("-", typeParts.Skip(1));
-        //                    var questionType = await _unitOfWork.QuestionTypes.GetAsync(qt => qt.Skill.ToString() == skill && qt.TypeName == typeName);
-        //                    if (questionType == null)
-        //                        errors.Add($"Row {row}: QuestionType '{typeValue}' not found.");
-        //                    else
-        //                        question.QuestionTypeId = questionType.Id;
-        //                }
-
-        //                // Parse Difficulty
-        //                var difficultyText = worksheet.Cells[row, 4].Text.Trim();
-        //                if (Enum.TryParse<Difficulty>(difficultyText, true, out var difficulty))
-        //                    question.Difficulty = difficulty;
-        //                else
-        //                    errors.Add($"Row {row}: Invalid Difficulty '{difficultyText}'.");
-
-        //                // Parse Question Content
-        //                question.QuestionContent = worksheet.Cells[row, 5].Text.Trim();
-        //                if (string.IsNullOrEmpty(question.QuestionContent))
-        //                    errors.Add($"Row {row}: QuestionContent is required.");
-
-        //                // Parse Answers
-        //                question.Answers = new List<Answer>();
-        //                if (isMultipleChoice)
-        //                {
-        //                    question.IsMultipleChoice = true;
-        //                    var correctAnswers = worksheet.Cells[row, 6].Text.Trim().Split(',', StringSplitOptions.RemoveEmptyEntries);
-        //                    var answerLetters = new[] { "A", "B", "C", "D" };
-        //                    for (int i = 0; i < 4; i++)
-        //                    {
-        //                        var content = worksheet.Cells[row, 7 + i].Text.Trim();
-        //                        if (i < 2 && string.IsNullOrEmpty(content))
-        //                            errors.Add($"Row {row}: Answer {i + 1} is required for multiple-choice.");
-        //                        if (!string.IsNullOrEmpty(content))
-        //                        {
-        //                            question.Answers.Add(new Answer
-        //                            {
-        //                                Content = content,
-        //                                IsCorrect = correctAnswers.Contains(answerLetters[i])
-        //                            });
-        //                        }
-        //                    }
-        //                    if (question.Answers.Count < 2)
-        //                        errors.Add($"Row {row}: Multiple-choice questions require at least 2 answers.");
-        //                    if (!question.Answers.Any(a => a.IsCorrect))
-        //                        errors.Add($"Row {row}: At least one correct answer is required.");
-        //                }
-        //                else
-        //                {
-        //                    question.IsMultipleChoice = false;
-        //                    var answerContent = worksheet.Cells[row, 6].Text.Trim();
-        //                    if (string.IsNullOrEmpty(answerContent))
-        //                        errors.Add($"Row {row}: Essay answer is required.");
-        //                    else
-        //                        question.Answers.Add(new Answer
-        //                        {
-        //                            Content = answerContent,
-        //                            IsCorrect = true
-        //                        });
-        //                }
-        //                // Parse Audio Attachment
-        //                var audioFileName = worksheet.Cells[row, isMultipleChoice ? 11 : 7].Text.Trim();
-        //                if (!string.IsNullOrEmpty(audioFileName))
-        //                {
-        //                    if (uploadedFiles.TryGetValue(audioFileName, out var imageFile) && imageFile.ContentType == "audio/mpeg")
-        //                    {
-        //                        imageFile.QuestionForAudio = question;
-        //                        question.AttachFileAudioId = imageFile.Id;
-        //                    }
-        //                    else
-        //                        errors.Add($"Row {row}: Audio file '{audioFileName}' not uploaded or invalid format (must be .mp3).");
-        //                }
-
-        //                // Parse Image Attachment
-        //                var imageFileName = worksheet.Cells[row, isMultipleChoice ? 12 : 8].Text.Trim();
-        //                if (!string.IsNullOrEmpty(imageFileName))
-        //                {
-        //                    if (uploadedFiles.TryGetValue(imageFileName, out var imageFile) && (imageFile.ContentType == "image/jpeg" || imageFile.ContentType == "image/png"))
-        //                    {
-        //                        imageFile.QuestionForImage = question;
-        //                        question.AttachFileImageId = imageFile.Id;
-        //                    }
-        //                    else
-        //                        errors.Add($"Row {row}: Image file '{imageFileName}' not uploaded or invalid format (must be .jpg or .png).");
-        //                }
-
-        //                // Validate Nghe skill
-        //                var skillValue = typeParts.Length > 0 ? typeParts[0] : "";
-        //                if (skillValue == "Nghe" && !question.AttachFileAudioId.HasValue)
-        //                    errors.Add($"Row {row}: Audio file is required for Nghe skill.");
-
-        //                questions.Add(question);
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                errors.Add($"Row {row}: Error processing row - {ex.Message}");
-        //            }
-        //        }
-
-        //        if (!errors.Any())
-        //        {
-        //            foreach (var question in questions)
-        //                _unitOfWork.Questions.Add(question);
-
-        //            await _unitOfWork.SaveAsync();
-
-        //            await _unitOfWork.AccessLogs.AddAsync(new Domain.Entities.SystemAccessLog
-        //            {
-        //                AccessTime = DateTime.Now,
-        //                ActionName = "Import questions from Excel",
-        //                IsSuccess = true,
-        //                TargetObject = "Questions",
-        //                Details = $"Imported {questions.Count} questions by user {requestedUserId} from IP {ipAddress}. TaskId: {taskId?.ToString() ?? "None"}"
-        //            });
-        //            await _unitOfWork.SaveAsync();
-        //        }
-        //        else
-        //        {
-        //            foreach (var imageFile in uploadedFiles.Values)
-        //            {
-        //                _unitOfWork.ImageFiles.Remove(imageFile);
-        //            }
-        //            await _unitOfWork.SaveAsync();
-
-        //            await _unitOfWork.AccessLogs.AddAsync(new Domain.Entities.SystemAccessLog
-        //            {
-        //                AccessTime = DateTime.Now,
-        //                ActionName = "Import questions from Excel",
-        //                IsSuccess = false,
-        //                TargetObject = "Questions",
-        //                Details = $"Failed to import questions by user {requestedUserId} from IP {ipAddress}. Errors: {string.Join("; ", errors)}. TaskId: {taskId?.ToString() ?? "None"}"
-        //            });
-        //            await _unitOfWork.SaveChangesAsync();
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        errors.Add($"Failed to process Excel file: {ex.Message}");
-        //        foreach (var imageFile in uploadedFiles.Values)
-        //        {
-        //            _unitOfWork.ImageFiles.re(imageFile);
-        //        }
-        //        await _unitOfWork.SaveChangesAsync();
-
-        //        await _unitOfWork.AccessLogs.AddAsync(new Domain.Entities.SystemAccessLog
-        //        {
-        //            AccessTime = DateTime.Now,
-        //            ActionName = "Import questions from Excel",
-        //            IsSuccess = false,
-        //            TargetObject = "Questions",
-        //            Details = $"Failed to import questions by user {requestedUserId} from IP {ipAddress}. Error: {ex.Message}. TaskId: {taskId?.ToString() ?? "None"}"
-        //        });
-        //        await _unitOfWork.SaveChangesAsync();
-        //    }
-
-        //    return (questions, errors);
-        //}
-                       
-        private List<(ProcessedQuestionDTO?, List<string>)> ProcessMultipleChoicecQuestionsSheet(ExcelWorksheet worksheet)
-        {
-            List<(ProcessedQuestionDTO?, List<string>)> result = new();
-            int rowCount = worksheet.Dimension.End.Row;
-
-            // Start from row 2 (after header)
-            for (int row = 2; row <= rowCount; row++)
-            {
-                var messages = new List<string> { "OK" };
-                var processedQuestion = new ProcessedQuestionDTO();
-
-                try
-                {
-                    // Read basic question information
-                    processedQuestion.QuestionContent = worksheet.Cells[row, 1].GetValue<string>() ?? "";
-                    processedQuestion.Difficulty = (Difficulty)worksheet.Cells[row, 2].GetValue<int>();
-                    processedQuestion.LevelNameAndTopicName = worksheet.Cells[row, 3].GetValue<string>() ?? "";
-                    processedQuestion.ReferenceName = worksheet.Cells[row, 4].GetValue<string>() ?? "";
-                    processedQuestion.ReferencePublishedYear = worksheet.Cells[row, 5].GetValue<int>();
-                    processedQuestion.QuestionTypeName = worksheet.Cells[row, 6].GetValue<string>() ?? "";
-                    processedQuestion.Skill = (Skill)worksheet.Cells[row, 7].GetValue<int>();
-                    processedQuestion.AttachmentFileName = worksheet.Cells[row, 8].GetValue<string>();
-
-                    // Validation
-                    if (string.IsNullOrEmpty(processedQuestion.QuestionContent))
-                        messages.Add("Nội dung câu hỏi không được để trống.");
-
-                    //if (processedQuestion.Difficulty != 1 || processedQuestion.Difficulty > 5)
-                    //    messages.Add("Độ khó phải từ 1-5.");
-
-                    if (string.IsNullOrEmpty(processedQuestion.LevelNameAndTopicName))
-                        messages.Add("Trình độ và chủ đề không được để trống.");
-
-                    if (string.IsNullOrEmpty(processedQuestion.ReferenceName))
-                        messages.Add("Tên nguồn tham khảo không được để trống.");
-
-                    if (processedQuestion.ReferencePublishedYear <= 0)
-                        messages.Add("Năm xuất bản không hợp lệ.");
-
-                    if (string.IsNullOrEmpty(processedQuestion.QuestionTypeName))
-                        messages.Add("Loại câu hỏi không được để trống.");
-
-                    //if (string.IsNullOrEmpty(processedQuestion.Skill))
-                    //    messages.Add("Kỹ năng không được để trống.");
-
-                    // Process answers (A, B, C, D)
-                    processedQuestion.Answers = new List<AddAnswerDTO>();
-                    for (int answerCol = 9; answerCol <= 12; answerCol++)
-                    {
-                        string answerContent = worksheet.Cells[row, answerCol].GetValue<string>() ?? "";
-                        if (!string.IsNullOrEmpty(answerContent))
-                        {
-                            bool isCorrect = false;
-                            // Check if this is correct answer
-                            string correctAnswer = worksheet.Cells[row, 13].GetValue<string>() ?? "";
-                            if (!string.IsNullOrEmpty(correctAnswer))
-                            {
-                                char answerLetter = (char)('A' + (answerCol - 9));
-                                isCorrect = correctAnswer.Contains(answerLetter.ToString());
-                            }
-
-                            processedQuestion.Answers.Add(new AddAnswerDTO
-                            {
-                                Content = answerContent,
-                                IsCorrect = isCorrect
-                            });
-                        }
-                    }
-
-                    if (processedQuestion.Answers.Count < 2)
-                        messages.Add("Câu hỏi phải có ít nhất 2 đáp án.");
-
-                    if (processedQuestion.Answers.Count(a => a.IsCorrect) != 1)
-                        messages.Add("Phải có đúng 1 đáp án đúng.");
-                }
-                catch (Exception ex)
-                {
-                    messages.Add($"Lỗi xử lý dòng {row}: {ex.Message}");
-                    result.Add((null, messages));
-                    continue;
-                }
-
-                result.Add((processedQuestion, messages));
-            }
-
-            return result;
-        }
-        private List<(ProcessedQuestionDTO?, List<string>)> ProcessEssayQuestionsSheet(ExcelWorksheet worksheet)
-        {
-            List<(ProcessedQuestionDTO?, List<string>)> result = new();
-            int rowCount = worksheet.Dimension.End.Row;
-
-            // Start from row 2 (after header)
-            for (int row = 2; row <= rowCount; row++)
-            {
-                var messages = new List<string> { "OK" };
-                var processedQuestion = new ProcessedQuestionDTO();
-
-                try
-                {
-                    // Read basic question information
-                    processedQuestion.QuestionContent = worksheet.Cells[row, 1].GetValue<string>() ?? "";
-                    processedQuestion.Difficulty = (Difficulty)worksheet.Cells[row, 2].GetValue<int>();
-                    processedQuestion.LevelNameAndTopicName = worksheet.Cells[row, 3].GetValue<string>() ?? "";
-                    processedQuestion.ReferenceName = worksheet.Cells[row, 4].GetValue<string>() ?? "";
-                    processedQuestion.ReferencePublishedYear = worksheet.Cells[row, 5].GetValue<int>();
-                    processedQuestion.QuestionTypeName = worksheet.Cells[row, 6].GetValue<string>() ?? "";
-                    processedQuestion.Skill = (Skill)worksheet.Cells[row, 7].GetValue<int>();
-                    processedQuestion.AttachmentFileName = worksheet.Cells[row, 8].GetValue<string>();
-
-                    // Validation
-                    if (string.IsNullOrEmpty(processedQuestion.QuestionContent))
-                        messages.Add("Nội dung câu hỏi không được để trống.");
-
-                    //if (processedQuestion.Difficulty < 1 || processedQuestion.Difficulty > 5)
-                    //    messages.Add("Độ khó phải từ 1-5.");
-
-                    if (string.IsNullOrEmpty(processedQuestion.LevelNameAndTopicName))
-                        messages.Add("Trình độ và chủ đề không được để trống.");
-
-                    if (string.IsNullOrEmpty(processedQuestion.ReferenceName))
-                        messages.Add("Tên nguồn tham khảo không được để trống.");
-
-                    if (processedQuestion.ReferencePublishedYear <= 0)
-                        messages.Add("Năm xuất bản không hợp lệ.");
-
-                    if (string.IsNullOrEmpty(processedQuestion.QuestionTypeName))
-                        messages.Add("Loại câu hỏi không được để trống.");
-
-                    //if (string.IsNullOrEmpty(processedQuestion.Skill))
-                    //    messages.Add("Kỹ năng không được để trống.");
-
-                    // Process answer (expected answer for essay)
-                    string answerContent = worksheet.Cells[row, 9].GetValue<string>() ?? "";
-                    if (!string.IsNullOrEmpty(answerContent))
-                    {
-                        processedQuestion.Answers.Add(new AddAnswerDTO
-                        {
-                            Content = answerContent,
-                            IsCorrect = true
-                        });
+                        questionRequest = await ParseMultipleChoiceRow(sheet, row, request.RequestedUserId,request.TaskId.Value, attachmentDict);
                     }
                     else
                     {
-                        messages.Add("Câu hỏi tự luận phải có đáp án mẫu.");
+                        questionRequest = await ParseEssayRow(sheet, row, request.RequestedUserId, attachmentDict);
+                    }
+                    if (questionRequest == null)
+                    {
+                        result.Messages.Add($"Hàng {row}: Dữ liệu không hợp lệ hoặc tệp đính kèm không khớp");
+                        continue;
+                    }
+                    questionRequest.TaskId = request.TaskId;
+                    var addResult = await AddSingleQuestionAsync(questionRequest);
+                    if (addResult.IsSuccess && addResult.Result.Any())
+                    {
+                        ((List<QuestionDetailDto>)result.Question).AddRange(addResult.Result);
+                        changes.Add($"Thêm câu hỏi {(request.ForMultipleChoice ? "trắc nghiệm" : "tự luận")}: {questionRequest.QuestionContent}");
+                    }
+                    else
+                    {
+                        result.Messages.Add($"Hàng {row}: {addResult.Message}");
                     }
                 }
-                catch (Exception ex)
+                if (!changes.Any())
                 {
-                    messages.Add($"Lỗi xử lý dòng {row}: {ex.Message}");
-                    result.Add((null, messages));
-                    continue;
+                    response.Message = "Không có câu hỏi nào được thêm từ file Excel";
+                    response.StatusCode = HttpStatusCode.NoContent;
+                    result.Messages.Add(response.Message);
+                    await _unitOfWork.RollbackAsync();
+                    response.Result = new List<ImportQuestionResultDTO> { result };
+                    return response;
                 }
-
-                result.Add((processedQuestion, messages));
+                await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
+                {
+                    AccessTime = now,
+                    ActionName = "Thêm câu hỏi từ Excel",
+                    Details = string.Join(" ~ ", changes),
+                    IpAddress = ipAddress ?? "::1",
+                    IsSuccess = true,
+                    TargetObject = nameof(Question),
+                    UserId = request.RequestedUserId
+                });
+                await _unitOfWork.CommitAsync();
+                if (request.TaskId.HasValue)
+                {
+                    var task = await _unitOfWork.AddQuestionTasks.GetByIdAsync(request.TaskId.Value);
+                    if (task != null)
+                    {
+                        var actor = await _unitOfWork.Users.GetByIdAsync(request.RequestedUserId);
+                        var taskCreator = await _unitOfWork.Users.GetByIdAsync(task.CreatedBy.Value);
+                        if (taskCreator != null && !string.IsNullOrEmpty(taskCreator.Email))
+                        {
+                            try
+                            {
+                                _unitOfWork.EmailService.SendEmail(
+                                    taskCreator.Email,
+                                    "HỆ THỐNG CÓ CÂU HỎI MỚI ĐƯỢC THÊM VÀO TASK CỦA BẠN",
+                                    $"{actor?.UserName} vừa thêm {((List<QuestionDetailDto>)result.Question).Count} câu hỏi mới từ file Excel vào tác vụ bạn đã tạo lúc {now:dd/MM/yyyy HH:mm}. " +
+                                    "Vui lòng truy cập hệ thống để kiểm tra và duyệt câu hỏi.",
+                                    taskCreator.FullName
+                                );
+                            }
+                            catch (Exception ex)
+                            {
+                                result.Messages.Add("Thêm câu hỏi thành công nhưng không thể gửi email thông báo.");
+                            }
+                        }
+                    }
+                }
+                response.Result = new List<ImportQuestionResultDTO> { result };
+                response.IsSuccess = true;
+                response.Message = $"Thêm {((List<QuestionDetailDto>)result.Question).Count} câu hỏi từ Excel thành công";
+                response.StatusCode = HttpStatusCode.OK;
             }
-
-            return result;
-        }
- 
-        private async Task<APIResponse<ImportQuestionResultDTO>> AddQuestionAsync(AddQuestionRequest request)
-        {
-            // This would be implementation for adding questions to database
-            // Simplified version shown here
-            APIResponse<ImportQuestionResultDTO> response = new();
-
-            // Add questions to database
-            foreach (var singleRequest in request.Requests)
+            catch (Exception ex)
             {
-                try
-                {
-                    // Create Question entity
-                    //var question = new Question
-                    //{
-                    //    QuestionContent = singleRequest.QuestionContent,
-                    //    Difficulty = singleRequest.Difficulty,
-                    //    LevelDetailId = singleRequest.LevelDetail.Id,
-                    //    ReferenceId = singleRequest.Reference.Id,
-                    //    QuestionTypeId = singleRequest.QuestionType.Id,
-                    //    IsMultipleChoice = singleRequest.IsMultipleChoice,
-                    //    Status = QuestionStatus.Pending, // Assuming new questions are Active by default
-                    //    Description = string.Empty, // Default empty description
-                    //    LogId = singleRequest.AccessLog.Id, // Set the LogId from AccessLog
-                    //    SystemAccessLog = singleRequest.AccessLog,
-                    //    CreatedBy = request.RequestedUser.Id,
-                    //    CreatedDate = DateTime.UtcNow,
-
-
-                    //};
-                    var question = _mapper.Map<Question>(singleRequest);
-                    // Set the task ID if task is provided
-                    if (singleRequest.Task != null)
-                    {
-                        question.TaskId = singleRequest.Task.Id;
-                        question.AddQuestionTask = singleRequest.Task;
-                    }
-                    // Add attachment if present
-                    if (singleRequest.Attachment != null)
-                    {
-                        // Read file data into byte array
-                        byte[] fileData;
-                        using (var memoryStream = new MemoryStream())
-                        {
-                            await singleRequest.Attachment.CopyToAsync(memoryStream);
-                            fileData = memoryStream.ToArray();
-                        }
-
-                        // Create ImageFile with the byte array data
-                        var imageFile = new ImageFile
-                        {
-                            FileName = singleRequest.Attachment.FileName,
-                            ContentType = singleRequest.Attachment.ContentType,
-                            FileData = fileData,
-                            QuestionForImage = question,
-                            User = request.RequestedUser // Set the user who uploaded the file
-                        };
-
-                        // Add the image file to the repository
-                        await _unitOfWork.ImageFiles.AddAsync(imageFile);
-
-                        // Set the image file reference on question
-                        question.AttachFileImageId = imageFile.Id;
-                        question.AttachmentFileImage = imageFile;
-                        question.AttachmentDuration = singleRequest.AttachmentDuration;
-                    }
-
-                    // Initialize Answers list if null
-                    if (question.Answers == null)
-                    {
-                        question.Answers = new List<Answer>();
-                    }
-
-                    // Add answers
-                    if (singleRequest.Answers != null)
-                    {
-                        foreach (var answerDto in singleRequest.Answers)
-                        {
-                            var answer = _mapper.Map<Answer>(answerDto);
-                            question.Answers.Add(answer);
-                        }
-                    }
-
-                    await _unitOfWork.Questions.AddAsync(question);
-                }
-                catch (Exception ex)
-                {
-                    // Handle failures for individual questions
-                    //response.Result.Messages.Add($"Lỗi thêm câu hỏi: {ex.Message}");
-                }
+                await _unitOfWork.RollbackAsync();
+                response.Message = $"Lỗi khi thêm câu hỏi từ Excel: {ex.Message}";
+                response.StatusCode = HttpStatusCode.InternalServerError;
+                result.Messages.Add(response.Message);
+                response.Result = new List<ImportQuestionResultDTO> { result };
             }
             return response;
         }
+        private async Task<AddSingleQuestionRequest> ParseMultipleChoiceRow(ExcelWorksheet sheet, int row, Guid requestedUserId, Guid taskId, Dictionary<string, IFormFile> attachments)
+        {
+            var request = new AddSingleQuestionRequest
+            {
+                RequestedUserId = requestedUserId,
+                TaskId = taskId,
+                IsMultipleChoice = true,
+                Answers = new List<AddAnswerDTO>()
+            };
 
+            // Parse Nguồn
+            var refText = sheet.Cells[row, 1].Text;
+            if (!string.IsNullOrEmpty(refText))
+            {
+                var refParts = refText.Split('-');
+                var refName = refParts[0];
+                var refs = await _unitOfWork.References.GetAsync(x => x.ReferenceName == refName);
+                if (refs != null)
+                    request.ReferenceId = refs.Id;
+                else
+                    return null;
+            }
+
+            // Parse Chủ đề
+            var levelText = sheet.Cells[row, 2].Text;
+            if (!string.IsNullOrEmpty(levelText))
+            {
+                var levelParts = levelText.Split('-');
+                var levelName = levelParts[0];
+                var topicName = levelParts.Length > 1 ? levelParts[1] : "";
+                var levelDetail = await _unitOfWork.LevelDetails.GetAsync(x => x.Level.LevelName == levelName && x.Topic.TopicName == topicName);
+                if (levelDetail != null)
+                    request.LevelDetailId = levelDetail.Id;
+                else
+                    return null;
+            }
+
+            // Parse Loại câu hỏi
+            var typeText = sheet.Cells[row, 3].Text;
+            if (!string.IsNullOrEmpty(typeText))
+            {
+                
+                var typeParts = typeText.Split('-');
+                var skill = typeParts[0];
+                Skill skillEnum = Enum.Parse<Skill>(skill);
+                request.Skill = skillEnum;
+                var typeName = typeParts.Length > 1 ? typeParts[1] : "";
+                var questionType = await _unitOfWork.QuestionTypes.GetAsync(x => x.Skill == skillEnum && x.TypeName == typeName);
+                if (questionType != null)
+                    request.QuestionTypeId = questionType.Id;
+                else
+                    return null;
+            }
+
+            // Parse Độ khó
+            var difficultyText = sheet.Cells[row, 4].Text;
+            if (!Enum.TryParse<Difficulty>(difficultyText, out var difficulty))
+                return null;
+            request.Difficulty = difficulty;
+
+            // Parse Nội dung câu hỏi
+            request.QuestionContent = sheet.Cells[row, 5].Text;
+            if (string.IsNullOrEmpty(request.QuestionContent))
+                return null;
+
+            // Parse Đáp án
+            var correctAnswers = sheet.Cells[row, 6].Text.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList();
+            for (int i = 7; i <= 10; i++)
+            {
+                var answerText = sheet.Cells[row, i].Text;
+                if (!string.IsNullOrEmpty(answerText))
+                {
+                    request.Answers.Add(new AddAnswerDTO
+                    {
+                        Content = answerText,
+                        IsCorrect = correctAnswers.Contains($"{(char)(64 + (i - 6))}")
+                    });
+                }
+            }
+            if (request.Answers.Count < 2 || !request.Answers.Any(a => a.IsCorrect))
+                return null;
+
+            // Parse và so sánh file đính kèm
+            var audioFileName = sheet.Cells[row, 11].Text;
+            var imageFileName = sheet.Cells[row, 12].Text;
+            if (!string.IsNullOrEmpty(audioFileName))
+            {
+                if (!attachments.ContainsKey(audioFileName))
+                {
+                    return null; // Tệp âm thanh không khớp
+                }
+                var audioFile = attachments[audioFileName];
+                var audioExtension = Path.GetExtension(audioFile.FileName).ToLower();
+                if (!new[] { ".mp3", ".wav" }.Contains(audioExtension))
+                    return null;
+                if (audioFile.Length > 10 * 1024 * 1024) // 10MB
+                    return null;
+                request.AttachmentFileAudio = audioFile;
+            }
+            if (!string.IsNullOrEmpty(imageFileName))
+            {
+                if (!attachments.ContainsKey(imageFileName))
+                {
+                    return null; // Tệp ảnh không khớp
+                }
+                var imageFile = attachments[imageFileName];
+                var imageExtension = Path.GetExtension(imageFile.FileName).ToLower();
+                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(imageExtension))
+                    return null;
+                if (imageFile.Length > 5 * 1024 * 1024) // 5MB
+                    return null;
+                request.AttachmentFileImage = imageFile;
+            }
+
+            return request;
+        }
+        private async Task<AddSingleQuestionRequest> ParseEssayRow(ExcelWorksheet sheet, int row, Guid requestedUserId, Dictionary<string, IFormFile> attachments)
+        {
+            var request = new AddSingleQuestionRequest
+            {
+                RequestedUserId = requestedUserId,
+                IsMultipleChoice = false,
+                Answers = new List<AddAnswerDTO>()
+            };
+
+            // Parse Nguồn
+            var refText = sheet.Cells[row, 1].Text;
+            if (!string.IsNullOrEmpty(refText))
+            {
+                var refParts = refText.Split('-');
+                var refName = refParts[0];
+                var refs = await _unitOfWork.References.GetAsync(x => x.ReferenceName == refName);
+                if (refs != null)
+                    request.ReferenceId = refs.Id;
+                else
+                    return null;
+            }
+
+            // Parse Chủ đề
+            var levelText = sheet.Cells[row, 2].Text;
+            if (!string.IsNullOrEmpty(levelText))
+            {
+                var levelParts = levelText.Split('-');
+                var levelName = levelParts[0];
+                var topicName = levelParts.Length > 1 ? levelParts[1] : "";
+                var levelDetail = await _unitOfWork.LevelDetails.GetAsync(x => x.Level.LevelName == levelName && x.Topic.TopicName == topicName);
+                if (levelDetail != null)
+                    request.LevelDetailId = levelDetail.Id;
+                else
+                    return null;
+            }
+
+            // Parse Loại câu hỏi
+            var typeText = sheet.Cells[row, 3].Text;
+            if (!string.IsNullOrEmpty(typeText))
+            {
+                var typeParts = typeText.Split('-');
+                var skill = typeParts[0];
+                var typeName = typeParts.Length > 1 ? typeParts[1] : "";
+                var questionType = await _unitOfWork.QuestionTypes.GetAsync(x => x.Skill.ToString() == skill && x.TypeName == typeName);
+                if (questionType != null)
+                    request.QuestionTypeId = questionType.Id;
+                else
+                    return null;
+            }
+
+            // Parse Độ khó
+            var difficultyText = sheet.Cells[row, 4].Text;
+            if (!Enum.TryParse<Difficulty>(difficultyText, out var difficulty))
+                return null;
+            request.Difficulty = difficulty;
+
+            // Parse Nội dung câu hỏi
+            request.QuestionContent = sheet.Cells[row, 5].Text;
+            if (string.IsNullOrEmpty(request.QuestionContent))
+                return null;
+
+            // Parse Đáp án
+            var answerText = sheet.Cells[row, 6].Text;
+            if (!string.IsNullOrEmpty(answerText))
+            {
+                request.Answers.Add(new AddAnswerDTO
+                {
+                    Content = answerText,
+                    IsCorrect = true
+                });
+            }
+            else
+                return null;
+
+            // Parse và so sánh file đính kèm
+            var audioFileName = sheet.Cells[row, 7].Text;
+            var imageFileName = sheet.Cells[row, 8].Text;
+            if (!string.IsNullOrEmpty(audioFileName))
+            {
+                if (!attachments.ContainsKey(audioFileName))
+                {
+                    return null; // Tệp âm thanh không khớp
+                }
+                var audioFile = attachments[audioFileName];
+                var audioExtension = Path.GetExtension(audioFile.FileName).ToLower();
+                if (!new[] { ".mp3", ".wav" }.Contains(audioExtension))
+                    return null;
+                if (audioFile.Length > 10 * 1024 * 1024) // 10MB
+                    return null;
+                request.AttachmentFileAudio = audioFile;
+            }
+            if (!string.IsNullOrEmpty(imageFileName))
+            {
+                if (!attachments.ContainsKey(imageFileName))
+                {
+                    return null; // Tệp ảnh không khớp
+                }
+                var imageFile = attachments[imageFileName];
+                var imageExtension = Path.GetExtension(imageFile.FileName).ToLower();
+                if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(imageExtension))
+                    return null;
+                if (imageFile.Length > 5 * 1024 * 1024) // 5MB
+                    return null;
+                request.AttachmentFileImage = imageFile;
+            }
+
+            return request;
+        }
+       
         private async Task<APIResponse<ImportQuestionResultDTO>> AddQuestionAsync(AddQuestionRequest request, string ipAddress)
         {
             APIResponse<ImportQuestionResultDTO> response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
@@ -1356,7 +1004,7 @@ namespace KEB.Application.Services.Implementations
                     //}
                 }
                 // Gửi email thông báo sau khi hoàn thành thêm câu hỏi
-                await SendEmailToLeadAfterImportingQuestion(requestedUser, count);
+                //await SendEmailToLeadAfterImportingQuestion(requestedUser, count);
 
                 // Cập nhật log khi thành công
                 questionLog.IsSuccess = true;
@@ -1398,21 +1046,7 @@ namespace KEB.Application.Services.Implementations
             return response;
 
         }
-        private async Task SendEmailToLeadAfterImportingQuestion(User actor, int numOfQues)
-        {
-            var leads = await _unitOfWork.Users.GetAllAsync(x => x.RoleId.ToString() == LogicString.Role.TeamLeadRoleId);
-            foreach (var lead in leads)
-            {
-                await Task.Run(() =>
-                {
-                    _unitOfWork.EmailService.SendEmail(
-                        toEmail: lead.Email,
-                        subject: SystemDataFormat.INFORM_NEWQUESTION_EMAIL_SUBJECT,
-                        body: string.Format(SystemDataFormat.INFORM_NEWQUESTION_EMAIL_BODY, actor.UserName, numOfQues),
-                        receiverName: lead.UserName);
-                });
-            }
-        }
+   
 
         public async Task<APIResponse<QuestionDetailDto>> AddSingleQuestionAsync(AddSingleQuestionRequest request)
         {

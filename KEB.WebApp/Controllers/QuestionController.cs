@@ -1,6 +1,8 @@
+using AutoMapper;
 using DocumentFormat.OpenXml.InkML;
 using DocumentFormat.OpenXml.Office.SpreadSheetML.Y2023.MsForms;
 using DocumentFormat.OpenXml.Office2021.Drawing.SketchyShapes;
+using Grpc.Core;
 using KEB.Application.DTOs.AnswerDTO;
 using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.ExamDTO;
@@ -21,6 +23,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -34,6 +37,7 @@ namespace KEB.WebApp.Controllers
         private readonly HttpClient _httpClient;
         private const string ApiUrl = "https://localhost:7101/api/Questions";
         private const string BaseApiUrl = "https://localhost:7101/api";
+        private IMapper _mapper;
 
         public QuestionController(IHttpClientFactory httpClientFactory)
         {
@@ -56,7 +60,7 @@ namespace KEB.WebApp.Controllers
 
                 request.PaginationRequest = new Pagination { Page = 1, Size = 20 };
                 request.SortAscending = false;
-
+                request.Status = new List<QuestionStatus> { QuestionStatus.Ok };
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", request); // request rỗng sẽ trả toàn bộ
                 if (response.IsSuccessStatusCode)
                 {
@@ -263,18 +267,21 @@ namespace KEB.WebApp.Controllers
                     if (request.TaskId != null)
                         formData.Add(new StringContent(request.TaskId.ToString()), nameof(request.TaskId));
                     // Thêm file nếu có
-                    if (request.AttachmentFileImage != null && request.AttachmentFileImage.Length > 0)
-                    {
-                        var streamContent = new StreamContent(request.AttachmentFileImage.OpenReadStream());
-                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.AttachmentFileImage.ContentType);
-                        formData.Add(streamContent, nameof(request.AttachmentFileImage), request.AttachmentFileImage.FileName);
-                    }
-                    if (request.AttachmentFileAudio != null && request.AttachmentFileAudio.Length > 0)
-                    {
-                        var streamContent = new StreamContent(request.AttachmentFileAudio.OpenReadStream());
-                        streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.AttachmentFileAudio.ContentType);
-                        formData.Add(streamContent, nameof(request.AttachmentFileAudio), request.AttachmentFileAudio.FileName);
-                    }
+                   
+                        if (request.AttachmentFileImage != null && request.AttachmentFileImage.Length > 0)
+                        {
+                            var streamContentImage = new StreamContent(request.AttachmentFileImage.OpenReadStream());
+                            streamContentImage.Headers.ContentType = new MediaTypeHeaderValue(request.AttachmentFileImage.ContentType);
+                            formData.Add(streamContentImage, nameof(request.AttachmentFileImage), request.AttachmentFileImage.FileName);
+                        }
+
+                        if (request.AttachmentFileAudio != null && request.AttachmentFileAudio.Length > 0)
+                        {
+                            var streamContentAudio = new StreamContent(request.AttachmentFileAudio.OpenReadStream());
+                            streamContentAudio.Headers.ContentType = new MediaTypeHeaderValue(request.AttachmentFileAudio.ContentType);
+                            formData.Add(streamContentAudio, nameof(request.AttachmentFileAudio), request.AttachmentFileAudio.FileName);
+                        }
+
                     // Gửi request
                     var response = await _httpClient.PostAsync($"{ApiUrl}/add-single-question", formData);
                     if (!response.IsSuccessStatusCode)
@@ -331,7 +338,7 @@ namespace KEB.WebApp.Controllers
                 }
 
                 var questionDetail = apiResult.Result[0];
-
+               
                 // Map QuestionDetailDto to UpdateQuestionRequest
                 var updateRequest = new UpdateQuestionRequest
                 {
@@ -339,10 +346,9 @@ namespace KEB.WebApp.Controllers
                     NewQuestionContent = questionDetail.QuestionContent,
                     NewDifficulty = questionDetail.Difficulty,
                     NewReferenceId = questionDetail.ReferenceId,
-                    Answers = (List<AddAnswerDTO>)questionDetail.Answers,
-
+                    Answers = (List<AddAnswerDTO>)questionDetail.Answers, 
+                    AttachmentChanged = false
                 };
-
                 // Store the current question details in ViewBag for comparison in the view
                 ViewBag.CurrentQuestion = questionDetail;
 
@@ -378,8 +384,6 @@ namespace KEB.WebApp.Controllers
                         userId = parsedGuid;
                     }
                 }
-
-                // Tạo nội dung multipart/form-data
                 using var formData = new MultipartFormDataContent();
 
                 // Thêm các field dạng text
@@ -405,7 +409,7 @@ namespace KEB.WebApp.Controllers
                 }
 
                 // Xử lý các đáp án nếu có thay đổi
-                if (request.AnswersChanged && request.Answers != null && request.Answers.Any())
+                 if (request.AnswersChanged && request.Answers != null && request.Answers.Any())
                 {
                     var answersJson = System.Text.Json.JsonSerializer.Serialize(request.Answers);
                     formData.Add(new StringContent(answersJson), nameof(request.Answers));
@@ -413,11 +417,26 @@ namespace KEB.WebApp.Controllers
                 }
 
                 // Thêm file mới nếu có
-                if (request.AttachmentChanged && request.NewAttachment != null && request.NewAttachment.Length > 0)
+                if (request.AttachmentChanged)
                 {
-                    var streamContent = new StreamContent(request.NewAttachment.OpenReadStream());
-                    streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(request.NewAttachment.ContentType);
-                    formData.Add(streamContent, nameof(request.NewAttachment), request.NewAttachment.FileName);
+
+                    // Xử lý Image Attachment
+                    if (request.AttachmentFileImage != null && request.AttachmentFileImage.Length > 0)
+                    {
+                        var streamContentImage = new StreamContent(request.AttachmentFileImage.OpenReadStream());
+                        streamContentImage.Headers.ContentType = new MediaTypeHeaderValue(request.AttachmentFileImage.ContentType);
+                        formData.Add(streamContentImage, nameof(request.AttachmentFileImage), request.AttachmentFileImage.FileName);
+                    }
+
+                    // Xử lý Audio Attachment
+                    if (request.AttachmentFileAudio != null && request.AttachmentFileAudio.Length > 0)
+                    {
+                        var streamContentAudio = new StreamContent(request.AttachmentFileAudio.OpenReadStream());
+                        streamContentAudio.Headers.ContentType = new MediaTypeHeaderValue(request.AttachmentFileAudio.ContentType);
+                        formData.Add(streamContentAudio, nameof(request.AttachmentFileAudio), request.AttachmentFileAudio.FileName);
+                    }
+
+                    // Thêm flag AttachmentChanged
                     formData.Add(new StringContent(request.AttachmentChanged.ToString()), nameof(request.AttachmentChanged));
                 }
 
@@ -429,7 +448,7 @@ namespace KEB.WebApp.Controllers
                 }
 
                 // Gửi request
-                var response = await _httpClient.PutAsync($"{ApiUrl}/update-question", formData);
+                var response = await _httpClient.PostAsync($"{ApiUrl}/edit-question", formData);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -477,12 +496,21 @@ namespace KEB.WebApp.Controllers
             return View(request);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DownloadTemplate(bool forMultipleChoice = true)
+        {
+            var response = await _httpClient.GetAsync($"{ApiUrl}/download-template?forMultipleChoice={forMultipleChoice}");
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = forMultipleChoice ? "multiple_choice_template.xlsx" : "essay_template.xlsx";
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            return BadRequest("Không thể tải template");
+        }
         public async Task<IActionResult> ImportExcel()
         {
             await LoadDropdownData();
-
-            ViewBag.MultiChoiceTemplate = "/templates/multiple_choice_template.xlsx";
-            ViewBag.EssayTemplate = "/templates/essay_template.xlsx";
             return View(new ImportQuestionFromExcelRequest());
         }
         [HttpPost]

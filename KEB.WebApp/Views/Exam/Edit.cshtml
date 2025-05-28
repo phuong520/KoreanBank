@@ -1,0 +1,150 @@
+﻿@using KEB.Domain.ValueObject
+@model KEB.Application.DTOs.ExamDTO.EditExamRequest
+@{
+    ViewData["Title"] = "Chỉnh sửa Kỳ Thi";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">@ViewData["Title"]</h2>
+        </div>
+        <div class="col text-end">
+            <a href="#" class="btn btn-outline-info me-2" title="Trợ giúp"><i class="fas fa-question-circle"></i></a>
+            <a href="#" class="btn btn-outline-secondary me-2" title="Ngôn ngữ"><i class="fas fa-globe"></i></a>
+            <a href="#" class="btn btn-outline-primary" title="Thông báo"><i class="fas fa-bell"></i></a>
+        </div>
+    </div>
+
+    <form asp-action="Edit" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <input type="hidden" asp-for="TargetObjectId" />
+        <input type="hidden" asp-for="RequestedUserId" />
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="NewExamTypeId" class="form-label">Loại Kỳ Thi:</label>
+                    <select asp-for="NewExamTypeId" asp-items="ViewBag.ExamTypes" class="form-select">
+                        <option value="">-- Chọn loại kỳ thi --</option>
+                    </select>
+                    <span asp-validation-for="NewExamTypeId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="NewExamName" class="form-label">Tên Kỳ Thi:</label>
+                    <input asp-for="NewExamName" class="form-control" />
+                    <span asp-validation-for="NewExamName" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="NewTakePlaceTime" class="form-label">Ngày Thi:</label>
+                    <div class="input-group">
+                        <input asp-for="NewTakePlaceTime" type="datetime-local" class="form-control" />
+                        <span class="input-group-text">
+                            <i class="fas fa-calendar-alt"></i>
+                        </span>
+                    </div>
+                    <span asp-validation-for="NewTakePlaceTime" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="NewHostId" class="form-label">Host:</label>
+                    <select asp-for="NewHostId" asp-items="ViewBag.Hosts" class="form-select">
+                        <option value="">-- Chọn host --</option>
+                    </select>
+                    <span asp-validation-for="NewHostId" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="NewReviewerId" class="form-label">Reviewer:</label>
+                    <select asp-for="NewReviewerId" asp-items="ViewBag.Hosts" class="form-select">
+                        <option value="">-- Chọn reviewer --</option>
+                    </select>
+                    <span asp-validation-for="NewReviewerId" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+        @if (ViewData.ModelState.Any(x => x.Key == ""))
+        {
+            <div class="alert alert-danger" role="alert">
+                @Html.ValidationSummary(false)
+            </div>
+        }
+
+        <div class="row mt-4">
+            <div class="col text-end">
+                <a asp-action="Index" class="btn btn-secondary me-2">Quay Lại</a>
+                <button type="submit" class="btn btn-primary">Cập nhật</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            // Định dạng datetime-local
+            const takePlaceTimeInput = document.querySelector('#NewTakePlaceTime');
+            if (takePlaceTimeInput && takePlaceTimeInput.value) {
+                const date = new Date(takePlaceTimeInput.value);
+                takePlaceTimeInput.value = date.toISOString().slice(0, 16);
+            }
+
+            // Validation client-side
+            $('form').on('submit', function(e) {
+                const hostId = $('#NewHostId').val();
+                const reviewerId = $('#NewReviewerId').val();
+                if (hostId && reviewerId && hostId === reviewerId) {
+                    e.preventDefault();
+                    $('#notificationToast .toast-body').text('Host và Reviewer phải là hai người khác nhau.');
+                    $('#notificationToast').toast('show');
+                }
+
+                // Kiểm tra thời gian thi tối thiểu
+                const takePlaceTime = new Date(takePlaceTimeInput.value);
+                const minDate = new Date();
+                minDate.setDate(minDate.getDate() + @SystemDataFormat.EARLIEST_EXAM_TAKEPLACETIME_FROMNOW);
+                if (takePlaceTime < minDate) {
+                    e.preventDefault();
+                    $('#notificationToast .toast-body').text('Thời gian thi phải cách hiện tại ít nhất @SystemDataFormat.EARLIEST_EXAM_TAKEPLACETIME_FROMNOW ngày.');
+                    $('#notificationToast').toast('show');
+                }
+                const createdDate = new Date(createdDateValue);
+                    const currentDate = new Date();
+                    const editDeadline = new Date(createdDate);
+                    editDeadline.setDate(editDeadline.getDate() + 1);
+
+                    if (currentDate > editDeadline) {
+                         e.preventDefault();
+                    $('#notificationToast .toast-body').text('Bạn chỉ có thể chỉnh sửa kỳ thi sau 1 ngày tạo.');
+                    $('#notificationToast').toast('show');
+                    }
+            });
+        });
+    </script>
+    <!-- Toast Notification -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="notificationToast" class="toast" role="alert">
+            <div class="toast-header">
+                <strong class="me-auto">Thông báo</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+}

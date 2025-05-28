@@ -39,5 +39,6 @@ namespace KEB.Infrastructure.Repository
             int pageSize,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null);
         Task UpdateWithNoCommitAsync(T entity);
+        Task RemoveAsync(T entity);
     }
 }

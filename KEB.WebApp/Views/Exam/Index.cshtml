@@ -31,9 +31,12 @@ else
             </tr>
         </thead>
         <tbody>
+            @{
+                int i = 1;
+            }
             @foreach (var exam in Model)
             {
-                int i = 1;
+           
                 <tr style="border-bottom: 1px solid #dee2e6;">
                     <td style="border-right: none;">@i</td>
                     <td style="border-right: none;" name="ExamName">@exam.ExamName</td>
@@ -45,8 +48,8 @@ else
                         <a href="@Url.Action("Edit", "Exam", new { id = exam.ExamId })" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <a href="@Url.Action("Delete", "Exam", new { id = exam.ExamId })" class="btn btn-sm btn-outline-info">
-                            <i class="bi bi-info-circle"></i>
+                        <a href="@Url.Action("Delete", "Exam", new { id = exam.ExamId })" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
                         </a>
                     </td>
                 </tr>

@@ -353,7 +353,7 @@ namespace KEB.Application.Services.Implementations
             }
             var targetExam = await _unitOfWork.Exams
                             .GetAsync(filter: x => x.Id == request.TargetObjectId,
-                                      includeProperties: "ExamType,ExamType.Level,Papers,Host,Reviewer");
+                                      includeProperties: "ExamType,ExamType.Levels,Papers,Host,Reviewer");
             if (targetExam == null)
             {
                 response.StatusCode = System.Net.HttpStatusCode.NotFound;
@@ -370,10 +370,10 @@ namespace KEB.Application.Services.Implementations
             if (targetExam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION) < currentTime)
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                response.Message = AppMessages.CAN_ONLY_UPDATE_EXAM_WITHIN_LIMIT_TIME;
+                response.Message = "Bạn chỉ có thể chỉnh sửa thông tin kỳ thi trong vòng 1 ngày sau khi tạo."; ;
                 return response;
             }
-
+            await _unitOfWork.BeginTransactionAsync();
             List<string> changes = [];
             DateTime earliestNewTime = currentTime.AddDays(SystemDataFormat.EARLIEST_EXAM_TAKEPLACETIME_FROMNOW);
             ExamType? examType = targetExam.ExamType;
@@ -567,7 +567,9 @@ namespace KEB.Application.Services.Implementations
                 {
                     try
                     {
-                        await _unitOfWork.SaveChangesAsync();
+                        await _unitOfWork.Exams.UpdateWithNoCommitAsync(targetExam);
+                        
+                        //await _unitOfWork.SaveChangesAsync();
                         await _unitOfWork.AccessLogs.AddAsync(new()
                         {
                             AccessTime = currentTime,
@@ -578,14 +580,17 @@ namespace KEB.Application.Services.Implementations
                             UserId = request.RequestedUserId,
                             Details = string.Join(", ", changes)
                         });
-                        await Task.Run(() =>
-                        {
-                            _unitOfWork.Enqueue<EmailNotiService>((x) => x.SendEmails(needSendEmails));
-                        });
+                        //await Task.Run(() =>
+                        //{
+                        //    _unitOfWork.Enqueue<EmailNotiService>((x) => x.SendEmails(needSendEmails));
+                        //});
                         await Console.Out.WriteLineAsync("Edited");
+                        await _unitOfWork.CommitAsync();
                     }
+
                     catch (Exception ex)
                     {
+                        await _unitOfWork.RollbackAsync();
                         await Console.Out.WriteLineAsync(ex.Message);
                         response.Message = AppMessages.INTERNAL_SERVER_ERROR;
                         response.StatusCode = System.Net.HttpStatusCode.Conflict;
@@ -703,7 +708,7 @@ namespace KEB.Application.Services.Implementations
                 }
                 var queriedResult = await _unitOfWork.Exams.GetAllAsync(
                             filter: filter,
-                            includeProperties: "ExamType,ExamType.Level,Host,Reviewer",
+                            includeProperties: "ExamType,ExamType.Levels,Host,Reviewer",
                             orderBy: x => x.OrderByDescending(x => x.CreatedDate));
                 var count = queriedResult.Count;
                 if (getAll)
@@ -747,6 +752,7 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
 
+       
         public Task<APIResponse<object>> HideExam(Guid? requestedUserId, Guid examId, string? ipAddress = "::1", string keyword = "")
         {
             throw new NotImplementedException();

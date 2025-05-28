@@ -10,6 +10,7 @@ using static KEB.Domain.ValueObject.LogicString;
 using OfficeOpenXml;
 using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml;
+using LicenseContext = OfficeOpenXml.LicenseContext;
 
 namespace KEB.Application.Services.Implementations
 {
@@ -46,29 +47,24 @@ namespace KEB.Application.Services.Implementations
             return $"/templates/{fileName}?timestamp={DateTime.UtcNow.Ticks}";
         }
 
-        public async Task UploadExcelTemplate(string? message = "")
+        public async Task<byte[]> UploadExcelTemplate(bool forMultipleChoice = true, string ? message = "")
         {
             try
             {
-                await UploadMultipleChoiceTemplate(message);
+                return await (forMultipleChoice ? UploadMultipleChoiceTemplate(message) : UploadEssayTemplate(message));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in UploadMultipleChoiceTemplate: {ex.Message}");
-            }
-
-            try
-            {
-                await UploadEssayTemplate(message);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error in UploadEssayTemplate: {ex.Message}");
+                throw new Exception($"Failed to generate Excel template: {ex.Message}", ex);
+                // Hoặc trả về Array.Empty<byte>() nếu không muốn ném exception:
+                // return Array.Empty<byte>();
             }
         }
-        private async Task UploadMultipleChoiceTemplate(string? message = "")
+        private async Task<byte[]> UploadMultipleChoiceTemplate(string? message = "")
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //ExcelPackage.License.SetLicense(LicenseContext.NonCommercial);
+
             using var excel = new ExcelPackage();
             var multipleChoiceSheet = excel.Workbook.Worksheets.Add("TRẮC NGHIỆM");
             var typeSheet = excel.Workbook.Worksheets.Add("LOẠI CÂU HỎI");
@@ -202,27 +198,13 @@ namespace KEB.Application.Services.Implementations
                 );
             }
 
-            //using var memoryStream = new MemoryStream();
-            //excel.SaveAs(memoryStream);
-            //memoryStream.Position = 0;
-
-            //var content = memoryStream.ToArray();
-            //var fileName = "multiple_choice_template.xlsx";
-
-            //var filePath = Path.Combine("wwwroot", "templates", "multiple_choice_template.xlsx");
-
-            //using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-            //{
-            //    excel.SaveAs(stream);
-            //}
-            var filePath = Path.Combine(_templatePath, "multiple_choice_template.xlsx");
-            using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-            {
-                excel.SaveAs(stream);
-            }
+            using var memoryStream = new MemoryStream();
+            await excel.SaveAsAsync(memoryStream);
+            memoryStream.Position = 0;
+            return memoryStream.ToArray();
 
         }
-        private async Task UploadEssayTemplate(string? message = "")
+        private async Task<byte[]> UploadEssayTemplate(string? message = "")
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
             using var excel = new ExcelPackage();
@@ -354,36 +336,13 @@ namespace KEB.Application.Services.Implementations
                     );
                 }
 
-                // Upload file to Azure
-                //using var memoryStream = new MemoryStream();
-                //excel.SaveAs(memoryStream);
-                //memoryStream.Position = 0;
-
-                //var formFile = new FormFile(memoryStream, 0, memoryStream.Length, "excelFile", AzureBlob.ESSAY_QUESTION_IMPORTTEMPLATE_FILENAME)
-                //{
-                //    Headers = new HeaderDictionary(),
-                //    ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                //};
-                var filePath = Path.Combine(_templatePath, "essay_template.xlsx");
-                using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                {
-                    excel.SaveAs(stream);
-                }
+                using var memoryStream = new MemoryStream();
+                await excel.SaveAsAsync(memoryStream);
+                memoryStream.Position = 0;
+                return memoryStream.ToArray();
             }
         }
-        private static TableProperties GetTablePropertiesForSingleBordersTable(UInt32Value size)
-        {
-            return new TableProperties(
-                new TableBorders(
-                    new TopBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
-                    new BottomBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
-                    new LeftBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
-                    new RightBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
-                    new InsideHorizontalBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size },
-                    new InsideVerticalBorder { Val = new EnumValue<BorderValues>(BorderValues.Single), Size = size }
-                )
-            );
-        }
 
+       
     }
 }

@@ -3,86 +3,83 @@
 @{
     ViewData["Title"] = "Upload Questions from Excel";
 }
+<body>
+    <div class="container mt-5">
+        <h2>Thêm câu hỏi từ Excel</h2>
 
-<h1>Upload Questions from Excel</h1>
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert alert-danger">@ViewBag.Error</div>
+        }
+        @if (ViewBag.Success != null)
+        {
+            <div class="alert alert-success">@ViewBag.Success</div>
+            @if (ViewBag.Result != null)
+            {
+                <ul>
+                    @foreach (var message in ViewBag.Result.Messages)
+                    {
+                        <li>@message</li>
+                    }
+                </ul>
+            }
+        }
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success" role="alert">
-        @TempData["SuccessMessage"]
-    </div>
-}
-
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="form-group mb-3">
-                <label class="form-label">Question Type</label>
-                <div class="form-check">
-                    <input asp-for="ForMultipleChoice" type="checkbox" class="form-check-input" checked />
-                    <label class="form-check-label">Multiple Choice (Uncheck for Essay)</label>
-                </div>
-                <span asp-validation-for="ForMultipleChoice" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="TaskId" class="form-label">Task</label>
-                <select asp-for="TaskId" class="form-select" asp-items="ViewBag.Tasks">
-                    <option value="">-- Chọn nhiệm vụ --</option>
+        <form asp-action="ImportExcel" enctype="multipart/form-data" method="post" id="uploadForm">
+            <div class="mb-3">
+                <label class="form-label">Loại câu hỏi</label>
+                <select asp-for="ForMultipleChoice" class="form-select">
+                    <option value="true">Trắc nghiệm</option>
+                    <option value="false">Tự luận</option>
                 </select>
-                <span asp-validation-for="TaskId" class="text-danger"></span>
             </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="ExcelFile" class="form-label">Excel File</label>
-                <input asp-for="ExcelFile" type="file" accept=".xlsx" class="form-control" />
-                <span asp-validation-for="ExcelFile" class="text-danger"></span>
-                <small class="form-text text-muted">
-                    Download templates:
-                    <a href="@ViewBag.MultipleChoiceTemplateUrl">Multiple Choice</a> |
-                    <a href="@ViewBag.EssayTemplateUrl">Essay</a>
+            <div class="mb-3">
+                <label class="form-label">Tác vụ (Task)</label>
+                <select asp-for="TaskId" class="form-select">
+                    <option value="">-- Chọn tác vụ --</option>
+                    @foreach (var task in ViewBag.Tasks)
+                    {
+                        <option value="@task.Value">@task.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">File Excel</label>
+                <input type="file" asp-for="ExcelFile" class="form-control" accept=".xlsx" required />
+                <small class="form-text">
+                    Tải template:
+                    <a href="@Url.Action("DownloadTemplate", new { forMultipleChoice = true })">Trắc nghiệm</a> |
+                    <a href="@Url.Action("DownloadTemplate", new { forMultipleChoice = false })">Tự luận</a>
                 </small>
             </div>
 
-            <div class="form-group mb-3">
-                <label class="form-label">Attachments (Audio/Image)</label>
-                <div id="attachmentInputs">
-                    <div class="input-group mb-2">
-                        <input type="file" name="Attachments" accept=".mp3,.jpg,.png" class="form-control" multiple/>
-                        <button type="button" class="btn btn-danger remove-attachment">Remove</button>
-                    </div>
-                </div>
-                <button type="button" id="addAttachment" class="btn btn-secondary">Add Another Attachment</button>
+            <div class="mb-3">
+                <label class="form-label">Tệp đính kèm (hình ảnh/âm thanh)</label>
+                <input type="file" name="Attachments" class="form-control" multiple accept=".jpg,.jpeg,.png,.mp3,.wav" />
+                <small class="form-text">Hỗ trợ: .jpg, .jpeg, .png (max 5MB), .mp3, .wav (max 10MB)</small>
             </div>
 
-            <div class="form-group mb-3">
-                <button type="submit" class="btn btn-primary">Upload</button>
-                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
         </form>
     </div>
-</div>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
         $(document).ready(function () {
-            $('#addAttachment').click(function () {
-                var newInput = `
-                    <div class="input-group mb-2">
-                        <input type="file" name="Attachments" accept=".mp3,.jpg,.png" class="form-control" />
-                        <button type="button" class="btn btn-danger remove-attachment">Remove</button>
-                    </div>`;
-                $('#attachmentInputs').append(newInput);
-            });
-
-            $('#attachmentInputs').on('click', '.remove-attachment', function () {
-                if ($('#attachmentInputs .input-group').length > 1) {
-                    $(this).closest('.input-group').remove();
+            $('#uploadForm').submit(function (e) {
+                var excelFile = $('#ExcelFile').val();
+                if (!excelFile) {
+                    alert('Vui lòng chọn file Excel');
+                    e.preventDefault();
+                    return;
+                }
+                if (!excelFile.endsWith('.xlsx')) {
+                    alert('Chỉ hỗ trợ file .xlsx');
+                    e.preventDefault();
+                    return;
                 }
             });
         });
     </script>
-}
+</body>

@@ -25,7 +25,7 @@ namespace KEB.Application.Services
         IQuestionService QuestionService { get; }
         IStatisticsService StatisticsService { get; }
         IAccessLogService AccessLogService { get; }
-        //IQuestionWithFileService FileTemplateService { get; }
+        IQuestionWithFileService QuestionWithFileService { get; }
         IEmailNotiService EmailNotiService { get; }
         INotiService NotiService { get; }
         //IImageFileService ImageFileService { get; }

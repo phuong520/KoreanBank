@@ -9,7 +9,7 @@ namespace KEB.Application.Services.Interfaces
     public interface IQuestionWithFileService
     {
         Task<string> GetTemplateUrl(bool forMultipleChoice);
-        Task UploadExcelTemplate(string? message = "");
+        Task<byte[]> UploadExcelTemplate(bool forMultipleChoice, string ? message = "");
 
     }
 }

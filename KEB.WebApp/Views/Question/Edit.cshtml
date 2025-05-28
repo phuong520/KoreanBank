@@ -1,8 +1,8 @@
 ﻿@using KEB.Domain.Enums
 @model KEB.Application.DTOs.QuestionDTO.UpdateQuestionRequest
 @{
-    // var current = ViewBag.CurrentQuestion as KEB.Application.DTOs.QuestionDTO.QuestionDetailDto;
-    var current = ViewBag.CurrentQuestion ;
+      // var current = ViewBag.CurrentQuestion as KEB.Application.DTOs.QuestionDTO.QuestionDetailDto;
+      var current = ViewBag.CurrentQuestion ;
     ViewData["Title"] = "Chỉnh sửa câu hỏi";
 }
 
@@ -31,7 +31,7 @@
                 </div>
                 @{
                     
-                    var answersList = current.Answers;
+                    var answersList = Model.Answers;
                     
                 }
 
@@ -64,7 +64,7 @@
                                 <label class="ms-1">Đúng</label>
                             </div>
                             <div class="form-group mb-2 d-flex align-items-center">
-                                <input name="Answers[1].Content" class="form-control me-2" value="중고 서점에서는 판매해 주일 이다." required />
+                                <input name="Answers[1].Content" class="form-control me-2" required />
                                 <input type="checkbox" name="Answers[1].IsCorrect" class="form-check-input" value="true" />
                                 <label class="ms-1">Đúng</label>
                             </div>
@@ -116,7 +116,7 @@
                 <div class="form-group row mb-3">
                     <label class="col-4 fw-bold">Trình độ:</label>
                     <div class="col-8">
-                        <input type="text" class="form-control" value="@current.Level" readonly />
+                        <input type="text" class="form-control" value="@current.LevelName" readonly />
                     </div>
                 </div>
 
@@ -130,7 +130,7 @@
                 <div class="form-group row mb-3">
                     <label class="col-4 fw-bold">Dạng câu hỏi:</label>
                     <div class="col-8">
-                        <input type="text" class="form-control" value="Nhìn hình ảnh và trả lời câu hỏi" readonly />
+                        <input type="text" class="form-control" value="@current.QuestionTypeName" readonly />
                     </div>
                 </div>
 

@@ -1,5 +1,6 @@
 ﻿using KEB.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -135,6 +136,22 @@ namespace KEB.Infrastructure.Repository
             }
             query = query.Skip((pageNumber-1)*pageSize).Take(pageSize);
             return await query.ToListAsync();
+        }
+
+        public async Task RemoveAsync(T entity)
+        {
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
+            if (_context.Entry(entity).State == EntityState.Detached)
+            {
+                _context.Attach(entity);
+            }
+
+            _context.Remove(entity);
+            // Không gọi SaveChangesAsync ở đây để hỗ trợ transaction
         }
 
         public Task UpdateWithNoCommitAsync(T entity)

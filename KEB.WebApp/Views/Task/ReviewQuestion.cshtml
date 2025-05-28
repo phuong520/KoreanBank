@@ -4,10 +4,7 @@
 @{
     var status = Enum.GetValues(typeof(QuestionStatus)).Cast<QuestionStatus>().ToList();
     int i = 1;
-
-    // Lấy trạng thái hiện tại từ ViewBag hoặc mặc định là Pending
-    // var currentStatus = ViewBag.CurrentStatus != null ? ViewBag.CurrentStatus : QuestionStatus.Pending;
-    var currentStatus = QuestionStatus.Pending;
+    var currentStatus = ((List<QuestionStatus>)ViewBag.CurrentStatus)?.FirstOrDefault() ?? QuestionStatus.Pending;
 }
 <!DOCTYPE html>
 <html lang="vi">
@@ -49,6 +46,7 @@
         <div class="table-header">
             <div class="stt">STT</div>
             <div>Câu Hỏi</div>
+            <div>Tệp đính kèm</div>
             <div>Đáp án</div>
             <div>Đánh Giá</div>
             <div>Nhận xét</div>
@@ -66,6 +64,25 @@
                         }
                         <div class="question-text">
                             <div>@question.QuestionContent</div>
+                        </div>
+                        <div class="attachment">
+                            @if (question.AttachmentAudio != null)
+                            {
+
+                                <div class="mb-2">
+                                    <audio controls class="audio-preview mb-3">
+                                        <source src="data:audio/*;base64,@question.AttachmentAudio" type="audio/mpeg">
+                                        Trình duyệt của bạn không hỗ trợ audio.
+                                    </audio>
+                                </div>
+                            }
+                            @if ((question.AttachmentImage != null))
+                            {
+                                <div class="mb-2">
+                                    <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 100%; max-height: 100px;" />
+                                </div>
+
+                            }
                         </div>
                         <div class="answers">
                             @if (question.Answers != null && question.Answers.Any())
@@ -99,13 +116,35 @@
                                     ✗ Từ chối
                                 </button>
                             }
+                            else if (currentStatus == QuestionStatus.Denied)
+                            {
+                                <a class="btn btn-edit" asp-action="Edit" asp-controller="Question" asp-route-id="@question.Id">
+                                    ✎ Chỉnh sửa
+                                </a>
+                            }
+                            else if (currentStatus == QuestionStatus.Ok)
+                            {
+                                <span style="color: #28a745;">Đã duyệt</span>
+                            }
                             else
                             {
                                 <span>@currentStatus.ToString()</span>
                             }
                         </div>
                         <div class="comment">
-                            <input type="text" class="input-field reason-input" data-id="@question.Id" placeholder="Nhận xét..." @(currentStatus != QuestionStatus.Pending ? "disabled" : "") />
+                            @if (currentStatus == QuestionStatus.Denied)
+                            {
+                                <span>@question.Description</span>
+                                @* <input type="text" class="input-field reason-input" data-id="@question.Id" value="@question.Description" placeholder="Lý do từ chối..." /> *@
+                            }
+                            else if (currentStatus == QuestionStatus.Ok)
+                            {
+                                <span>@question.Description</span>
+                            }
+                            else
+                            {
+                                <input type="text" class="input-field reason-input" data-id="@question.Id" placeholder="Nhận xét..." @(currentStatus != QuestionStatus.Pending ? "disabled" : "") />
+                            }
                         </div>
                     </div>
                 }
@@ -150,14 +189,12 @@
                 showNotification("Vui lòng nhập lý do từ chối", "error");
                 return;
             }
-              console.log(questionId, toStatus, reason, createdBy, logId);
 
-                document.getElementById('questionId').value = questionId;
-                document.getElementById('toStatus').value = toStatus;
-                document.getElementById('reason').value = reason;
-                document.getElementById('notifyTo').value = createdBy;
-                document.getElementById('logId').value = logId;
-                console.log(document.getElementById('notifyTo').value);
+            document.getElementById('questionId').value = questionId;
+            document.getElementById('toStatus').value = toStatus;
+            document.getElementById('reason').value = reason;
+            document.getElementById('notifyTo').value = createdBy;
+            document.getElementById('logId').value = logId;
 
             document.getElementById("reviewForm").submit();
         }

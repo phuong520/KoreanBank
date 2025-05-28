@@ -49,6 +49,7 @@ namespace KEB.Application.Services
            // FileTemplateService = new QuestionWithFileService(_unitOfWork, _mapper);
             EmailNotiService = new EmailNotiService(_unitOfWork);
             NotiService = new NotiService(_unitOfWork);
+            QuestionWithFileService = new QuestionWithFileService(_unitOfWork, _mapper);
             //ImageFileService = new ImageFileService(_unitOfWork);
         }
 
@@ -86,6 +87,7 @@ namespace KEB.Application.Services
         public IEmailNotiService EmailNotiService { get; set; }
 
         public INotiService NotiService { get; set; }
+        public IQuestionWithFileService QuestionWithFileService { get; set; }
         //public IImageFileService ImageFileService { get; set; }
 
     }

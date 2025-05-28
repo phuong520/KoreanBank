@@ -1,8 +1,7 @@
-﻿
-// wwwroot/js/notification-hub.js
+﻿// wwwroot/js/notification-hub.js
 function getCookie(name) {
-    const value = `; ${ document.cookie } `;
-    const parts = value.split(`; ${ name }=`);
+    const value = `; ${document.cookie} `;
+    const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
     return null;
 }
@@ -24,7 +23,8 @@ connection.start()
 
 connection.on("SendLatestNotifications", (notis) => {
     console.log("New notifications received:", notis);
-    notis.forEach(noti => showNotification(noti));
+    const unreadCount = notis.filter(n => !n.isRead).length;
+    notis.forEach(noti => showNotification(noti, unreadCount));
 });
 
 function showNotification(message) {
@@ -44,9 +44,9 @@ function showNotification(message) {
 
     const createdTime = new Date(message.createdTime).toLocaleString();
     li.innerHTML = `
-    < div class="notification-content" > ${ message.description }</div >
+        <div class="notification-content">${message.Description}</div>
         <div class="notification-time">${createdTime}</div>
-`;
+    `;
 
     const emptyMsg = notificationList.querySelector(".notification-empty");
     if (emptyMsg) {
@@ -56,6 +56,9 @@ function showNotification(message) {
     notificationList.prepend(li);
 
     let currentCount = parseInt(badge.innerText) || 0;
-    badge.innerText = currentCount + 1;
+    if (!isNaN(currentCount)) {
+        badge.innerText = currentCount + 1;
+    } else {
+        badge.innerText = 1;
+    }
 }
-```
