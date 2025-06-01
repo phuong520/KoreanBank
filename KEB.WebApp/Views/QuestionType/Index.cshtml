@@ -72,7 +72,7 @@
             </div>
             <div class="modal-body">
                 <!-- Form Thêm loại câu hỏi -->
-                <form id="addQuestionTypeForm" method="post" action="@Url.Action("Create", "QuestionType")">
+                <form id="addQuestionTypeForm" novalidate>
                     <div class="mb-3">
                         <label for="questionTypeName" class="form-label">Tên loại câu hỏi <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="questionTypeName" name="QuestionTypeName" required />
@@ -96,13 +96,17 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="submit" class="btn btn-primary">Thêm</button>
+                        <button type="button" class="btn btn-primary" id="addQuestionTypeSubmitBtn">
+                            <span id="addSubmitBtnText">Thêm</span>
+                            <span id="addSubmitBtnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
 <!-- Modal Sửa loại câu hỏi -->
 <div class="modal fade" id="editQuestionTypeModal" tabindex="-1" aria-labelledby="editQuestionTypeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -140,6 +144,7 @@
         </div>
     </div>
 </div>
+
 <!-- Modal Xóa loại câu hỏi -->
 <div class="modal fade" id="deleteQuestionTypeModal" tabindex="-1" aria-labelledby="deleteQuestionTypeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -169,55 +174,127 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-       
         document.addEventListener('DOMContentLoaded', function () {
-            // Lấy form element
-            const form = document.getElementById('addQuestionTypeForm');
+            // Lấy form element và các thành phần cần thiết cho thêm mới
+            const addForm = document.getElementById('addQuestionTypeForm');
+            const addSubmitBtn = document.getElementById('addQuestionTypeSubmitBtn');
+            const addSubmitBtnText = document.getElementById('addSubmitBtnText');
+            const addSubmitBtnSpinner = document.getElementById('addSubmitBtnSpinner');
+            const addModal = document.getElementById('addQuestionTypeModal');
 
-            // Xử lý sự kiện submit form
-            form.addEventListener('submit', function (event) {
-                // Kiểm tra form có hợp lệ không
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
+            // Xử lý sự kiện click nút "Thêm" - GỌI API
+            addSubmitBtn.addEventListener('click', async function (event) {
+                event.preventDefault();
 
+                // Validate form
+                if (!addForm.checkValidity()) {
                     // Hiển thị các thông báo lỗi
-                    Array.from(form.elements).forEach(input => {
+                    Array.from(addForm.elements).forEach(input => {
                         if (input.nodeName !== 'BUTTON' && !input.checkValidity()) {
                             input.classList.add('is-invalid');
                         }
                     });
-                } else {
-                    // Ẩn modal khi submit thành công
-                    // Bootstrap sẽ tự động submit form và chuyển trang
+                    addForm.classList.add('was-validated');
+                    return;
                 }
 
-                form.classList.add('was-validated');
+                // Disable button và hiển thị spinner
+                addSubmitBtn.disabled = true;
+                addSubmitBtnText.textContent = 'Đang xử lý...';
+                addSubmitBtnSpinner.classList.remove('d-none');
+
+                try {
+                    // Lấy dữ liệu từ form
+                    const formData = {
+                        QuestionTypeName: document.getElementById('questionTypeName').value.trim(),
+                        QuestionTypeContent: document.getElementById('questionTypeContent').value.trim(),
+                        Skill: parseInt(document.getElementById('skill').value)
+                    };
+
+                    // Gọi API bằng fetch
+                    const response = await fetch('https://localhost:7101/api/QuestionTypes/add-questiontype', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (response.ok) {
+                        // Thành công
+                        const result = await response.json();
+                        console.log('Success:', result);
+
+                        // Hiển thị thông báo thành công
+                        alert(result.message || 'Thêm loại câu hỏi thành công!');
+
+                        // Đóng modal
+                        $(addModal).modal('hide');
+
+                        // Reload trang để cập nhật danh sách
+                        location.reload();
+
+                    } else {
+                        // Lỗi từ server
+                        let errorMessage = 'Có lỗi xảy ra khi thêm loại câu hỏi!';
+
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData.errors) {
+                                errorMessage = Object.values(errorData.errors).flat().join(', ');
+                            }
+                        } catch (e) {
+                            errorMessage = `Lỗi HTTP ${response.status}: ${response.statusText}`;
+                        }
+
+                        alert(errorMessage);
+                    }
+
+                } catch (error) {
+                    // Lỗi network hoặc lỗi khác
+                    console.error('Error:', error);
+                    alert('Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng!');
+
+                } finally {
+                    // Enable lại button và ẩn spinner
+                    addSubmitBtn.disabled = false;
+                    addSubmitBtnText.textContent = 'Thêm';
+                    addSubmitBtnSpinner.classList.add('d-none');
+                }
             });
 
             // Reset form khi modal được đóng
-            const modal = document.getElementById('addQuestionTypeModal');
-            modal.addEventListener('hidden.bs.modal', function () {
-                form.reset();
-                form.classList.remove('was-validated');
-                Array.from(form.elements).forEach(input => {
+            $(addModal).on('hidden.bs.modal', function () {
+                addForm.reset();
+                addForm.classList.remove('was-validated');
+                Array.from(addForm.elements).forEach(input => {
                     input.classList.remove('is-invalid');
                 });
+
+                // Reset button state
+                addSubmitBtn.disabled = false;
+                addSubmitBtnText.textContent = 'Thêm';
+                addSubmitBtnSpinner.classList.add('d-none');
             });
 
             // Xử lý sự kiện input để xóa lỗi khi user điền thông tin
-            Array.from(form.elements).forEach(input => {
+            Array.from(addForm.elements).forEach(input => {
                 input.addEventListener('input', function() {
                     if (this.checkValidity()) {
                         this.classList.remove('is-invalid');
                     }
                 });
             });
-             // Xử lý nút sửa
+
+            // Xử lý nút sửa
             $('.edit-questiontype-btn').on('click', function() {
                 const questionTypeId = $(this).data('questiontype-id');
                 openEditModal(questionTypeId);
             });
+
             // Xử lý form sửa
             $('#editQuestionTypeForm').on('submit', function(e) {
                 e.preventDefault();
@@ -258,6 +335,7 @@
                     }
                 });
             });
+
             // Xử lý nút xóa
             $('.delete-questiontype-btn').on('click', function() {
                 const questionTypeId = $(this).data('questiontype-id');
@@ -265,6 +343,7 @@
                 $('#deleteQuestionTypeId').val(questionTypeId);
                 $('#deleteQuestionTypeName').text(questionTypeName);
             });
+
             // Xử lý form xóa
             $('#deleteQuestionTypeForm').on('submit', function(e) {
                 e.preventDefault();
@@ -302,6 +381,7 @@
                 });
             });
         });
+
         function openEditModal(questionTypeId) {
             $('#editQuestionTypeModal').modal('show');
             $('#editQuestionTypeLoading').show();

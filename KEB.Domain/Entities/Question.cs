@@ -19,7 +19,7 @@ namespace KEB.Domain.Entities
         public int? AttachmentDuration { get; set; }
         public bool IsMultipleChoice { get; set; }
         public QuestionStatus Status { get; set; }
-        public string Description { get; set; } 
+        public string? Description { get; set; } 
         public References References { get; set; }
         public Guid ReferenceId { get; set; }
         public QuestionType QuestionType { get; set; }

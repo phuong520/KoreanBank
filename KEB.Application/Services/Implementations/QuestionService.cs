@@ -37,7 +37,7 @@ namespace KEB.Application.Services.Implementations
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
         private readonly HttpClient _httpClient;
-        private readonly string _apiKey;
+        //private readonly string _apiKey;
         private readonly string _modelName;
         private readonly string _baseApiUrl;
         public QuestionService(IUnitOfWork unitOfWork, IMapper mapper, HttpClient httpClient, IConfiguration configuration)
@@ -46,9 +46,9 @@ namespace KEB.Application.Services.Implementations
             _mapper = mapper;
             _httpClient = httpClient;
 
-            _apiKey = configuration["Gemini:ApiKey"] ?? throw new ArgumentNullException("Gemini:ApiKey not found");
-            _modelName = configuration["Gemini:ModelName"] ?? "gemini-1.5-flash";
-            _baseApiUrl = configuration["Gemini:BaseApiUrl"] ?? "https://generativelanguage.googleapis.com/v1beta/models/";
+            //_apiKey = configuration["Gemini:ApiKey"] ?? throw new ArgumentNullException("Gemini:ApiKey not found");
+            //_modelName = configuration["Gemini:ModelName"] ?? "gemini-1.5-flash";
+            //_baseApiUrl = configuration["Gemini:BaseApiUrl"] ?? "https://generativelanguage.googleapis.com/v1beta/models/";
 
         }
      
@@ -250,10 +250,10 @@ namespace KEB.Application.Services.Implementations
                 {
                     validError.Add("Some questions can not be found to be processed");
                 }
-                if (targetQuestions.Any(x => x.LogId != request.LogId))
-                {
-                    validError.Add("Can only approve/deny questions in the same import history");
-                }
+                //if (targetQuestions.Any(x => x.LogId != request.LogId))
+                //{
+                //    validError.Add("Can only approve/deny questions in the same import history");
+                //}
                 // Can only modified questions of pending status
                 if (targetQuestions.Any(x => x.Status != QuestionStatus.Pending))
                 {
@@ -995,9 +995,9 @@ namespace KEB.Application.Services.Implementations
                 // Thêm câu hỏi
                 foreach (var item in request.Requests)
                 {
-                    item.Task = targetTask;
-                    item.AccessLog = questionLog;
-                    item.RequestedUser = requestedUser;
+                    //item.Task = targetTask;
+                    //item.AccessLog = questionLog;
+                    //item.RequestedUser = requestedUser;
 
                     // Thêm câu hỏi đơn lẻ
                     APIResponse<QuestionDetailDto> singleResponse;
@@ -1133,31 +1133,31 @@ namespace KEB.Application.Services.Implementations
                     return response;
                 }
                 // Kiểm tra trùng lặp trước khi tạo câu hỏi
-                var existingQuestions = await _unitOfWork.Questions.GetAllAsync(
-                    filter: x => x.QuestionContent.Trim().ToLower() == request.QuestionContent.Trim().ToLower(),
-                    includeProperties: "Answers",
-                    asTracking: false
-                );
+                //var existingQuestions = await _unitOfWork.Questions.GetAllAsync(
+                //    filter: x => x.QuestionContent.Trim().ToLower() == request.QuestionContent.Trim().ToLower(),
+                //    includeProperties: "Answers",
+                //    asTracking: false
+                //);
 
-                var duplicateQuestion = existingQuestions.FirstOrDefault(q =>
-                {
-                    // Compare answers (assuming order doesn't matter)
-                    bool answersMatch = q.Answers != null && request.Answers != null &&
-                        q.Answers.Count == request.Answers.Count &&
-                        q.Answers.Select(a => a.AnswerContent.Trim().ToLower())
-                            .OrderBy(a => a)
-                            .SequenceEqual(request.Answers.Select(a => a.Content.Trim().ToLower()).OrderBy(a => a));
+                //var duplicateQuestion = existingQuestions.FirstOrDefault(q =>
+                //{
+                //    // Compare answers (assuming order doesn't matter)
+                //    bool answersMatch = q.Answers != null && request.Answers != null &&
+                //        q.Answers.Count == request.Answers.Count &&
+                //        q.Answers.Select(a => a.AnswerContent.Trim().ToLower())
+                //            .OrderBy(a => a)
+                //            .SequenceEqual(request.Answers.Select(a => a.Content.Trim().ToLower()).OrderBy(a => a));
 
-                    return answersMatch;
-                });
+                //    return answersMatch;
+                //});
 
-                if (duplicateQuestion != null)
-                {
-                    response.IsSuccess = false;
-                    response.StatusCode = HttpStatusCode.BadRequest;
-                    response.Message = $"Câu hỏi trùng lặp với câu hỏi ID: {duplicateQuestion.Id}";
-                    return response;
-                }
+                //if (duplicateQuestion != null)
+                //{
+                //    response.IsSuccess = false;
+                //    response.StatusCode = HttpStatusCode.BadRequest;
+                //    response.Message = $"Câu hỏi trùng lặp với câu hỏi ID: {duplicateQuestion.Id}";
+                //    return response;
+                //}
                 var attach = new ImageFile();
                 if (request.AttachmentFileImage != null)
                 {

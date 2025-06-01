@@ -98,15 +98,10 @@
                 </div>
 
                 <div class="nav-item">
-                    <a class="nav-link" data-bs-toggle="collapse" href="#questionBankMenu">
-                        <i class="bi bi-question-circle"></i>
+                    <a class="nav-link" asp-controller="Question" asp-action="Index">
+                        <i class="bi bi-collection"></i>
                         <span>Ngân hàng câu hỏi</span>
-                        <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
-                    <div class="collapse nav-dropdown" id="questionBankMenu">
-                        <a class="nav-link" asp-controller="QuestionType" asp-action="Index">Loại câu hỏi</a>
-                        <a class="nav-link" asp-controller="Question" asp-action="Index">Danh sách câu hỏi</a>
-                    </div>
                 </div>
 
                 <div class="nav-item">
@@ -166,10 +161,15 @@
                 </div>
 
                 <div class="nav-item">
-                    <a class="nav-link" asp-controller="Question" asp-action="Index">
-                        <i class="bi bi-collection"></i>
+                    <a class="nav-link" data-bs-toggle="collapse" href="#questionBankMenu">
+                        <i class="bi bi-question-circle"></i>
                         <span>Ngân hàng câu hỏi</span>
+                        <i class="bi bi-chevron-down ms-auto"></i>
                     </a>
+                    <div class="collapse nav-dropdown" id="questionBankMenu">
+                        <a class="nav-link" asp-controller="QuestionType" asp-action="Index">Loại câu hỏi</a>
+                        <a class="nav-link" asp-controller="Question" asp-action="Index">Danh sách câu hỏi</a>
+                    </div>
                 </div>
 
                 <div class="nav-item">

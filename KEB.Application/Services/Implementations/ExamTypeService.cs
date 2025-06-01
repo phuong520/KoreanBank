@@ -254,7 +254,7 @@ namespace KEB.Application.Services.Implementations
                 }
                 var satisfiedQuestions = await _unitOfWork.Questions.GetAllAsync(filter:
                             x => (x.QuestionType.Skill == skill)
-                            && x.Status == QuestionStatus.Pending
+                            && x.Status == QuestionStatus.Ok
                             && x.QuestionTypeId == detail.QuestionTypeId
                             && (x.Difficulty == detail.Difficulty)
                             && x.IsMultipleChoice == detail.IsMultipleChoice

@@ -13,6 +13,213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Duyệt câu hỏi</title>
     <link rel="stylesheet" href="~/css/ReviewQuestion.css" />
+    <style>
+        .bulk-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 15px 20px;
+            border-top: 2px solid #ddd;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none;
+            align-items: center;
+            gap: 15px;
+        }
+
+            .bulk-actions.show {
+                display: flex;
+            }
+
+            .bulk-actions .selected-count {
+                font-weight: bold;
+                color: #333;
+            }
+
+            .bulk-actions .btn {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: all 0.3s;
+            }
+
+            .bulk-actions .btn-bulk-accept {
+                background: #28a745;
+                color: white;
+            }
+
+                .bulk-actions .btn-bulk-accept:hover {
+                    background: #218838;
+                }
+
+            .bulk-actions .btn-bulk-reject {
+                background: #dc3545;
+                color: white;
+            }
+
+                .bulk-actions .btn-bulk-reject:hover {
+                    background: #c82333;
+                }
+
+        .question-checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .select-all-container {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            display: none;
+        }
+
+            .select-all-container.show {
+                display: block;
+            }
+
+            .select-all-container label {
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+        .table-header {
+            display: grid;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #ddd;
+            font-weight: bold;
+        }
+
+            .table-header.pending {
+                grid-template-columns: 80px 2fr 150px 200px 200px 150px;
+            }
+
+            .table-header.non-pending {
+                grid-template-columns: 50px 2fr 150px 200px 150px 200px;
+            }
+
+        .question-item {
+            display: grid;
+            gap: 10px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            align-items: start;
+        }
+
+            .question-item.pending {
+                grid-template-columns: 80px 2fr 150px 200px 200px 150px;
+            }
+
+            .question-item.non-pending {
+                grid-template-columns: 50px 2fr 150px 200px 150px 200px;
+            }
+
+            .question-item.selected {
+                background-color: #e3f2fd;
+            }
+
+        .stt-with-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .question-text {
+            word-wrap: break-word;
+            word-break: break-word;
+            /* white-space: pre-wrap; */
+            line-height: 1.4;
+            max-width: 100%;
+        }
+
+        .attachment {
+            max-width: 150px;
+        }
+
+            .attachment img {
+                max-width: 100%;
+                max-height: 80px;
+                object-fit: contain;
+            }
+
+            .attachment audio {
+                width: 100%;
+                max-width: 150px;
+            }
+
+        .answers {
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+
+        .actions {
+            max-width: 150px;
+        }
+
+        .comment {
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+
+        .bulk-comment-container {
+            margin-top: 10px;
+            display: none;
+        }
+
+            .bulk-comment-container.show {
+                display: block;
+            }
+
+        .bulk-comment-input {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+
+        .input-field, .reason-input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-approve, .btn-reject {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+
+            .btn-approve:hover {
+                background: #218838;
+            }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+
+            .btn-reject:hover {
+                background: #c82333;
+            }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -34,22 +241,50 @@
             }
         </div>
 
+        <!-- Form duyệt đơn lẻ -->
         <form id="reviewForm" method="post" asp-action="ReviewQuestion">
             @Html.AntiForgeryToken()
-            <input type="hidden" id="questionId" name="Requests[0].QuestionId" />
-            <input type="hidden" id="toStatus" name="Requests[0].ToStatus" />
-            <input type="hidden" id="reason" name="Requests[0].Reason" />
-            <input type="hidden" id="notifyTo" name="NotifyTo" />
             <input type="hidden" id="logId" name="LogId" />
+            <input type="hidden" id="notifyTo" name="NotifyTo" />
+            <input type="hidden" id="singleQuestionId" name="Requests[0].QuestionId" />
+            <input type="hidden" id="singleToStatus" name="Requests[0].ToStatus" />
+            <input type="hidden" id="singleReason" name="Requests[0].Reason" />
         </form>
 
-        <div class="table-header">
-            <div class="stt">STT</div>
-            <div>Câu Hỏi</div>
-            <div>Tệp đính kèm</div>
-            <div>Đáp án</div>
-            <div>Đánh Giá</div>
-            <div>Nhận xét</div>
+        <!-- Form duyệt hàng loạt -->
+        <form id="bulkReviewForm" method="post" asp-action="ReviewQuestion">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="bulkLogId" name="LogId" />
+            <input type="hidden" id="bulkNotifyTo" name="NotifyTo" />
+            <div id="bulkQuestionIds"></div>
+        </form>
+
+        <!-- Checkbox chọn tất cả (chỉ hiện ở tab Chờ duyệt) -->
+        <div class="select-all-container @(currentStatus == QuestionStatus.Pending ? "show" : "")">
+            <label>
+                <input type="checkbox" id="selectAll" class="question-checkbox">
+                Chọn tất cả
+            </label>
+        </div>
+
+        <div class="table-header @(currentStatus == QuestionStatus.Pending ? "pending" : "non-pending")">
+            @if (currentStatus == QuestionStatus.Pending)
+            {
+                <div>Chọn</div>
+                <div>Câu Hỏi</div>
+                <div>Tệp đính kèm</div>
+                <div>Đáp án</div>
+                <div>Nhận xét</div>
+            }
+            else
+            {
+                <div>STT</div>
+                <div>Câu Hỏi</div>
+                <div>Tệp đính kèm</div>
+                <div>Đáp án</div>
+                <div>Đánh Giá</div>
+                <div>Nhận xét</div>
+            }
         </div>
 
         <div class="question-content">
@@ -57,20 +292,34 @@
             {
                 foreach (var question in Model)
                 {
-                    <div class="question-item" data-question-id="@question.Id" data-created-by="@question.NotifyTo" data-log-id="@question.LogId">
-                        <div class="stt">@i</div>
+                    <div class="question-item @(currentStatus == QuestionStatus.Pending ? "pending" : "non-pending")"
+                         data-question-id="@question.Id"
+                         data-notify-to="@question.NotifyTo"
+                         data-log-id="@question.LogId">
+                        @if (currentStatus == QuestionStatus.Pending)
+                        {
+                            <div class="stt-with-checkbox">
+                                <input type="checkbox" class="question-checkbox"
+                                       data-question-id="@question.Id"
+                                       data-notify-to="@question.NotifyTo"
+                                       data-log-id="@question.LogId">
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="stt">@i</div>
+                        }
                         @{
                             i++;
                         }
                         <div class="question-text">
-                            <div>@question.QuestionContent</div>
+                            @question.QuestionContent
                         </div>
                         <div class="attachment">
                             @if (question.AttachmentAudio != null)
                             {
-
                                 <div class="mb-2">
-                                    <audio controls class="audio-preview mb-3">
+                                    <audio controls class="audio-preview">
                                         <source src="data:audio/*;base64,@question.AttachmentAudio" type="audio/mpeg">
                                         Trình duyệt của bạn không hỗ trợ audio.
                                     </audio>
@@ -79,9 +328,8 @@
                             @if ((question.AttachmentImage != null))
                             {
                                 <div class="mb-2">
-                                    <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 100%; max-height: 100px;" />
+                                    <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" />
                                 </div>
-
                             }
                         </div>
                         <div class="answers">
@@ -106,46 +354,52 @@
                                 <p style="color: #dc3545;">Không có đáp án nào.</p>
                             }
                         </div>
-                        <div class="actions">
-                            @if (currentStatus == QuestionStatus.Pending)
-                            {
-                                <button type="button" class="btn btn-accept" onclick="reviewQuestion('@question.Id', 4, '@question.NotifyTo', '@question.LogId')">
-                                    ✓ Chấp nhận
-                                </button>
-                                <button type="button" class="btn btn-reject" onclick="reviewQuestion('@question.Id', 3, '@question.NotifyTo', '@question.LogId')">
-                                    ✗ Từ chối
-                                </button>
-                            }
-                            else if (currentStatus == QuestionStatus.Denied)
-                            {
-                                <a class="btn btn-edit" asp-action="Edit" asp-controller="Question" asp-route-id="@question.Id">
-                                    ✎ Chỉnh sửa
-                                </a>
-                            }
-                            else if (currentStatus == QuestionStatus.Ok)
-                            {
-                                <span style="color: #28a745;">Đã duyệt</span>
-                            }
-                            else
-                            {
-                                <span>@currentStatus.ToString()</span>
-                            }
-                        </div>
                         <div class="comment">
                             @if (currentStatus == QuestionStatus.Denied)
                             {
                                 <span>@question.Description</span>
-                                @* <input type="text" class="input-field reason-input" data-id="@question.Id" value="@question.Description" placeholder="Lý do từ chối..." /> *@
                             }
                             else if (currentStatus == QuestionStatus.Ok)
                             {
                                 <span>@question.Description</span>
                             }
-                            else
+                            else if (currentStatus == QuestionStatus.Pending)
                             {
-                                <input type="text" class="input-field reason-input" data-id="@question.Id" placeholder="Nhận xét..." @(currentStatus != QuestionStatus.Pending ? "disabled" : "") />
+                                <input type="text" class="reason-input" data-question-id="@question.Id" placeholder="Nhận xét..." />
                             }
                         </div>
+                        @* @if (currentStatus == QuestionStatus.Pending) *@
+                        @* { *@
+                        @*     <div class="action-buttons"> *@
+                        @*         <button type="button" class="btn-approve" *@
+                        @*                 onclick="reviewSingleQuestion('@question.Id', 4, '@question.NotifyTo', '@question.LogId')"> *@
+                        @*             ✓ Duyệt *@
+                        @*         </button> *@
+                        @*         <button type="button" class="btn-reject" *@
+                        @*                 onclick="reviewSingleQuestion('@question.Id', 3, '@question.NotifyTo', '@question.LogId')"> *@
+                        @*             ✗ Từ chối *@
+                        @*         </button> *@
+                        @*     </div> *@
+                        @* } *@
+                        @if (currentStatus != QuestionStatus.Pending)
+                        {
+                            <div class="actions">
+                                @if (currentStatus == QuestionStatus.Denied)
+                                {
+                                    <a class="btn btn-edit" asp-action="Edit" asp-controller="Question" asp-route-id="@question.Id">
+                                        ✎ Chỉnh sửa
+                                    </a>
+                                }
+                                else if (currentStatus == QuestionStatus.Ok)
+                                {
+                                    <span style="color: #28a745;">Đã duyệt</span>
+                                }
+                                else
+                                {
+                                    <span>@currentStatus.ToString()</span>
+                                }
+                            </div>
+                        }
                     </div>
                 }
             }
@@ -155,6 +409,27 @@
                     <p>Không có câu hỏi nào ở trạng thái này.</p>
                 </div>
             }
+        </div>
+    </div>
+
+    <!-- Thanh công cụ duyệt hàng loạt (chỉ hiện ở tab Chờ duyệt) -->
+    <div class="bulk-actions" id="bulkActions">
+        <span class="selected-count">Đã chọn <span id="selectedCount">0</span> câu hỏi</span>
+        <button type="button" class="btn btn-bulk-accept" onclick="bulkReviewQuestion(4)">
+            ✓ Chấp nhận
+        </button>
+        <button type="button" class="btn btn-bulk-reject" onclick="showBulkRejectForm()">
+            ✗ Từ chối
+        </button>
+        <div class="bulk-comment-container" id="bulkCommentContainer">
+            <label>Lý do từ chối:</label>
+            <input type="text" class="bulk-comment-input" id="bulkCommentInput" placeholder="Nhập lý do từ chối..." />
+            <button type="button" class="btn btn-bulk-reject" onclick="bulkReviewQuestion(3)" style="margin-left: 10px;">
+                Xác nhận từ chối
+            </button>
+            <button type="button" class="btn" onclick="hideBulkRejectForm()" style="background: #6c757d; color: white; margin-left: 5px;">
+                Hủy
+            </button>
         </div>
     </div>
 
@@ -180,23 +455,132 @@
             }, 3000);
         }
 
-        // Gửi form duyệt câu hỏi
-        function reviewQuestion(questionId, toStatus, createdBy, logId) {
-            const reasonInput = document.querySelector(`.reason-input[data-id="${questionId}"]`);
-            const reason = reasonInput ? reasonInput.value : "";
+        // Gửi form duyệt câu hỏi đơn lẻ
+        function reviewSingleQuestion(questionId, toStatus, notifyTo, logId) {
+            const reasonInput = document.querySelector(`.reason-input[data-question-id="${questionId}"]`);
+            const reason = reasonInput ? reasonInput.value.trim() : "";
 
-            if (toStatus == 3 && reason.trim() === "") {
+            if (toStatus == 3 && reason === "") {
                 showNotification("Vui lòng nhập lý do từ chối", "error");
                 return;
             }
 
-            document.getElementById('questionId').value = questionId;
-            document.getElementById('toStatus').value = toStatus;
-            document.getElementById('reason').value = reason;
-            document.getElementById('notifyTo').value = createdBy;
+            // Set values cho form đơn lẻ
             document.getElementById('logId').value = logId;
+            document.getElementById('notifyTo').value = notifyTo;
+            document.getElementById('singleQuestionId').value = questionId;
+            document.getElementById('singleToStatus').value = toStatus;
+            document.getElementById('singleReason').value = reason;
 
             document.getElementById("reviewForm").submit();
+        }
+
+        // Xử lý checkbox chọn tất cả
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const questionCheckboxes = document.querySelectorAll('.question-checkbox[data-question-id]');
+        const bulkActions = document.getElementById('bulkActions');
+        const selectedCountSpan = document.getElementById('selectedCount');
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                questionCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                    updateQuestionSelection(checkbox);
+                });
+                updateBulkActions();
+            });
+        }
+
+        // Xử lý checkbox từng câu hỏi
+        questionCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateQuestionSelection(this);
+                updateSelectAllState();
+                updateBulkActions();
+            });
+        });
+
+        function updateQuestionSelection(checkbox) {
+            const questionItem = checkbox.closest('.question-item');
+            if (checkbox.checked) {
+                questionItem.classList.add('selected');
+            } else {
+                questionItem.classList.remove('selected');
+            }
+        }
+
+        function updateSelectAllState() {
+            if (selectAllCheckbox) {
+                const checkedCount = document.querySelectorAll('.question-checkbox[data-question-id]:checked').length;
+                selectAllCheckbox.checked = checkedCount === questionCheckboxes.length;
+                selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < questionCheckboxes.length;
+            }
+        }
+
+        function updateBulkActions() {
+            const checkedCount = document.querySelectorAll('.question-checkbox[data-question-id]:checked').length;
+            selectedCountSpan.textContent = checkedCount;
+
+            if (checkedCount > 0) {
+                bulkActions.classList.add('show');
+            } else {
+                bulkActions.classList.remove('show');
+                hideBulkRejectForm();
+            }
+        }
+
+        function showBulkRejectForm() {
+            document.getElementById('bulkCommentContainer').classList.add('show');
+        }
+
+        function hideBulkRejectForm() {
+            document.getElementById('bulkCommentContainer').classList.remove('show');
+            document.getElementById('bulkCommentInput').value = '';
+        }
+
+        // Duyệt hàng loạt
+        function bulkReviewQuestion(toStatus) {
+            const checkedCheckboxes = document.querySelectorAll('.question-checkbox[data-question-id]:checked');
+
+            if (checkedCheckboxes.length === 0) {
+                showNotification("Vui lòng chọn ít nhất một câu hỏi", "error");
+                return;
+            }
+
+            let reason = "";
+            if (toStatus == 3) { // Từ chối
+                reason = document.getElementById('bulkCommentInput').value.trim();
+                if (reason === "") {
+                    showNotification("Vui lòng nhập lý do từ chối", "error");
+                    return;
+                }
+            }
+
+            // Lấy LogId và NotifyTo từ câu hỏi đầu tiên được chọn
+            const firstCheckedCheckbox = checkedCheckboxes[0];
+            const bulkLogId = firstCheckedCheckbox.dataset.logId;
+            const bulkNotifyTo = firstCheckedCheckbox.dataset.notifyTo;
+
+            // Set values cho bulk form
+            document.getElementById('bulkLogId').value = bulkLogId;
+            document.getElementById('bulkNotifyTo').value = bulkNotifyTo;
+
+            // Xóa các input cũ
+            const bulkQuestionIds = document.getElementById('bulkQuestionIds');
+            bulkQuestionIds.innerHTML = '';
+
+            // Tạo hidden inputs cho từng câu hỏi được chọn
+            checkedCheckboxes.forEach((checkbox, index) => {
+                const questionId = checkbox.dataset.questionId;
+
+                bulkQuestionIds.innerHTML += `
+                    <input type="hidden" name="Requests[${index}].QuestionId" value="${questionId}" />
+                    <input type="hidden" name="Requests[${index}].ToStatus" value="${toStatus}" />
+                    <input type="hidden" name="Requests[${index}].Reason" value="${reason}" />
+                `;
+            });
+
+            document.getElementById('bulkReviewForm').submit();
         }
     </script>
 </body>
