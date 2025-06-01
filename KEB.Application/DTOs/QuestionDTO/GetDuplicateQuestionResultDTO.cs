@@ -10,6 +10,5 @@ namespace KEB.Application.DTOs.QuestionDTO
     {
         public QuestionDetailDto Question { get; set; }
         public string Message { get; set; }
-
     }
 }

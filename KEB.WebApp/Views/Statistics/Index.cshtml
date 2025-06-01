@@ -156,6 +156,7 @@
             await renderBarChart(
                 'examChart',
                 'Số kỳ thi theo tháng',
+
                 `https://localhost:7101/api/Statistics/exams-by-month?lowerBound=${lowerBound}&upperBound=${upperBound}`
             );
             await renderBarChart(

@@ -1,28 +1,63 @@
 ﻿@model KEB.Application.DTOs.Common.LoginDTO
-
+@{
+    Layout = null;
+}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập</title>
+    <title>Đăng nhập - Hệ thống thi tiếng Hàn</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: flex-start; /* Align content to the left */
+            align-items: center;
+            /* Set the background image to cover the entire viewport */
+            background-image: url('/images/login.png'); /* Replace with your image URL */
+            background-size: cover; /* Cover the entire area */
+            background-position: center center; /* Center the image */
+            background-repeat: no-repeat; /* Do not repeat the image */
+            position: relative; /* Needed for absolute positioning of overlay */
+            overflow: hidden; /* Hide overflow if image is slightly larger */
+        }
+
+        /* Optional: Add an overlay for better text readability on the image */
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.3); /* Semi-transparent white overlay */
+            z-index: 1; /* Place it behind the login form */
+        }
+
+        .login-container-wrapper {
+            position: relative; /* For z-index stacking */
+            z-index: 2; /* Ensure the login form is above the overlay */
+            width: 50%; /* Take up the left half of the screen */
+            display: flex;
+            justify-content: center; /* Center the login form within its half */
+            align-items: center;
+            height: 100%; /* Take full height */
+            padding-left: 5%; /* Add some padding on the left */
+            box-sizing: border-box; /* Include padding in the width */
+            background-color: rgba(255, 255, 255, 0.7); /* Slightly transparent white background for the login area */
         }
 
         .login-container {
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 350px;
+            width: 380px; /* Adjusted width for better fit */
             padding: 30px;
+            box-sizing: border-box;
+            max-width: 90%; /* Ensure it's responsive on smaller screens */
         }
 
         .login-header {
@@ -32,7 +67,7 @@
 
             .login-header h1 {
                 color: #333;
-                font-size: 24px;
+                font-size: 28px; /* Slightly larger font size */
                 margin-bottom: 10px;
             }
 
@@ -52,7 +87,7 @@
                 padding: 12px;
                 border: 1px solid #ddd;
                 border-radius: 4px;
-                font-size: 14px;
+                font-size: 16px; /* Slightly larger font size */
                 box-sizing: border-box;
             }
 
@@ -64,8 +99,13 @@
             .forgot-password a {
                 color: #4285f4;
                 text-decoration: none;
-                font-size: 13px;
+                font-size: 14px; /* Slightly larger font size */
+                transition: color 0.3s ease;
             }
+
+                .forgot-password a:hover {
+                    color: #3367d6;
+                }
 
         .login-button {
             width: 100%;
@@ -74,10 +114,10 @@
             color: white;
             border: none;
             border-radius: 4px;
-            font-size: 16px;
+            font-size: 18px; /* Larger font size */
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s ease;
         }
 
             .login-button:hover {
@@ -86,54 +126,109 @@
 
         .text-danger {
             color: red;
-            font-size: 12px;
+            font-size: 13px; /* Adjusted font size */
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Styles for alert messages */
+        .alert {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <h1>Đăng nhập</h1>
+    <div class="background-overlay"></div>
+    <div class="login-container-wrapper">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>Đăng nhập</h1>
+            </div>
+
+            <form asp-action="Login" method="post">
+                <div class="form-group">
+                    <label asp-for="Username">Tài khoản</label>
+                    <input asp-for="Username" id="username" placeholder="Nhập tài khoản">
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password">Mật khẩu</label>
+                    <input asp-for="Password" type="password" id="password" placeholder="Nhập mật khẩu">
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <div class="forgot-password">
+                    <a href="#">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="login-button">Đăng nhập</button>
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success mt-3">@TempData["Success"]</div>
+                }
+
+                @if (ViewData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger mt-3">@ViewData["ErrorMessage"]</div>
+                }
+            </form>
         </div>
-
-        <form asp-action="Login" method="post">
-            <div class="form-group">
-                <label asp-for="Username">Tài khoản</label>
-                <input asp-for="Username" id="username" placeholder="Nhập tài khoản">
-                <span asp-validation-for="Username" class="text-danger"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Password">Mật khẩu</label>
-                <input asp-for="Password" type="password" id="password" placeholder="Nhập mật khẩu">
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-
-            <div class="forgot-password">
-                <a href="#">Quên mật khẩu?</a>
-            </div>
-
-            <button type="submit" class="login-button">Đăng nhập</button>
-
-            @if (TempData["Success"] != null)
-            {
-                <div class="alert alert-success mt-3">@TempData["Success"]</div>
-            }
-
-            @if (ViewData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger mt-3">@ViewData["ErrorMessage"]</div>
-            }
-        </form>
     </div>
 
     <script>
-        // Enable client-side validation
+        // Enable client-side validation (assuming you are using jQuery for validation)
         document.addEventListener('DOMContentLoaded', function () {
-            if (!window.jQuery) return;
-            $("form").submit(function (e) {
-                // Your custom form submission logic, if needed
-            });
+            // This part is for ASP.NET Core's client-side validation.
+            // If you are not using ASP.NET Core, you'll need a different validation approach (e.g., pure JS or a validation library).
+            // For a simple standalone HTML, you might remove asp-for and asp-validation-for attributes
+            // and implement custom JavaScript validation.
+
+            // Example of a very basic client-side validation if not using ASP.NET Core MVC helpers
+            const loginForm = document.querySelector('form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(event) {
+                    let isValid = true;
+                    const usernameInput = document.getElementById('username');
+                    const passwordInput = document.getElementById('password');
+
+                    const usernameError = loginForm.querySelector('span[data-valmsg-for="Username"]');
+                    const passwordError = loginForm.querySelector('span[data-valmsg-for="Password"]');
+
+                    // Reset errors
+                    if (usernameError) usernameError.textContent = '';
+                    if (passwordError) passwordError.textContent = '';
+
+                    if (!usernameInput.value.trim()) {
+                        if (usernameError) usernameError.textContent = 'Tài khoản không được để trống.';
+                        isValid = false;
+                    }
+                    if (!passwordInput.value.trim()) {
+                        if (passwordError) passwordError.textContent = 'Mật khẩu không được để trống.';
+                        isValid = false;
+                    }
+
+                    if (!isValid) {
+                        event.preventDefault(); // Prevent form submission if validation fails
+                    }
+                });
+            }
         });
     </script>
 </body>

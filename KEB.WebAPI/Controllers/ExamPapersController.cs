@@ -20,7 +20,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("get-papers")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> GetExamPapers(
             Guid? examId,
             Guid? levelId,
@@ -43,7 +43,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("gen-papers-for-exam")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> GeneratePaper(Guid examId, Guid requestedUserId)
         {
             string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -53,7 +53,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("get-paper-detail")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> ViewPaperDetail(Guid requestedUserId, Guid paperId)
         {
             var request = new ViewPaperDetailRequest
@@ -68,7 +68,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("edit-exam-paper")]
-       // [Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> EditExamPaper(EditPaperDetailRequest request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -76,19 +76,19 @@ namespace KEB.WebAPI.Controllers
             return Ok(response);
         }
 
-        [HttpPost]
-        [Route("edit-exam-paper-ver2")]
-       // [Authorize(Roles = "R2,R3")]
-        public async Task<IActionResult> EditExamPaperVer2(EditPaperDetailRequest request)
-        {
-            request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
-            var response = await _unitOfService.ExamPaperService.EditExamPaper(request);
-            return Ok(response);
-        }
+       // [HttpPost]
+       // [Route("edit-exam-paper-ver2")]
+       //// [Authorize(Roles = "R2,R3")]
+       // public async Task<IActionResult> EditExamPaperVer2(EditPaperDetailRequest request)
+       // {
+       //     request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+       //     var response = await _unitOfService.ExamPaperService.EditExamPaper(request);
+       //     return Ok(response);
+       // }
 
         [HttpGet]
         [Route("view-activities-on-paper")]
-       // [Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> ViewPaperActivities(Guid paperId)
         {
             var response = await _unitOfService.ExamPaperService.ViewActivitiesOnPaper(paperId);
@@ -97,7 +97,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("leave-comment-on-paper")]
-       // [Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> LeaveCommentOnPaper(LeaveCommentRequest request)
         {
             var response = await _unitOfService.ExamPaperService.LeaveCommentOnPaper(request);
@@ -106,7 +106,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPut]
         [Route("mark-paper-as-reviewdone")]
-       // [Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> ReviewDonePaper(Guid requestedUserId, Guid paperId)
         {
             ChangePaperStatusRequest request = new()
@@ -121,7 +121,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPut]
         [Route("mark-paper-as-inreview")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> MarkPaperAsInReview(Guid requestedUserId, Guid paperId)
         {
             ChangePaperStatusRequest request = new()
@@ -134,37 +134,5 @@ namespace KEB.WebAPI.Controllers
             var response = await _unitOfService.ExamPaperService.ChangePaperStatus(request);
             return Ok(response);
         }
-
-
-
-        [HttpGet]
-        [Route("get-pdf-url-for-papercontent")]
-        //[Authorize(Roles = "R2,R3")]
-        public async Task<IActionResult> GetUrlOfPaperPdfContent(Guid requestedUserId, Guid paperId)
-        {
-            var request = new ViewPaperDetailRequest
-            {
-                PaperId = paperId,
-                RequestedUserId = requestedUserId,
-                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1",
-            };
-            var response = await _unitOfService.ExamPaperService.GetUrlOfPaperContentPdf(request);
-            return Ok(response);
-        }
-
-        //[HttpGet]
-        //[Route("get-pdf-url-for-paperaudio")]
-        ////[Authorize(Roles = "R2,R3")]
-        //public async Task<IActionResult> GetUrlOfPaperAudio(Guid requestedUserId, Guid paperId)
-        //{
-        //    var request = new ViewPaperDetailRequest
-        //    {
-        //        PaperId = paperId,
-        //        RequestedUserId = requestedUserId,
-        //        IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1",
-        //    };
-        //    var response = await _unitOfService.ExamPaperService.GetUrlOfPaperAudio(request);
-        //    return Ok(response);
-        //}
     }
 }

@@ -17,7 +17,7 @@ namespace KEB.WebAPI.Controllers
             _unitOfService = unitOfService;
         }
         [HttpPost]
-       // [Authorize(Roles = "R1")]
+        //[Authorize(Roles = "Quản trị viên")]
         public async Task<IActionResult> Get(ViewAccessLog request)
         {
             var response = await _unitOfService.AccessLogService.GetAccessLogs(request);

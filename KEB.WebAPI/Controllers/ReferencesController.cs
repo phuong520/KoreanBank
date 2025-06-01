@@ -19,14 +19,13 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-all-references")]
-        //[Authorize(Roles = "R2,R3")]
         public async Task<IActionResult> GetAllReferences()
         {
             var response = await _unitOfService.ReferenceService.GetAllReferences();
             return Ok(response);
         }
         [HttpPost("add-ref")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> AddNewReference(AddReferenceDto request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -35,7 +34,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPut]
         [Route("update-reference")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> UpdateReference(UpdateReference request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -44,7 +43,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpDelete]
         [Route("delete-reference")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> DeleteReference(Delete request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -53,6 +52,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-reference-details-id-{referenceId}")]
+
         public async Task<IActionResult> GetReference(Guid referenceId)
         {
             var response = await _unitOfService.ReferenceService.GetReference(referenceId);

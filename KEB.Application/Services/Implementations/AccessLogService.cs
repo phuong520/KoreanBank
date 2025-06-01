@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.SystemAccessLogDTO;
 using KEB.Application.Services.Interfaces;
 using KEB.Application.Utils;
@@ -60,11 +61,15 @@ namespace KEB.Application.Services.Implementations
 
             try
             {
+                
                 // Perform Get
                 var allLogs = await _unitOfWork.AccessLogs.GetAllAsync(
                     filter: filter,
                     orderBy: x => x.OrderByDescending(obj => obj.AccessTime),
-                    includeProperties: "User,User.Role");
+                    includeProperties: "User,User.Role",
+                    pageNumber: request.PaginationRequest.Page,
+                    pageSize: request.PaginationRequest.Size
+                    );
 
                 var logs = allLogs.ToList();
 
@@ -74,6 +79,11 @@ namespace KEB.Application.Services.Implementations
                 {
                     response.StatusCode = System.Net.HttpStatusCode.NoContent;
                     response.Message = AppMessages.NO_CONTENT;
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.PaginationRequest.Page,
+                        Size = request.PaginationRequest.Size
+                    };
                 }
                 else
                 {

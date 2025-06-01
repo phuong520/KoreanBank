@@ -43,7 +43,7 @@ namespace KEB.WebApp.Controllers
         {
             _httpClient = httpClientFactory.CreateClient();
         }
-
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> Index(GetQuestionsRequest request)
         {
             try
@@ -184,7 +184,7 @@ namespace KEB.WebApp.Controllers
             ViewBag.Tasks = new SelectList(tasks.Result, "Id", "TaskName");
             ViewBag.Topics = new SelectList(topiclist.Result, "TopicId", "TopicName");
         }
-        // [Authorize]
+       
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -218,9 +218,8 @@ namespace KEB.WebApp.Controllers
                 return View();
             }
         }
-
+        
         [HttpPost()]
-        // [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(AddSingleQuestionRequest request)
         {
             if (ModelState.IsValid)
@@ -309,7 +308,7 @@ namespace KEB.WebApp.Controllers
             return View(request);
 
         }
-
+        
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
@@ -363,9 +362,8 @@ namespace KEB.WebApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
-
+        
         [HttpPost]
-        // [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateQuestionRequest request)
         {
 
@@ -508,13 +506,15 @@ namespace KEB.WebApp.Controllers
             }
             return BadRequest("Không thể tải template");
         }
+        
+       
         public async Task<IActionResult> ImportExcel()
         {
             await LoadDropdownData();
             return View(new ImportQuestionFromExcelRequest());
         }
+        
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ImportExcel(ImportQuestionFromExcelRequest request)
         {
             if (!ModelState.IsValid)

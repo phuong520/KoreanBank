@@ -20,7 +20,8 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-all-users")]
-        //[Authorize(Roles = "Quản lý,Giảng viên")]
+
+        //[Authorize(Roles = "Quản trị viên")]
         public async Task<IActionResult> GetUsers(
             string keyWord = "",
             bool? isActive = null,
@@ -91,7 +92,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPut]
         [Route("change-role")]
-        //[Authorize(Roles = "Quản trị viên, Quản lý")]
+        //[Authorize(Roles = "Quản trị viên")]
         public async Task<IActionResult> ChangeRole(ChangeRole request)
         {
             var response = await _unitOfService.UserService
@@ -101,7 +102,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPut]
         [Route("change-status")]
-        //[Authorize(Roles = "Quản trị viên, Quản lý")]
+        //[Authorize(Roles = "Quản trị viên")]
         public async Task<IActionResult> ChangeActiveStatus(ChangeActiveStatus request)
         {
             var response = await _unitOfService.UserService

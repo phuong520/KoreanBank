@@ -2,8 +2,12 @@
 using KEB.Application.DTOs.Common;
 using KEB.Application.Services;
 using KEB.WebApp.Helpers;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace KEB.WebApp.Controllers
 {
@@ -25,7 +29,6 @@ namespace KEB.WebApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Login(LoginDTO loginDTO)
         {
-
             if (!ModelState.IsValid)
             {
                 return View(loginDTO);
@@ -33,7 +36,6 @@ namespace KEB.WebApp.Controllers
 
             try
             {
-
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/login", loginDTO);
 
                 if (response.IsSuccessStatusCode)
@@ -42,16 +44,34 @@ namespace KEB.WebApp.Controllers
 
                     if (apiResponse.IsSuccess)
                     {
-                        // Gán lại cookie trong MVC
-                        var cookieOptions = new CookieOptions
+                        var token = apiResponse.Result;
+
+                        // Parse token lấy claims
+                        var handler = new JwtSecurityTokenHandler();
+                        var jwt = handler.ReadJwtToken(token);
+                        var claims = jwt.Claims.ToList();
+
+                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        var principal = new ClaimsPrincipal(identity);
+
+                        // Đăng nhập sử dụng Cookie Authentication
+                        await HttpContext.SignInAsync(
+                            CookieAuthenticationDefaults.AuthenticationScheme,
+                            principal,
+                            new AuthenticationProperties
+                            {
+                                IsPersistent = true,
+                                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(2)
+                            });
+
+                        // Optionally lưu token nếu cần
+                        Response.Cookies.Append("token", token, new CookieOptions
                         {
                             HttpOnly = true,
-                            Secure = false,
-                            SameSite = SameSiteMode.Lax,
-                            Expires = DateTime.UtcNow.AddHours(2)
-                        };
-
-                        Response.Cookies.Append("token", apiResponse.Result, cookieOptions);
+                            Expires = DateTime.UtcNow.AddHours(2),
+                            Secure = true,
+                            SameSite = SameSiteMode.Lax
+                        });
 
                         return RedirectToAction("Index", "Statistics");
                     }
@@ -59,12 +79,12 @@ namespace KEB.WebApp.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Lỗi "+ ex);
-                return View(loginDTO);
+                Console.WriteLine("Lỗi: " + ex);
+                ModelState.AddModelError(string.Empty, "Có lỗi xảy ra");
             }
-            return BadRequest("Unknown error occurred");
-        }
 
+            return View(loginDTO);
+        }
         [HttpPost]
         public IActionResult Logout()
         {
@@ -104,6 +124,10 @@ namespace KEB.WebApp.Controllers
                 ModelState.AddModelError(string.Empty, $"Đổi mật khẩu thất bại: {errorMessage}");
                 return View(model);
             }
+        }
+        public IActionResult ResetPass()
+        {
+            return View();
         }
     }
 

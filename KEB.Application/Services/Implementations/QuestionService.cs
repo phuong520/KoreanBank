@@ -2,6 +2,7 @@
 using DocumentFormat.OpenXml.Spreadsheet;
 using KEB.Application.DTOs.AnswerDTO;
 using KEB.Application.DTOs.Common;
+using KEB.Application.DTOs.GeminiDto;
 using KEB.Application.DTOs.QuestionAddDTO;
 using KEB.Application.DTOs.QuestionDTO;
 using KEB.Application.DTOs.UserDTO;
@@ -12,6 +13,8 @@ using KEB.Domain.Enums;
 using KEB.Domain.ValueObject;
 using KEB.Infrastructure.UnitOfWorks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using OfficeOpenXml;
@@ -20,8 +23,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static KEB.Domain.ValueObject.LogicString;
 
@@ -31,12 +36,22 @@ namespace KEB.Application.Services.Implementations
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public QuestionService(IUnitOfWork unitOfWork, IMapper mapper)
+        private readonly HttpClient _httpClient;
+        private readonly string _apiKey;
+        private readonly string _modelName;
+        private readonly string _baseApiUrl;
+        public QuestionService(IUnitOfWork unitOfWork, IMapper mapper, HttpClient httpClient, IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-        }
+            _httpClient = httpClient;
 
+            _apiKey = configuration["Gemini:ApiKey"] ?? throw new ArgumentNullException("Gemini:ApiKey not found");
+            _modelName = configuration["Gemini:ModelName"] ?? "gemini-1.5-flash";
+            _baseApiUrl = configuration["Gemini:BaseApiUrl"] ?? "https://generativelanguage.googleapis.com/v1beta/models/";
+
+        }
+     
         public async Task<APIResponse<QuestionDetailDto>> GetQuestionDetailAsync(Guid questionId)
         {
             APIResponse<QuestionDetailDto> response = new();
@@ -296,8 +311,7 @@ namespace KEB.Application.Services.Implementations
                     CreatedDate = currentTime,
                     Description = $"Quản lý {requestedUser.UserName} " +
                                   $"đã duyệt {approved} câu hỏi và từ chối {denied} câu hỏi" +
-                                  $"{importHistory.ActionName:dd MMM yyyy}" +
-                                  $"lý do là {request.Requests}",
+                                  $"lý do là {request.Requests[0].Reason}",
                 });
 
                 // Send email to the created user
@@ -306,7 +320,7 @@ namespace KEB.Application.Services.Implementations
                     _unitOfWork.EmailService.SendEmail(importHistory.User.Email,
                                                 "QUẢN LÝ ĐÃ THAY ĐỔI TRẠNG THÁI CÂU HỎI",
                                                 $"Quản lý {requestedUser.UserName} " +
-                                                        $"đã duyệt {approved} câu hỏi và từ chối {denied} câu hỏi trong {importHistory.ActionName:dd MMM yyyy}",
+                                                        $"đã duyệt {approved} câu hỏi và từ chối {denied} câu hỏi trong {importHistory.ActionName: dd MMM yyyy} ",
                                                 importHistory.User.UserName);
                 });
                 response.Message = $"{approved};{denied}";
@@ -376,11 +390,6 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
 
-        public Task<APIResponse<GetDuplicateQuestionResultDTO>> FindDuplicateQuestions(Guid questionId)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<APIResponse<object>> UpdateQuestion(UpdateQuestionRequest request)
         {
             var response = new APIResponse<object> { IsSuccess = false };
@@ -388,7 +397,9 @@ namespace KEB.Application.Services.Implementations
             {
                 var question = await _unitOfWork.Questions.GetAsync(
                     x => x.Id == request.TargetObjectId,
-                    includeProperties: "QuestionType,Answers,LevelDetail,References,LevelDetail.Level,LevelDetail.Topic");
+                    asTracking: true,
+                    includeProperties: "QuestionType,Answers,LevelDetail,References,LevelDetail.Level,LevelDetail.Topic")
+                    ;
 
                 if (question == null)
                 {
@@ -542,6 +553,7 @@ namespace KEB.Application.Services.Implementations
                 question.UpdatedDate = now;
                 question.UpdatedBy = request.RequestedUserId;
                 question.Status = QuestionStatus.Pending;
+                await _unitOfWork.SaveChangesAsync();
 
                 await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
                 {
@@ -553,8 +565,8 @@ namespace KEB.Application.Services.Implementations
                     TargetObject = nameof(Question),
                     UserId = request.RequestedUserId
                 });
+                await _unitOfWork.SaveChangesAsync();
 
-                await _unitOfWork.Questions.UpdateWithNoCommitAsync(question);
                 var result = _mapper.Map<QuestionDetailDto>(question);
                 await _unitOfWork.CommitAsync();
 
@@ -629,7 +641,7 @@ namespace KEB.Application.Services.Implementations
                     AddSingleQuestionRequest questionRequest;
                     if (request.ForMultipleChoice)
                     {
-                        questionRequest = await ParseMultipleChoiceRow(sheet, row, request.RequestedUserId,request.TaskId.Value, attachmentDict);
+                        questionRequest = await ParseMultipleChoiceRow(sheet, row, request.RequestedUserId, request.TaskId.Value, attachmentDict);
                     }
                     else
                     {
@@ -754,7 +766,7 @@ namespace KEB.Application.Services.Implementations
             var typeText = sheet.Cells[row, 3].Text;
             if (!string.IsNullOrEmpty(typeText))
             {
-                
+
                 var typeParts = typeText.Split('-');
                 var skill = typeParts[0];
                 Skill skillEnum = Enum.Parse<Skill>(skill);
@@ -937,7 +949,7 @@ namespace KEB.Application.Services.Implementations
 
             return request;
         }
-       
+
         private async Task<APIResponse<ImportQuestionResultDTO>> AddQuestionAsync(AddQuestionRequest request, string ipAddress)
         {
             APIResponse<ImportQuestionResultDTO> response = new() { IsSuccess = false, StatusCode = HttpStatusCode.BadRequest };
@@ -1046,7 +1058,66 @@ namespace KEB.Application.Services.Implementations
             return response;
 
         }
-   
+
+        public async Task<APIResponse<GetDuplicateQuestionResultDTO>> FindDuplicateQuestions(Guid questionId)
+        {
+            APIResponse<GetDuplicateQuestionResultDTO> response = new();
+            try
+            {
+                var question = await _unitOfWork.Questions.GetAsync(x => x.Id == questionId,
+                                                                            includeProperties: "QuestionType,Answers,References," +
+                                                                                    "LevelDetail,LevelDetail.Level,LevelDetail.Topic");
+                var existingQuestions = await _unitOfWork.Questions.GetAllAsync(
+                filter: x => x.Id != questionId, // Exclude the current question
+                includeProperties: "QuestionType,Answers,References,LevelDetail,LevelDetail.Level,LevelDetail.Topic",
+                asTracking: false
+            );
+                // var duplicateQuestion = existingQuestions
+                //.FirstOrDefault(q => q.QuestionContent.Trim().ToLower() == question.QuestionContent.Trim().ToLower()
+                //);
+                var duplicateQuestion = existingQuestions.FirstOrDefault(q =>
+                {
+                    // Compare question content
+                    bool contentMatches = q.QuestionContent.Trim().ToLower() == question.QuestionContent.Trim().ToLower();
+
+                    // Compare answers (assuming order doesn't matter)
+                    bool answersMatch = q.Answers != null && question.Answers != null &&
+                        q.Answers.Count == question.Answers.Count &&
+                        q.Answers.Select(a => a.AnswerContent.Trim().ToLower())
+                            .OrderBy(a => a)
+                            .SequenceEqual(question.Answers.Select(a => a.AnswerContent.Trim().ToLower()).OrderBy(a => a));
+
+                    return contentMatches && answersMatch;
+                });
+                var result = _mapper.Map<GetDuplicateQuestionResultDTO>(question);
+                await _unitOfWork.BeginTransactionAsync();
+                if (duplicateQuestion != null)
+                {
+                    // Update status to duplicated
+                    question.Status = QuestionStatus.Duplicated;
+                    await _unitOfWork.Questions.UpdateWithNoCommitAsync(question);
+                    await _unitOfWork.CommitAsync();
+
+                    result.Message = $"Question is duplicated with question ID: {duplicateQuestion.Id}";
+                    result.Question.Status = "duplicated";
+                }
+                else
+                {
+                    result.Message = "No duplicate question found";
+                }
+                response.IsSuccess = true;
+                response.StatusCode = HttpStatusCode.OK;
+                response.Result[0] = result;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollbackAsync();
+                response.IsSuccess = false;
+                response.StatusCode = HttpStatusCode.BadRequest;
+                return response;
+            }
+        }
 
         public async Task<APIResponse<QuestionDetailDto>> AddSingleQuestionAsync(AddSingleQuestionRequest request)
         {
@@ -1061,7 +1132,32 @@ namespace KEB.Application.Services.Implementations
                     response.Message = "Nội dung câu hỏi không được để trống";
                     return response;
                 }
+                // Kiểm tra trùng lặp trước khi tạo câu hỏi
+                var existingQuestions = await _unitOfWork.Questions.GetAllAsync(
+                    filter: x => x.QuestionContent.Trim().ToLower() == request.QuestionContent.Trim().ToLower(),
+                    includeProperties: "Answers",
+                    asTracking: false
+                );
 
+                var duplicateQuestion = existingQuestions.FirstOrDefault(q =>
+                {
+                    // Compare answers (assuming order doesn't matter)
+                    bool answersMatch = q.Answers != null && request.Answers != null &&
+                        q.Answers.Count == request.Answers.Count &&
+                        q.Answers.Select(a => a.AnswerContent.Trim().ToLower())
+                            .OrderBy(a => a)
+                            .SequenceEqual(request.Answers.Select(a => a.Content.Trim().ToLower()).OrderBy(a => a));
+
+                    return answersMatch;
+                });
+
+                if (duplicateQuestion != null)
+                {
+                    response.IsSuccess = false;
+                    response.StatusCode = HttpStatusCode.BadRequest;
+                    response.Message = $"Câu hỏi trùng lặp với câu hỏi ID: {duplicateQuestion.Id}";
+                    return response;
+                }
                 var attach = new ImageFile();
                 if (request.AttachmentFileImage != null)
                 {
@@ -1085,6 +1181,7 @@ namespace KEB.Application.Services.Implementations
                 question.LevelDetailId = request.LevelDetailId;
                 question.QuestionTypeId = request.QuestionTypeId;
                 question.ReferenceId = request.ReferenceId;
+                question.Status = QuestionStatus.Pending;
                 if (request.AttachmentFileImage != null)
                 {
                     question.AttachFileImageId = attach.Id;
@@ -1186,9 +1283,8 @@ namespace KEB.Application.Services.Implementations
                     }
                 }
                 await _unitOfWork.SaveChangesAsync();
-
-                //gửi mail thông báo
-                var actor = await _unitOfWork.Users.GetByIdAsync(request.RequestedUserId);
+                    //gửi mail thông báo
+                    var actor = await _unitOfWork.Users.GetByIdAsync(request.RequestedUserId);
                 if (request.TaskId.HasValue)
                 {
                     var task = await _unitOfWork.AddQuestionTasks.GetByIdAsync(request.TaskId.Value);

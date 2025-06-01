@@ -1,6 +1,7 @@
 ﻿using KEB.Application.DTOs.ImportQuestionTaskDTO;
 using KEB.Application.DTOs.SystemAccessLogDTO;
 using KEB.Application.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KEB.WebApp.Controllers
@@ -15,7 +16,7 @@ namespace KEB.WebApp.Controllers
         {
             _httpClient = httpClientFactory.CreateClient();
         }
-
+        //[Authorize(Roles = "Quản trị viên")]
         public async Task<IActionResult> Index()
         {
             try
@@ -30,6 +31,12 @@ namespace KEB.WebApp.Controllers
                 }
 
                 var result = await response.Content.ReadFromJsonAsync<APIResponse<AccessLogDisplayDto>>();
+                if (result.IsSuccess)
+                {
+                    ViewBag.Pagination = result.Pagination;
+                    ViewBag.TotalCount = result.Result.Count;
+                    return View(result.Result);
+                }
                 return View(result.Result);
             }
             catch (Exception ex)

@@ -43,6 +43,9 @@ builder.Services.AddScoped<IImageFileService, ImageFileService>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUnitOfService, UnitOfService>();
+builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddHttpClient<GeminiApiService>();
+
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 

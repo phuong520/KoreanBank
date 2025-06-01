@@ -1,0 +1,21 @@
+﻿@{
+    ViewBag.Title = "Access Denied";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // nếu bạn có layout
+}
+
+<div class="container text-center mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <img src="https://cdn-icons-png.flaticon.com/512/753/753345.png" alt="Access Denied" width="120" class="mb-4" />
+            <h1 class="display-5 text-danger fw-bold">WARNING!!!</h1>
+            <p class="lead text-muted">
+                Bạn không có quyền thực hiện tác vụ này!
+            </p>
+            <hr>
+            <a href="@Url.Action("Index","Statistics")" class="btn btn-outline-secondary mt-3">
+                <i class="bi bi-arrow-left"></i> Quay lại trang chủ
+            </a>
+            
+        </div>
+    </div>
+</div>

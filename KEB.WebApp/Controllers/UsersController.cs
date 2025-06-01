@@ -4,6 +4,7 @@ using KEB.Application.Services;
 using KEB.Application.Services.Implementations;
 using KEB.Application.Services.Interfaces;
 using KEB.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Office.Core;
 using System.IdentityModel.Tokens.Jwt;
@@ -25,6 +26,7 @@ namespace KEB.WebApp.Controllers
             _httpClient = httpClientFactory.CreateClient();
         }
 
+        //[Authorize(Roles = "Quản trị viên")]
         public async Task<IActionResult> Index()
         {
             var url = $"{ApiUrl}/get-all-users?page=1&size=10";

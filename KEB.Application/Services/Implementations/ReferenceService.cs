@@ -33,7 +33,7 @@ namespace KEB.Application.Services.Implementations
 
             var requestedUser = await _unitOfWork.Users.GetUserById(request.CreatedBy);
             if (requestedUser == null || requestedUser.RoleId.ToString().Equals(LogicString.Role.AdminRoleId)
-                                        || requestedUser.RoleId.ToString().Equals(LogicString.Role.LecturerRoleId))
+                                        || requestedUser.RoleId.ToString().Equals(LogicString.Role.TeamLeadRoleId))
             {
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
                 response.Message = AppMessages.NO_PERMISSION;

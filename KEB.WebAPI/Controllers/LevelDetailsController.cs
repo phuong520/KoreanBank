@@ -16,6 +16,7 @@ namespace KEB.WebAPI.Controllers
         {
             _unitOfService = unitOfService;
         }
+
         [HttpGet("get-detail-by-level-id/{levelId}")]
         public async Task<IActionResult> GetDetailByLevelId(Guid levelId)
         {

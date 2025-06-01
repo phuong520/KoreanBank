@@ -1,4 +1,5 @@
-﻿@model IEnumerable<KEB.Application.DTOs.SystemAccessLogDTO.AccessLogDisplayDto>
+﻿@using KEB.Application.DTOs.Common
+@model IEnumerable<KEB.Application.DTOs.SystemAccessLogDTO.AccessLogDisplayDto>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -7,142 +8,148 @@
     <title>Nhật Ký Hoạt Động</title>
     <style>
         * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
         }
 
         body {
-        background-color: #f5f7fa;
+            background-color: #f5f7fa;
         }
 
         .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
 
         .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
         .title {
-        font-size: 24px;
-        color: #2c3e50;
-        font-weight: bold;
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: bold;
         }
 
         .user-area {
-        display: flex;
-        align-items: center;
-        gap: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
         .icon {
-        font-size: 20px;
-        color: #7f8c8d;
-        cursor: pointer;
+            font-size: 20px;
+            color: #7f8c8d;
+            cursor: pointer;
         }
 
         .user-icon {
-        width: 35px;
-        height: 35px;
-        border-radius: 50%;
-        background-color: #3498db;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #3498db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
         }
 
         .search-container {
-        position: relative;
-        margin-bottom: 20px;
+            position: relative;
+            margin-bottom: 20px;
         }
 
         .search-input {
-        width: 300px;
-        padding: 10px 15px 10px 40px;
-        border: none;
-        background-color: #dfe6e9;
-        border-radius: 20px;
-        font-size: 14px;
+            width: 300px;
+            padding: 10px 15px 10px 40px;
+            border: none;
+            background-color: #dfe6e9;
+            border-radius: 20px;
+            font-size: 14px;
         }
 
         .search-icon {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #7f8c8d;
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8c8d;
         }
 
         table {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: white;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         th {
-        background-color: #f8f9fa;
-        color: #2c3e50;
-        text-align: left;
-        padding: 15px;
-        font-size: 14px;
-        border-bottom: 1px solid #ecf0f1;
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            text-align: left;
+            padding: 15px;
+            font-size: 14px;
+            border-bottom: 1px solid #ecf0f1;
         }
 
         td {
-        padding: 15px;
-        border-bottom: 1px solid #ecf0f1;
-        color: #34495e;
-        font-size: 14px;
+            padding: 15px;
+            border-bottom: 1px solid #ecf0f1;
+            color: #34495e;
+            font-size: 14px;
         }
 
         .pagination {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-        gap: 5px;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
         }
 
         .page-item {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
         }
 
-        .page-item.active {
-        background-color: #6c5ce7;
-        color: white;
-        }
+            .page-item.active {
+                background-color: #6c5ce7;
+                color: white;
+            }
 
-        .page-item:not(.active) {
-        background-color: #dfe6e9;
-        color: #2d3436;
-        }
+            .page-item:not(.active) {
+                background-color: #dfe6e9;
+                color: #2d3436;
+            }
+
+            .page-item.disabled {
+                background-color: #dfe6e9;
+                color: #7f8c8d;
+                cursor: not-allowed;
+            }
 
         .user-info {
-        display: flex;
-        flex-direction: column;
+            display: flex;
+            flex-direction: column;
         }
 
         .user-role {
-        font-size: 13px;
-        color: #7f8c8d;
+            font-size: 13px;
+            color: #7f8c8d;
         }
     </style>
 </head>
@@ -153,11 +160,16 @@
         </div>
 
         <div class="search-container">
-            <input type="text" class="search-input" placeholder="Tìm kiếm">
+            <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm" value="@(ViewBag.Search ?? "")">
             <div class="search-icon">
                 <i class="fas fa-search"></i>
             </div>
         </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div style="color: red; margin-bottom: 10px;">@TempData["Error"]</div>
+        }
 
         <table>
             <thead>
@@ -170,27 +182,129 @@
                     <th>Thời gian</th>
                 </tr>
             </thead>
-
-            <tbody>
-                @{int index = 1;}
-                @foreach(var log in Model){
+            <tbody id="logTableBody">
+                @if (Model != null && Model.Any())
+                {
+                    int index = ((ViewBag.Pagination?.Page ?? 1) - 1) * (ViewBag.Pagination?.Size ?? 10) + 1;
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>@log.User.UserName</td>
+                            <td>@log.User.FullName</td>
+                            <td>@log.User.RoleName</td>
+                            <td>@log.ActionName</td>
+                            <td>@log.AccessTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        </tr>
+                        index++;
+                    }
+                }
+                else
+                {
                     <tr>
-                        <td>@index</td>
-                        <td>@log.User.UserName</td>
-                        <td>@log.User.FullName</td>
-                        <td>@log.User.RoleName</td>
-                        <td>@log.ActionName</td>
-                        <td>@log.AccessTime</td>
+                        <td colspan="6" style="text-align: center;">Không có dữ liệu</td>
                     </tr>
-                    index++;
                 }
             </tbody>
-            
         </table>
-        <div class="pagination" id="pagination"></div>
+
+        <div class="pagination" id="pagination">
+            @if (ViewBag.Pagination != null && ViewBag.TotalCount != null)
+            {
+                var pagination = ViewBag.Pagination as Pagination;
+                var totalCount = (int)ViewBag.TotalCount;
+                var totalPages = (int)Math.Ceiling((double)totalCount / pagination.Size);
+                if (totalPages > 1)
+                {
+                    <div class="page-item @(pagination.Page == 1 ? "disabled" : "")" onclick="goToPage(@(pagination.Page - 1))">«</div>
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <div class="page-item @(pagination.Page == i ? "active" : "")" onclick="goToPage(@i)">@i</div>
+                    }
+                    <div class="page-item @(pagination.Page == totalPages ? "disabled" : "")" onclick="goToPage(@(pagination.Page + 1))">»</div>
+                }
+            }
+        </div>
     </div>
 
-    <!-- Adding Font Awesome for icons -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <script>
+        function goToPage(page) {
+            const totalPages = Math.ceil(@ViewBag.TotalCount / @(ViewBag.Pagination?.Size ?? 10));
+            if (page < 1 || page > totalPages) return;
+
+            const search = document.getElementById('searchInput').value;
+            fetchData(page, @(ViewBag.Pagination?.Size ?? 10), search);
+        }
+
+        function fetchData(page, pageSize, search) {
+            const request = {
+                paginationRequest: { page: page, size: pageSize },
+                action: search,
+                from: "0001-01-01T00:00:00Z",
+                to: "9999-12-31T23:59:59Z"
+            };
+
+            fetch('@ViewBag.ApiUrl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(request)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Không thể tải danh sách hoạt động');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Update table body
+                const tbody = document.getElementById('logTableBody');
+                tbody.innerHTML = '';
+                if (data.result && data.result.length > 0) {
+                    let index = (page - 1) * pageSize + 1;
+                    data.result.forEach(log => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${index}</td>
+                                <td>${log.user.userName}</td>
+                                <td>${log.user.fullName}</td>
+                                <td>${log.user.roleName}</td>
+                                <td>${log.actionName}</td>
+                                <td>${new Date(log.accessTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+                            </tr>`;
+                        index++;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có dữ liệu</td></tr>';
+                }
+
+                // Update pagination
+                const pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+                const totalPages = Math.ceil(data.totalCount / data.pagination.size);
+                if (totalPages > 1) {
+                    pagination.innerHTML += `<div class="page-item ${page == 1 ? 'disabled' : ''}" onclick="goToPage(${page - 1})">«</div>`;
+                    for (let i = 1; i <= totalPages; i++) {
+                        pagination.innerHTML += `<div class="page-item ${page == i ? 'active' : ''}" onclick="goToPage(${i})">${i}</div>`;
+                    }
+                    pagination.innerHTML += `<div class="page-item ${page == totalPages ? 'disabled' : ''}" onclick="goToPage(${page + 1})">»</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const tbody = document.getElementById('logTableBody');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có dữ liệu</td></tr>';
+                alert(error.message);
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchValue = e.target.value;
+            fetchData(1, @(ViewBag.Pagination?.Size ?? 10), searchValue);
+        });
+    </script>
 </body>
 </html>

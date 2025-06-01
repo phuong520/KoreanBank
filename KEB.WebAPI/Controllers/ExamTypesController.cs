@@ -19,7 +19,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-all-exam-types")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> GetAllExamTypes()
         {
             var response = await _unitOfService.ExamTypeService.GetExamTypesAsync();
@@ -28,7 +28,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("view-exam-type-detail")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> ViewExamTypeDetail(Guid id)
         {
             var response = await _unitOfService.ExamTypeService.GetExamTypeDetails(id);
@@ -37,7 +37,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpDelete]
         [Route("delete-exam-type")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> DeleteExamType(Delete request)
         {
             var response = await _unitOfService.ExamTypeService.DeleteExamTypeAsync(request);
@@ -46,7 +46,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("add-new-exam-type")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> AddNewExamType(AddExamTypeRequest request)
         {
             var response = await _unitOfService.ExamTypeService.AddExamTypeAsync(request);
@@ -55,7 +55,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("edit-exam-type")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> EditExamType(FullEditExamTypeRequest request)
         {
             var response = await _unitOfService.ExamTypeService.EditExamTypeAsync(request);

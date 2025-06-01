@@ -20,7 +20,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("get-exam-by-id")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> GetExams(Guid? id = null)
         {
             var response = await _unitOfService.ExamService.GetExamAsync(id);
@@ -30,7 +30,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("add-exam")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> AddExam(AddExamRequest request)
         {
             var response = await _unitOfService.ExamService.AddExamAsync(request);
@@ -38,7 +38,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("edit-exam")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> EditExam(EditExamRequest request)
         {
             var response = await _unitOfService.ExamService.EditExamAsync(request);
@@ -47,7 +47,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpDelete]
         [Route("delete-exam")]
-       // [Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> DeleteExam([FromForm] Guid requestedUserId, [FromForm] Guid examId)
         {
             Delete request = new()
@@ -60,12 +60,6 @@ namespace KEB.WebAPI.Controllers
             var response = await _unitOfService.ExamService.DeleteExamAsync(request);
             return Ok(response);
         }
-        [HttpGet]
-        //[Route("")]
-        public async Task<IActionResult> UploadExamMaterials(Guid examId)
-        {
-            var response = await _unitOfService.ExamPaperService.UploadExamMaterials(examId);
-            return Ok(response);
-        }
+        
     }
 }

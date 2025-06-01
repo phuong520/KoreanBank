@@ -19,7 +19,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-all-levels")]
-        //[Authorize(Roles = "Giảng viên, Quản trị viên")]
+        //[Authorize(Roles = "Giảng viên, Quản lý, Quản trị viên")]
         public async Task<IActionResult> GetAllLevels()
         {
             var response = await _unitOfService.LevelService.GetAllLevels();
@@ -28,7 +28,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("get-level-has-id-{levelId}")]
-       // [Authorize(Roles = "Giảng viên, Quản trị viên")]
+        //[Authorize(Roles = "Giảng viên, Quản trị viên, Quản lý")]
         public async Task<IActionResult> GetLevel(Guid levelId)
         {
             var response = await _unitOfService.LevelService.GetLevel(levelId);

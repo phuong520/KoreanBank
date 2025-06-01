@@ -27,7 +27,7 @@ namespace KEB.WebAPI.Controllers
                 var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true, 
-                    Secure = false,   
+                    Secure = true,   
                     SameSite = SameSiteMode.Lax,  
                     Expires = DateTime.UtcNow.AddHours(2) 
                 };

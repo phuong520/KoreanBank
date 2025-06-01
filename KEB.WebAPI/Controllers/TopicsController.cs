@@ -26,7 +26,6 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-topic-id-{topicId}")]
-        //[Authorize(Roles = "R2,R3")]
         public async Task<IActionResult> GetTopic(Guid topicId)
         {
             var response = await _unitOfService.TopicService.GetTopic(topicId);
@@ -43,8 +42,7 @@ namespace KEB.WebAPI.Controllers
         }
 
         [HttpPost("add-new-topic")]
-        
-      //  [Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> AddNewTopic(AddTopicDto request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -55,7 +53,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPut]
         [Route("edit-topic")]
-        //  [Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> RenameTopic(EditTopicDto request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -65,7 +63,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpDelete]
         [Route("delete-topic")]
-        //   [Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> DeleteTopic(Delete request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";

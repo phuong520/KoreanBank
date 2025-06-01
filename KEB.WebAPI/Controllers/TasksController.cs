@@ -27,7 +27,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-questions-log")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> ViewImportQuestionHistory(
            Guid? userId,
            Guid? taskId,
@@ -46,7 +46,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("lead-change-question-status")]
-        // [Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> ChangeQuestionStatus(ChangeQuestionStatusRequest request)
         {
             try
@@ -76,7 +76,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("view-import-question-tasks")]
-       //[Authorize(Roles = "R2,R3")]
+       
         public async Task<IActionResult> ViewImportQuestionTask(
            Guid? assigneeId,
            Guid? levelId,
@@ -99,7 +99,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("view-task-by-id")]
-        //[Authorize(Roles = "R2,R3")]
+       
         public async Task<IActionResult> GetTaskById(Guid id)
         {
             var response = await _unitOfService.AddQuestionTaskService.GetTaskDetail(id);
@@ -108,7 +108,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("assign-import-question-task")]
-      //  [Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> AssignImportQuestionTask(AssignTaskRequest request)
         {
             try
@@ -132,7 +132,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("change-task-deadline")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> ChangeTaskDeadline(ChangeTaskDeadlineRequest request)
         {
             var response = await _unitOfService.AddQuestionTaskService.ChangeTaskDeadline(request);
@@ -140,7 +140,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("edit-import-question-task")]
-       //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> EditImportQuestionTask(EditTaskRequest request)
         {
             var response = await _unitOfService.AddQuestionTaskService.EditImportQuestionTask(request);
@@ -149,7 +149,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpDelete]
         [Route("delete-import-question-task")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Quản lý")]
         public async Task<IActionResult> DeleteImportQuestionTask(Delete request)
         {
             var response = await _unitOfService.AddQuestionTaskService.DeleteImportQuestionTask(request);
@@ -158,7 +158,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("view-exam-as-task")]
-       // [Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> ViewExamAsTask(Guid? userId, Guid? levelId, bool? occured, bool? getHost)
         {
             GetExamAsTaskRequest request = new()

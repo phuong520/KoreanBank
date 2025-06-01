@@ -23,6 +23,8 @@ namespace KEB.Application.Services
         private readonly ILoggerFactory _loggerFactory;
         private readonly HttpClient _httpClient;
 
+        private readonly GeminiApiService _geminiApiService;
+
         public UnitOfService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration config, ILogger<UnitOfService> logger, ILoggerFactory loggerFactory, HttpClient httpClient)
         {
             _unitOfWork = unitOfWork;
@@ -45,11 +47,12 @@ namespace KEB.Application.Services
             QuestionTypeService = new QuestionTypeService(_unitOfWork, _mapper);
             AccessLogService = new AccessLogService(_unitOfWork, _mapper);
             StatisticsService = new StatisticsService(_unitOfWork);
-            QuestionService = new QuestionService(_unitOfWork, _mapper);
+            QuestionService = new QuestionService(_unitOfWork, _mapper,_httpClient,_config);
            // FileTemplateService = new QuestionWithFileService(_unitOfWork, _mapper);
             EmailNotiService = new EmailNotiService(_unitOfWork);
             NotiService = new NotiService(_unitOfWork);
             QuestionWithFileService = new QuestionWithFileService(_unitOfWork, _mapper);
+            //GeminiApiService = new GeminiApiService(_httpClient, _config);
             //ImageFileService = new ImageFileService(_unitOfWork);
         }
 
@@ -88,6 +91,7 @@ namespace KEB.Application.Services
 
         public INotiService NotiService { get; set; }
         public IQuestionWithFileService QuestionWithFileService { get; set; }
+        //public IGeminiApiService GeminiApiService { get; set; }
         //public IImageFileService ImageFileService { get; set; }
 
     }

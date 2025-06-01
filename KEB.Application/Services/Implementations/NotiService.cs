@@ -32,6 +32,7 @@ namespace KEB.Application.Services.Implementations
                     //AnchorLink = x.AnchorLink,
                     CreatedTime = x.CreatedDate,
                     Description = x.Description,
+                    IsRead = x.IsRead
                 }).ToList();
             }
             catch (Exception ex)

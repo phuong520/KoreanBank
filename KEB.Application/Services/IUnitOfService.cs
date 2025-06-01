@@ -28,6 +28,7 @@ namespace KEB.Application.Services
         IQuestionWithFileService QuestionWithFileService { get; }
         IEmailNotiService EmailNotiService { get; }
         INotiService NotiService { get; }
+        //IGeminiApiService GeminiApiService { get; }
         //IImageFileService ImageFileService { get; }
     }
 }

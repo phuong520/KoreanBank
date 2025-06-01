@@ -39,5 +39,9 @@ namespace KEB.WebApp.Controllers
 
             return View(errorViewModel);
         }
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }

@@ -695,7 +695,7 @@ namespace KEB.Application.Services.Implementations
             try
             {
                 var task = await _unitOfWork.AddQuestionTasks.GetAsync(x => x.Id == id,
-                            includeProperties: "Assignee,QuestionType,Questions,LevelDetail,LevelDetail.Topic,LevelDetail.Level");
+                            includeProperties: "User,QuestionType,Questions,LevelDetail,LevelDetail.Topic,LevelDetail.Level");
                 if (task == null)
                 {
                     response.IsSuccess = false;

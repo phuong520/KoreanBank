@@ -50,6 +50,10 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.QuestionType.TypeName))
                 .ForMember(dest => dest.LevelDetailId,
                 opt => opt.MapFrom(src => src.LevelDetailId))
+                .ForMember(dest => dest.Difficulty,
+                opt => opt.MapFrom(src => src.Difficult))
+                .ForMember(dest => dest.NumberOfQuestions,
+                opt => opt.MapFrom(src => src.NumberOfQuestion))
                 .ForMember(dest => dest.LevelDetail,
                 opt => opt.MapFrom(src => $"{src.LevelDetail.Level.LevelName} - {src.LevelDetail.Topic.TopicName}"));
 

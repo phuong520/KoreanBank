@@ -1,123 +1,185 @@
-@* @model KEB.Application.DTOs.ImportQuestionTaskDTO.TaskFullDisplayDTO *@
+@model KEB.Application.DTOs.ImportQuestionTaskDTO.TaskFullDisplayDTO
 
-@* @{ *@
-@*     ViewData["Title"] = "Chi tiết nhiệm vụ"; *@
-@* } *@
+@{
+    ViewData["Title"] = "Chi tiết Task";
+}
 
-@* <div class="container-fluid"> *@
-@*     <div class="row"> *@
-@*         <div class="col-md-8 offset-md-2"> *@
-@*             <div class="card"> *@
-@*                 <div class="card-header d-flex justify-content-between align-items-center"> *@
-@*                     <h3 class="card-title mb-0">Chi tiết nhiệm vụ</h3> *@
-@*                     <a asp-action="Index" class="btn btn-secondary"> *@
-@*                         <i class="fas fa-arrow-left"></i> Quay lại *@
-@*                     </a> *@
-@*                 </div> *@
-@*                 <div class="card-body"> *@
-@*                     @if (TempData["Error"] != null) *@
-@*                     { *@
-@*                         <div class="alert alert-danger alert-dismissible fade show" role="alert"> *@
-@*                             @TempData["Error"] *@
-@*                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button> *@
-@*                         </div> *@
-@*                     } *@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-tasks"></i>
+                        Chi tiết: @Model.TaskName
+                    </h3>
+                    @* <div class="card-tools"> *@
+                    @*     <span> *@
+                    @*         @Model.Status.ToString() *@
+                    @*     </span> *@
+                    @* </div> *@
+                </div>
+                <div class="card-body">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-info">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <strong class="info-box-text">Người được giao: </strong>
+                                    <span class="info-box-number">@Model.AssigneeName</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box">
+                                <span class="info-box-icon bg-warning">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </span>
+                                <div class="info-box-content">
+                                    <strong class="info-box-text" style="text-decor">Hạn chót: </strong>
+                                    <span class="info-box-number">@Model.Deadline.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-@*                     <div class="row mb-4"> *@
-@*                         <div class="col-md-6"> *@
-@*                             <h5>Thông tin cơ bản</h5> *@
-@*                             <dl class="row"> *@
-@*                                 <dt class="col-sm-4">Tên nhiệm vụ:</dt> *@
-@*                                 <dd class="col-sm-8">@Model.TaskName</dd> *@
+                    <!-- Task Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card card-outline card-primary">
+                                <div class="card-header">
+                                    <h4 class="card-title">Thông tin chi tiết</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Cấp độ:</strong>
+                                            <p class="text-muted">@Model.LevelDetail</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Loại câu hỏi:</strong>
+                                            <p class="text-muted">@Model.QuestionTypeName</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Kỹ năng:</strong>
+                                            <p class="text-muted">@Model.Skill</p>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <strong>Độ khó:</strong>
+                                            <span >
+                                                @Model.Difficulty.ToString()
+                                            </span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>Số câu hỏi:</strong>
+                                            <span>@Model.NumberOfQuestions</span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <strong>
+                                                @(Model.ForMultipleChoice ? "Trắc nghiệm" : "Tự luận")
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-@*                                 <dt class="col-sm-4">Người tạo:</dt> *@
-@*                                 <dd class="col-sm-8">@Model.AssigneeName</dd> *@
+                    <!-- Summary Section -->
+                    @if (Model.SumUp != null && Model.SumUp.Any())
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">
+                                            <i class="fas fa-chart-pie"></i>
+                                            Tổng kết
+                                        </h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>STT</th>
+                                                        <th>Thông tin</th>
+                                                        <th>Giá trị</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @for (int i = 0; i < Model.SumUp.Count; i++)
+                                                    {
+                                                        <tr>
+                                                            <td>@(i + 1)</td>
+                                                            <td colspan="2">@Model.SumUp[i]</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
 
-@*                                 <dt class="col-sm-4">Hạn chót:</dt> *@
-@*                                 <dd class="col-sm-8">@Model.Deadline.ToString("dd/MM/yyyy HH:mm")</dd> *@
+                    <!-- Import History Section -->
+                    @if (Model.ImportHistory != null && Model.ImportHistory.Any())
+                    {
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">
+                                            <i class="fas fa-history"></i>
+                                            Lịch sử import
+                                        </h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="timeline">
+                                            @for (int i = 0; i < Model.ImportHistory.Count; i++)
+                                            {
+                                                <div class="time-label">
+                                                    <span class="bg-blue">Import #@(i + 1)</span>
+                                                </div>
+                                                <div>
+                                                    <i class="fas fa-file-import bg-green"></i>
+                                                    <div class="timeline-item">
+                                                        <div class="timeline-body">
+                                                            @Model.ImportHistory[i]
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
 
-@*                                 <dt class="col-sm-4">Trạng thái:</dt> *@
-@*                                 <dd class="col-sm-8"> *@
-@*                                     <span class="badge @(Model.Status == "Completed" ? "bg-success" :  *@
-@*                                                   Model.Status == "InProgress" ? "bg-warning" : "bg-secondary")"> *@
-@*                                         @Model.Status *@
-@*                                     </span> *@
-@*                                 </dd> *@
-@*                             </dl> *@
-@*                         </div> *@
-@*                         <div class="col-md-6"> *@
-@*                             <h5>Thông tin chi tiết</h5> *@
-@*                             <dl class="row"> *@
-@*                                 <dt class="col-sm-4">Người thực hiện:</dt> *@
-@*                                 <dd class="col-sm-8">@Model.AssigneeName</dd> *@
+                <div class="card-footer">
+                    <div class="row">
+                      
+                        <div class="col-md-6 text-right">
+                            <a href="javascript:history.back()" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Quay lại
+                            </a>
+                            <a href="#" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Chỉnh sửa
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-@*                                 <dt class="col-sm-4">Hạn hoàn thành:</dt> *@
-@*                                 <dd class="col-sm-8">@Model.Deadline.ToString("dd/MM/yyyy HH:mm")</dd> *@
-
-@*                                 <dt class="col-sm-4">Độ ưu tiên:</dt> *@
-@*                                 <dd class="col-sm-8"> *@
-@*                                     <span class="badge @(Model.Priority == "High" ? "bg-danger" :  *@
-@*                                                   Model.Priority == "Medium" ? "bg-warning" : "bg-info")"> *@
-@*                                         @Model.Priority *@
-@*                                     </span> *@
-@*                                 </dd> *@
-
-@*                                 <dt class="col-sm-4">Tiến độ:</dt> *@
-@*                                 <dd class="col-sm-8"> *@
-@*                                     <div class="progress"> *@
-@*                                         @{ *@
-@*                                             var progress = Model.NumberOfQuestions > 0  *@
-@*                                                 ? (Model.NumberOfAddedQuestions * 100 / Model.NumberOfQuestions)  *@
-@*                                                 : 0; *@
-@*                                         } *@
-@*                                         <div class="progress-bar" role="progressbar"  *@
-@*                                              style="width: @progress%;"  *@
-@*                                              aria-valuenow="@progress"  *@
-@*                                              aria-valuemin="0"  *@
-@*                                              aria-valuemax="100"> *@
-@*                                             @progress% *@
-@*                                         </div> *@
-@*                                     </div> *@
-@*                                     <small class="text-muted"> *@
-@*                                         @Model.NumberOfAddedQuestions / @Model.NumberOfQuestions câu hỏi *@
-@*                                     </small> *@
-@*                                 </dd> *@
-@*                             </dl> *@
-@*                         </div> *@
-@*                     </div> *@
-
-@*                     <div class="mb-4"> *@
-@*                         <h5>Mô tả</h5> *@
-@*                         <div class="card"> *@
-@*                             <div class="card-body"> *@
-@*                                 @(string.IsNullOrEmpty(Model.Description) ? "Không có mô tả" : Model.Description) *@
-@*                             </div> *@
-@*                         </div> *@
-@*                     </div> *@
-
-@*                     <div class="d-flex justify-content-end"> *@
-@*                         <form asp-action="Delete" asp-route-id="@Model.Id" method="post"  *@
-@*                               onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?');"  *@
-@*                               style="display: inline;"> *@
-@*                             @Html.AntiForgeryToken() *@
-@*                             <button type="submit" class="btn btn-danger"> *@
-@*                                 <i class="fas fa-trash"></i> Xóa nhiệm vụ *@
-@*                             </button> *@
-@*                         </form> *@
-@*                     </div> *@
-@*                 </div> *@
-@*             </div> *@
-@*         </div> *@
-@*     </div> *@
-@* </div> *@
-
-@* @section Scripts { *@
-@*     <script> *@
-@*         // Auto-hide alerts after 5 seconds *@
-@*         $(document).ready(function() { *@
-@*             setTimeout(function() { *@
-@*                 $(".alert").alert('close'); *@
-@*             }, 5000); *@
-@*         }); *@
-@*     </script> *@
-@* }  *@

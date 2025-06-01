@@ -53,14 +53,7 @@ namespace KEB.WebApp.Controllers
         {
             try
             {
-                var token = HttpContext.Request.Cookies["token"];
-                if (string.IsNullOrEmpty(token))
-                {
-                    return RedirectToAction("Login", "Common", new { returnUrl = Url.Action("Details", "Task", new { id }) });
-                }
-
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
+              
                 var response = await _httpClient.GetAsync($"{ApiUrl}/view-task-by-id?id={id}");
                 if (!response.IsSuccessStatusCode)
                 {
@@ -68,10 +61,10 @@ namespace KEB.WebApp.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<APIResponse<List<TaskFullDisplayDTO>>>();
+                var result = await response.Content.ReadFromJsonAsync<APIResponse<TaskFullDisplayDTO>>();
                 if (result?.IsSuccess != true || result.Result == null || !result.Result.Any())
-                {
-                    TempData["Error"] = "Không tìm thấy thông tin chi tiết nhiệm vụ";
+                {   
+                    TempData["Error"] = "Không tìm thấy thông tin chi tiết nhiệm vụ";   
                     return RedirectToAction(nameof(Index));
                 }
 

@@ -19,7 +19,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-all-questiontypes")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên, Quản trị viên")]
         public async Task<IActionResult> GetAllQuestionTypes(string? nameSearchValue, Skill? skill, bool? isDeleted, Guid? createdUserId, DateTime? fromTime)
         {
             var request = new GetQuestionType { CreatedBy = createdUserId, FromTime = fromTime, IsDeleted = isDeleted, Skill = skill, NameValueToBeSearched = nameSearchValue };
@@ -30,7 +30,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("get-questiontype-{id}")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý, Giảng viên, Quản trị viên")]
         public async Task<IActionResult> GetQuestionType(Guid id)
         {
             var response = await _unitOfService.QuestionTypeService.GetQuestionType(id);
@@ -39,7 +39,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("add-questiontype")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> AddQuestionType(QuestionTypeCreateDto questionTypeCreateDTO)
         {
             var response = await _unitOfService.QuestionTypeService
@@ -60,7 +60,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpDelete]
         [Route("delete-questiontype")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> DeleteQuestionType(QuestionTypeDeleteDto request)
         {
             var response = await _unitOfService.QuestionTypeService
@@ -72,7 +72,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPut]
         [Route("edit-questiontype")]
-        //[Authorize(Roles = "R2")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> EditQuestionType(QuestionTypeUpdateDto questionTypeUpdateDTO)
         {
             var response = await _unitOfService.QuestionTypeService

@@ -26,7 +26,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("get-questions")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý, Giảng viên, Quản trị viên")]
         public async Task<IActionResult> GetQuestionsAsync(GetQuestionsRequest request)
         {
             var response = await _unitOfService.QuestionService.GetQuestionsListAsync(request);
@@ -34,7 +34,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-question-has-id-{id}")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý, Giảng viên")]
         public async Task<IActionResult> GetQuestionAsync(Guid id)
         {
             var response = await _unitOfService.QuestionService.GetQuestionDetailAsync(id);
@@ -44,7 +44,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpGet]
         [Route("view-import-questions-history")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý, Giảng viên")]
         public async Task<IActionResult> ViewQuestionImportHistory(
                 Guid? userId,
                 bool? isSuccess,
@@ -66,7 +66,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpDelete]
         [Route("delete-question")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Quản lý,Giảng viên")]
         public async Task<IActionResult> DeleteQuestion(Delete request)
         {
             var response = await _unitOfService.QuestionService.TeamLeadDeleteQuestion(request);
@@ -75,7 +75,7 @@ namespace KEB.WebAPI.Controllers
 
         [HttpPost]
         [Route("edit-question")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> EditQuestion([FromForm] UpdateQuestionRequest request)
         {
             request.IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
@@ -84,7 +84,7 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpPost]
         [Route("add-single-question")]
-        //[Authorize(Roles = "R2,R3")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> AddSingleQuestion([FromForm] AddSingleQuestionRequest request)
         {
 
@@ -97,46 +97,8 @@ namespace KEB.WebAPI.Controllers
 
             return Ok(result);
         }
-        //[HttpPost("upload-excel")]
-        //[Consumes("multipart/form-data")]
-        //public async Task<IActionResult> UploadExcel([FromForm] ImportQuestionFromExcelRequest request)
-        //{
-        //    try
-        //    {
-        //        // Get RequestedUserId from claims
-        //        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var requestedUserId))
-        //        {
-        //            return Unauthorized(new APIResponse<ImportQuestionResultDTO>
-        //            {
-        //                IsSuccess = false,
-        //                StatusCode = HttpStatusCode.Unauthorized,
-        //                Message = "Invalid user authentication."
-        //            });
-        //        }
-
-        //        request.RequestedUserId = requestedUserId;
-
-        //        // Get client IP address
-        //        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-
-        //        // Call service
-        //        var response = await _unitOfService.QuestionService.UploadQuestionFromExcel(request, ipAddress);
-
-        //        return StatusCode((int)response.StatusCode, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode((int)HttpStatusCode.InternalServerError, new APIResponse<ImportQuestionResultDTO>
-        //        {
-        //            IsSuccess = false,
-        //            StatusCode = HttpStatusCode.InternalServerError,
-        //            Message = $"Error processing request: {ex.Message}"
-        //        });
-        //    }
-        //}
-
         [HttpGet("download-template")]
+        //[Authorize(Roles = "Giảng viên, Quản lý, Quản trị viên")]
         public async Task<IActionResult> DownloadTemplate(bool forMultipleChoice = true)
         {
             var bytes = await _unitOfService.QuestionWithFileService.UploadExcelTemplate(forMultipleChoice);
@@ -144,6 +106,7 @@ namespace KEB.WebAPI.Controllers
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
         [HttpPost("upload-excel")]
+        //[Authorize(Roles = "Giảng viên")]
         public async Task<IActionResult> UploadExcel([FromForm] ImportQuestionFromExcelRequest request)
         {
             if (request.ExcelFile == null || request.ExcelFile.Length == 0)

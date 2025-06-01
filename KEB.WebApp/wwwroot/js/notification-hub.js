@@ -44,7 +44,7 @@ function showNotification(message) {
 
     const createdTime = new Date(message.createdTime).toLocaleString();
     li.innerHTML = `
-        <div class="notification-content">${message.Description}</div>
+        <div class="notification-content">${message.description}</div>
         <div class="notification-time">${createdTime}</div>
     `;
 
