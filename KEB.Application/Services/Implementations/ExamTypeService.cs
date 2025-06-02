@@ -468,12 +468,13 @@ namespace KEB.Application.Services.Implementations
             }
             return response;
         }
-        public async Task<APIResponse<ExamTypeGeneralDisplayDTO>> GetExamTypesAsync()
+        public async Task<APIResponse<ExamTypeGeneralDisplayDTO>> GetExamTypesAsync(Pagination request)
 
         {
             APIResponse<ExamTypeGeneralDisplayDTO> response = new();
             try
             {
+                var total = await _unitOfWork.ExamTypes.GetAllAsync(includeProperties: "");
                 var queriedResult = await _unitOfWork.ExamTypes.GetAllAsync(includeProperties: "Levels,ExamTypeConstraints,Exams");
                 var count = queriedResult.Count;
                 if (count == 0)
@@ -485,6 +486,13 @@ namespace KEB.Application.Services.Implementations
                 {
                     response.Result = _mapper.Map<List<ExamTypeGeneralDisplayDTO>>(queriedResult);
                     response.Message = count + "";
+                    response.TotalCount = total.Count();
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.Page,
+                        Size = request.Size
+                    };
+                    
                 }
             }
             catch (Exception)

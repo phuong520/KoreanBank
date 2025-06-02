@@ -41,7 +41,18 @@ namespace KEB.Infrastructure.Repository
             await _context.Set<T>().AddAsync(entity);
         }
 
-      
+        public async Task<int> CountAsync<T>(Expression<Func<T, bool>> filter = null) where T : class
+        {
+            IQueryable<T> query = _context.Set<T>();
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            return await query.CountAsync();
+        }
+
         public async Task DeleteRangeAsync(IEnumerable<T> entities)
         {
             _context.Set<T>().RemoveRange(entities);

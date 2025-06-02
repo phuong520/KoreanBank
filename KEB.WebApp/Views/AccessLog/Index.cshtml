@@ -1,157 +1,12 @@
 ﻿@using KEB.Application.DTOs.Common
 @model IEnumerable<KEB.Application.DTOs.SystemAccessLogDTO.AccessLogDisplayDto>
-<!DOCTYPE html>
+
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nhật Ký Hoạt Động</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f5f7fa;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .title {
-            font-size: 24px;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-
-        .user-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .icon {
-            font-size: 20px;
-            color: #7f8c8d;
-            cursor: pointer;
-        }
-
-        .user-icon {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background-color: #3498db;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .search-container {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .search-input {
-            width: 300px;
-            padding: 10px 15px 10px 40px;
-            border: none;
-            background-color: #dfe6e9;
-            border-radius: 20px;
-            font-size: 14px;
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #7f8c8d;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        th {
-            background-color: #f8f9fa;
-            color: #2c3e50;
-            text-align: left;
-            padding: 15px;
-            font-size: 14px;
-            border-bottom: 1px solid #ecf0f1;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #ecf0f1;
-            color: #34495e;
-            font-size: 14px;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            gap: 5px;
-        }
-
-        .page-item {
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-            .page-item.active {
-                background-color: #6c5ce7;
-                color: white;
-            }
-
-            .page-item:not(.active) {
-                background-color: #dfe6e9;
-                color: #2d3436;
-            }
-
-            .page-item.disabled {
-                background-color: #dfe6e9;
-                color: #7f8c8d;
-                cursor: not-allowed;
-            }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-role {
-            font-size: 13px;
-            color: #7f8c8d;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/log.css" />
 </head>
 <body>
     <div class="container">
@@ -159,10 +14,43 @@
             <h1 class="title">Nhật Ký Hoạt Động</h1>
         </div>
 
-        <div class="search-container">
-            <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm" value="@(ViewBag.Search ?? "")">
-            <div class="search-icon">
-                <i class="fas fa-search"></i>
+        <div class="filters-container">
+            <div class="filter-row">
+                <div class="search-container filter-group">
+                    <label class="filter-label">Tìm kiếm</label>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Tìm kiếm theo hành động..." value="@(ViewBag.Search ?? "")">
+                    <div class="search-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Từ ngày</label>
+                    <input type="datetime-local" class="filter-input" id="fromDate" value="@(ViewBag.From?.ToString("yyyy-MM-ddTHH:mm") ?? "")">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Đến ngày</label>
+                    <input type="datetime-local" class="filter-input" id="toDate" value="@(ViewBag.To?.ToString("yyyy-MM-ddTHH:mm") ?? "")">
+                </div>
+
+                <div class="filter-buttons">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Xóa
+                    </button>
+                </div>
+            </div>
+
+            <div class="quick-filters">
+                <button class="quick-filter-btn" onclick="setQuickFilter('today')">Hôm nay</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('yesterday')">Hôm qua</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('thisWeek')">Tuần này</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('lastWeek')">Tuần trước</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('thisMonth')">Tháng này</button>
+                <button class="quick-filter-btn" onclick="setQuickFilter('lastMonth')">Tháng trước</button>
             </div>
         </div>
 
@@ -217,10 +105,35 @@
                 if (totalPages > 1)
                 {
                     <div class="page-item @(pagination.Page == 1 ? "disabled" : "")" onclick="goToPage(@(pagination.Page - 1))">«</div>
-                    @for (int i = 1; i <= totalPages; i++)
+                    
+                    
+                        int startPage = Math.Max(1, pagination.Page - 2);
+                        int endPage = Math.Min(totalPages, pagination.Page + 2);
+                    
+                    
+                    @if (startPage > 1)
+                    {
+                        <div class="page-item" onclick="goToPage(1)">1</div>
+                        @if (startPage > 2)
+                        {
+                            <div class="page-item disabled">...</div>
+                        }
+                    }
+                    
+                    @for (int i = startPage; i <= endPage; i++)
                     {
                         <div class="page-item @(pagination.Page == i ? "active" : "")" onclick="goToPage(@i)">@i</div>
                     }
+                    
+                    @if (endPage < totalPages)
+                    {
+                        @if (endPage < totalPages - 1)
+                        {
+                            <div class="page-item disabled">...</div>
+                        }
+                        <div class="page-item" onclick="goToPage(@totalPages)">@totalPages</div>
+                    }
+                    
                     <div class="page-item @(pagination.Page == totalPages ? "disabled" : "")" onclick="goToPage(@(pagination.Page + 1))">»</div>
                 }
             }
@@ -229,20 +142,39 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
     <script>
+        let isLoading = false;
+        
         function goToPage(page) {
-            const totalPages = Math.ceil(@ViewBag.TotalCount / @(ViewBag.Pagination?.Size ?? 10));
-            if (page < 1 || page > totalPages) return;
+            if (isLoading) return;
+            
+            const currentPage = @(ViewBag.Pagination?.Page ?? 1);
+            const totalPages = Math.ceil(@(ViewBag.TotalCount ?? 0) / @(ViewBag.Pagination?.Size ?? 10));
+            
+            if (page < 1 || page > totalPages || page === currentPage) return;
 
             const search = document.getElementById('searchInput').value;
-            fetchData(page, @(ViewBag.Pagination?.Size ?? 10), search);
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            
+            fetchData(page, @(ViewBag.Pagination?.Size ?? 10), search, fromDate, toDate);
         }
 
-        function fetchData(page, pageSize, search) {
+        function fetchData(page, pageSize, search, fromDate, toDate) {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const tbody = document.getElementById('logTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">Đang tải...</td></tr>';
+
+            // Prepare date values
+            let fromDateTime = fromDate ? new Date(fromDate).toISOString() : "0001-01-01T00:00:00Z";
+            let toDateTime = toDate ? new Date(toDate).toISOString() : "9999-12-31T23:59:59Z";
+
             const request = {
                 paginationRequest: { page: page, size: pageSize },
-                action: search,
-                from: "0001-01-01T00:00:00Z",
-                to: "9999-12-31T23:59:59Z"
+                action: search || "",
+                from: fromDateTime,
+                to: toDateTime
             };
 
             fetch('@ViewBag.ApiUrl', {
@@ -261,7 +193,6 @@
             })
             .then(data => {
                 // Update table body
-                const tbody = document.getElementById('logTableBody');
                 tbody.innerHTML = '';
                 if (data.result && data.result.length > 0) {
                     let index = (page - 1) * pageSize + 1;
@@ -269,10 +200,10 @@
                         tbody.innerHTML += `
                             <tr>
                                 <td>${index}</td>
-                                <td>${log.user.userName}</td>
-                                <td>${log.user.fullName}</td>
-                                <td>${log.user.roleName}</td>
-                                <td>${log.actionName}</td>
+                                <td>${log.user.userName || ''}</td>
+                                <td>${log.user.fullName || ''}</td>
+                                <td>${log.user.roleName || ''}</td>
+                                <td>${log.actionName || ''}</td>
                                 <td>${new Date(log.accessTime).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
                             </tr>`;
                         index++;
@@ -282,28 +213,215 @@
                 }
 
                 // Update pagination
-                const pagination = document.getElementById('pagination');
-                pagination.innerHTML = '';
-                const totalPages = Math.ceil(data.totalCount / data.pagination.size);
-                if (totalPages > 1) {
-                    pagination.innerHTML += `<div class="page-item ${page == 1 ? 'disabled' : ''}" onclick="goToPage(${page - 1})">«</div>`;
-                    for (let i = 1; i <= totalPages; i++) {
-                        pagination.innerHTML += `<div class="page-item ${page == i ? 'active' : ''}" onclick="goToPage(${i})">${i}</div>`;
-                    }
-                    pagination.innerHTML += `<div class="page-item ${page == totalPages ? 'disabled' : ''}" onclick="goToPage(${page + 1})">»</div>`;
-                }
+                updatePagination(page, pageSize, data.totalCount || 0);
+                
+                // Update URL without page reload
+                updateUrl(page, search, fromDate, toDate);
             })
             .catch(error => {
                 console.error('Error:', error);
-                const tbody = document.getElementById('logTableBody');
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Không có dữ liệu</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Có lỗi xảy ra khi tải dữ liệu</td></tr>';
                 alert(error.message);
+            })
+            .finally(() => {
+                isLoading = false;
             });
         }
 
+        function updateUrl(page, search, fromDate, toDate) {
+            const url = new URL(window.location);
+            url.searchParams.set('page', page);
+            
+            if (search) {
+                url.searchParams.set('search', search);
+            } else {
+                url.searchParams.delete('search');
+            }
+            
+            if (fromDate) {
+                url.searchParams.set('from', fromDate);
+            } else {
+                url.searchParams.delete('from');
+            }
+            
+            if (toDate) {
+                url.searchParams.set('to', toDate);
+            } else {
+                url.searchParams.delete('to');
+            }
+            
+            window.history.pushState({}, '', url);
+        }
+
+        function updatePagination(currentPage, pageSize, totalCount) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            const totalPages = Math.ceil(totalCount / pageSize);
+            if (totalPages <= 1) return;
+
+            // Previous button
+            const prevDisabled = currentPage === 1 ? 'disabled' : '';
+            pagination.innerHTML += `<div class="page-item ${prevDisabled}" onclick="goToPage(${currentPage - 1})">«</div>`;
+
+            // Page numbers with ellipsis
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                pagination.innerHTML += `<div class="page-item" onclick="goToPage(1)">1</div>`;
+                if (startPage > 2) {
+                    pagination.innerHTML += `<div class="page-item disabled">...</div>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = currentPage === i ? 'active' : '';
+                pagination.innerHTML += `<div class="page-item ${activeClass}" onclick="goToPage(${i})">${i}</div>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    pagination.innerHTML += `<div class="page-item disabled">...</div>`;
+                }
+                pagination.innerHTML += `<div class="page-item" onclick="goToPage(${totalPages})">${totalPages}</div>`;
+            }
+
+            // Next button
+            const nextDisabled = currentPage === totalPages ? 'disabled' : '';
+            pagination.innerHTML += `<div class="page-item ${nextDisabled}" onclick="goToPage(${currentPage + 1})">»</div>`;
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value;
+            const fromDate = document.getElementById('fromDate').value;
+            const toDate = document.getElementById('toDate').value;
+            
+            // Validate date range
+            if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+                alert('Ngày bắt đầu không thể lớn hơn ngày kết thúc');
+                return;
+            }
+            
+            fetchData(1, @(ViewBag.Pagination?.Size ?? 10), search, fromDate, toDate);
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('fromDate').value = '';
+            document.getElementById('toDate').value = '';
+            
+            // Remove active state from quick filter buttons
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            fetchData(1, @(ViewBag.Pagination?.Size ?? 10), '', '', '');
+        }
+
+        function setQuickFilter(type) {
+            const now = new Date();
+            const fromDateInput = document.getElementById('fromDate');
+            const toDateInput = document.getElementById('toDate');
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active state to clicked button
+            event.target.classList.add('active');
+            
+            let fromDate, toDate;
+            
+            switch(type) {
+                case 'today':
+                    fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    toDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                    break;
+                    
+                case 'yesterday':
+                    const yesterday = new Date(now);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    fromDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+                    toDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+                    break;
+                    
+                case 'thisWeek':
+                    const startOfWeek = new Date(now);
+                    startOfWeek.setDate(now.getDate() - now.getDay() + 1); // Monday
+                    fromDate = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
+                    toDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+                    break;
+                    
+                case 'lastWeek':
+                    const lastWeekStart = new Date(now);
+                    lastWeekStart.setDate(now.getDate() - now.getDay() - 6); // Last Monday
+                    const lastWeekEnd = new Date(lastWeekStart);
+                    lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // Last Sunday
+                    fromDate = new Date(lastWeekStart.getFullYear(), lastWeekStart.getMonth(), lastWeekStart.getDate());
+                    toDate = new Date(lastWeekEnd.getFullYear(), lastWeekEnd.getMonth(), lastWeekEnd.getDate(), 23, 59, 59);
+                    break;
+                    
+                case 'thisMonth':
+                    fromDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    toDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+                    break;
+                    
+                case 'lastMonth':
+                    fromDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    toDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                    break;
+            }
+            
+            // Format dates for datetime-local input
+            fromDateInput.value = fromDate.toISOString().slice(0, 16);
+            toDateInput.value = toDate.toISOString().slice(0, 16);
+            
+            // Auto apply filter
+            applyFilters();
+        }
+
+        // Search functionality with debounce
+        let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
             const searchValue = e.target.value;
-            fetchData(1, @(ViewBag.Pagination?.Size ?? 10), searchValue);
+            
+            searchTimeout = setTimeout(() => {
+                const fromDate = document.getElementById('fromDate').value;
+                const toDate = document.getElementById('toDate').value;
+                fetchData(1, @(ViewBag.Pagination?.Size ?? 10), searchValue, fromDate, toDate);
+            }, 300); // Debounce 300ms
+        });
+
+        // Auto-apply filter when date inputs change
+        document.getElementById('fromDate').addEventListener('change', function() {
+            // Remove active quick filter if manually changing dates
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        });
+        
+        document.getElementById('toDate').addEventListener('change', function() {
+            // Remove active quick filter if manually changing dates
+            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        });
+
+        // Initialize filters from URL parameters on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromParam = urlParams.get('from');
+            const toParam = urlParams.get('to');
+            
+            if (fromParam) {
+                document.getElementById('fromDate').value = fromParam;
+            }
+            if (toParam) {
+                document.getElementById('toDate').value = toParam;
+            }
         });
     </script>
 </body>

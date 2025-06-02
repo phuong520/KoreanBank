@@ -22,16 +22,22 @@ namespace KEB.WebApp.Controllers
         {
             _httpClient = httpClientFactory.CreateClient();
         }
-        public async Task<IActionResult>  Index()
+        public async Task<IActionResult>  Index(int page = 1, int size = 10)
         {
-            var result = await _httpClient.GetFromJsonAsync<APIResponse<ExamTypeGeneralDisplayDTO>>($"{ApiUrl}/get-all-exam-types");
+            var queryParams = $"?page={page}&size={size}";
 
-            if (result == null || !result.IsSuccess)
+            var response = await _httpClient.GetFromJsonAsync<APIResponse<ExamTypeGeneralDisplayDTO>>($"{ApiUrl}/get-all-exam-types{queryParams}");
+
+            if (response == null || !response.IsSuccess)
             {
-                return View(new List<object>());
+                return View(new List<ExamTypeGeneralDisplayDTO>());
             }
 
-            return View(result.Result);
+            ViewBag.Page = page;
+            ViewBag.Size = size;
+            ViewBag.TotalCount = response.TotalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)response.TotalCount / size);
+            return View(response.Result);
         }
         private async Task LoadDropdownData()
         {

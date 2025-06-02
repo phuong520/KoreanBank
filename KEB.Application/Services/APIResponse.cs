@@ -22,5 +22,6 @@ namespace KEB.Application.Services
         public string Message { get; set; }
         public List<T> Result { get; set; }
         public Pagination Pagination { get; set; }
+        public int TotalCount { get; set; }
     }
 }

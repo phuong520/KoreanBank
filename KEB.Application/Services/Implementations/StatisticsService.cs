@@ -103,7 +103,56 @@ namespace KEB.Application.Services.Implementations
         public async Task<APIResponse<StatisticDto>> StatisticExamPaperByMonth(DateTime lowerBound, DateTime upperBound)
         {
             APIResponse<StatisticDto> response = new();
+            Expression<Func<Exam, bool>> filter = x => true; // Init filter ~
+
+            if (lowerBound.Year != upperBound.Year)
+            {
+                response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                response.Message = "Chỉ thống kê được trong cùng một năm thôi";
+                response.IsSuccess = false;
+                return response;
+            }
+
+            filter = ExpressionExtension.CombineFilters(filter, x => x.CreatedDate >= lowerBound);
+            filter = ExpressionExtension.CombineFilters(filter, x => x.CreatedDate <= upperBound);
+
+            try
+            {
+                var queriedResult = await _unitOfWork.Exams.GetAllAsync(filter);
+                var groupedResult = queriedResult.GroupBy(x => x.TakePlaceTime.Month)
+                                                .ToDictionary(x => x.Key, x => x.Count());
+
+                // Tạo danh sách đầy đủ 12 tháng
+                var fullYearResult = new List<StatisticDto>();
+                for (int month = 1; month <= 12; month++)
+                {
+                    var monthValue = groupedResult.ContainsKey(month) ? groupedResult[month] : 0;
+                    fullYearResult.Add(new StatisticDto
+                    {
+                        StatisticName = new DateTime(lowerBound.Year, month, 1).ToString("MM/yyyy", new CultureInfo("en-US")),
+                        StatisticValue = monthValue
+                    });
+                }
+
+                response.Result = fullYearResult;
+                response.Message = "StatisticExamByMonth";
+            }
+            catch (Exception e)
+            {
+                await Console.Out.WriteLineAsync(e.Message);
+                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                response.Message = AppMessages.INTERNAL_SERVER_ERROR;
+                response.IsSuccess = false;
+            }
+
+            return response;
+        }
+        //ok
+        public async Task<APIResponse<StatisticDto>> StatisticExamPaperBySkill(DateTime lowerBound, DateTime upperBound)
+        {
+            APIResponse<StatisticDto> response = new();
             Expression<Func<Paper, bool>> filter = x => true; // Init filter ~
+
             if (lowerBound.Year != upperBound.Year)
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
@@ -111,62 +160,34 @@ namespace KEB.Application.Services.Implementations
                 response.IsSuccess = false;
                 return response;
             }
-            {
-                filter = ExpressionExtension.CombineFilters(filter, x => x.CreatedDate >= lowerBound);
-                filter = ExpressionExtension.CombineFilters(filter, x => x.CreatedDate <= upperBound);
 
-            }
+            filter = ExpressionExtension.CombineFilters(filter, x => x.CreatedDate >= lowerBound);
+            filter = ExpressionExtension.CombineFilters(filter, x => x.CreatedDate <= upperBound);
+
             try
             {
                 var queriedResult = await _unitOfWork.Papers.GetAllAsync(filter, includeProperties: "Exam");
-                var groupedResult = queriedResult.GroupBy(x => x.Exam.TakePlaceTime.Month);
-                response.Result = groupedResult.Select(x => new StatisticDto
+                var groupedResult = queriedResult.GroupBy(x => x.Exam.TakePlaceTime.Month)
+                                                .ToDictionary(x => x.Key, x => x.Count());
+
+                // Tạo danh sách đầy đủ 12 tháng
+                var fullYearResult = new List<StatisticDto>();
+                for (int month = 1; month <= 12; month++)
                 {
-                    StatisticName = new DateTime(lowerBound.Year, x.Key, 1).ToString("MM/yyyy", new CultureInfo("en-US")),
-                    StatisticValue = x.Count()
-                }).ToList();
-                response.Message = "StatisticExamPaperBySkill";
+                    var monthValue = groupedResult.ContainsKey(month) ? groupedResult[month] : 0;
+                    fullYearResult.Add(new StatisticDto
+                    {
+                        StatisticName = new DateTime(lowerBound.Year, month, 1).ToString("MM/yyyy", new CultureInfo("en-US")),
+                        StatisticValue = monthValue
+                    });
+                }
+
+                response.Result = fullYearResult;
+                response.Message = "StatisticExamPaperByMonth";
             }
             catch (Exception e)
             {
                 response.IsSuccess = false;
-                response.Message = AppMessages.INTERNAL_SERVER_ERROR;
-                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
-            }
-
-            return response;
-        }
-        //ok
-        public async Task<APIResponse<StatisticDto>> StatisticExamPaperBySkill(DateTime? lowerBound, DateTime? upperBound)
-        {
-            APIResponse<StatisticDto> response = new();
-            Expression<Func<Paper, bool>> filter = x => true; // Init filter ~
-            // Combine all filters ~
-            {
-                if (lowerBound != null)
-                {
-                    Expression<Func<Paper, bool>> tempFilter = x => x.CreatedDate >= lowerBound;
-                    filter = ExpressionExtension.CombineFilters(filter, tempFilter);
-                }
-                if (upperBound != null)
-                {
-                    Expression<Func<Paper, bool>> tempFilter = x => x.CreatedDate <= upperBound;
-                    filter = ExpressionExtension.CombineFilters(filter, tempFilter);
-                }
-            }
-            try
-            {
-                var queriedResult = await _unitOfWork.Papers.GetAllAsync(filter);
-                var groupedResult = queriedResult.GroupBy(x => x.Skill);
-                response.Result = groupedResult.Select(x => new StatisticDto
-                {
-                    StatisticName = x.Key.ToString(),
-                    StatisticValue = x.Count()
-                }).ToList();
-                response.Message = "StatisticExamPaperBySkill";
-            }
-            catch (Exception e)
-            {
                 response.Message = AppMessages.INTERNAL_SERVER_ERROR;
                 response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
             }

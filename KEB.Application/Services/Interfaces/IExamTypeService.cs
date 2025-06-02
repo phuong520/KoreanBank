@@ -14,7 +14,7 @@ namespace KEB.Application.Services.Interfaces
         Task<APIResponse<ExamTypeComplexDisplayDTO>> DeleteExamTypeAsync(Delete request);
         Task<APIResponse<object>> EditExamTypeAsync(FullEditExamTypeRequest request);
         Task<APIResponse<ExamTypeComplexDisplayDTO>> GetExamTypeDetails(Guid examTypeId);
-        Task<APIResponse<ExamTypeGeneralDisplayDTO>> GetExamTypesAsync();
+        Task<APIResponse<ExamTypeGeneralDisplayDTO>> GetExamTypesAsync(Pagination request);
 
     }
 }

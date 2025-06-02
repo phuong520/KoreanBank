@@ -502,11 +502,18 @@ namespace KEB.Application.Services.Implementations
             }
             try
             {
+                var total = await _unitOfWork.Users.CountAsync(filter);
+                var pageNumber = request.PaginationRequest?.Page ?? 1;
+                var pageSize = request.PaginationRequest?.Size ?? 10;
+
+                // Nếu page nhỏ hơn 1, bạn có thể set về 1
+                if (pageNumber < 1) pageNumber = 1;
+                if (pageSize < 1) pageSize = 10;
                 // Perform Get
                 var allUsers = await _unitOfWork.Users.GetAllAsync(
                     filter: filter,
-                    pageNumber: request.PaginationRequest?.Page ?? 0,
-                    pageSize: request.PaginationRequest?.Size ?? 0,
+                    //pageNumber: request.pageNumber?.Page ?? 0,
+                    //pageSize: request.pageSize?.Size ?? 0,
                     includeProperties: "Role");
 
                 var result = new List<UserDisplayDTO>();
@@ -525,7 +532,12 @@ namespace KEB.Application.Services.Implementations
                 response.Result = result;
                 response.IsSuccess = true;
                 response.Message = $"Tìm thấy {result.Count} bản ghi.";
-
+                response.TotalCount = total;
+                response.Pagination = new DTOs.Common.Pagination
+                {
+                    Page = request.PaginationRequest.Page,
+                    Size = request.PaginationRequest.Size,
+                };
                 return response;
             }
             catch (Exception ex)

@@ -61,7 +61,7 @@ namespace KEB.Application.Services.Implementations
 
             try
             {
-                
+                var total = await _unitOfWork.AccessLogs.CountAsync(filter);
                 // Perform Get
                 var allLogs = await _unitOfWork.AccessLogs.GetAllAsync(
                     filter: filter,
@@ -84,11 +84,18 @@ namespace KEB.Application.Services.Implementations
                         Page = request.PaginationRequest.Page,
                         Size = request.PaginationRequest.Size
                     };
+                    response.TotalCount = 0;
                 }
                 else
                 {
                     response.Result = result;
                     response.Message = "Tìm thấy " + count + " bản ghi";
+                    response.TotalCount = total;
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.PaginationRequest.Page,
+                        Size = request.PaginationRequest.Size
+                    };
                 };
                 return response;
             }

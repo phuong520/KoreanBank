@@ -635,7 +635,10 @@ namespace KEB.Application.Services.Implementations
 
             try
             {
-                var queriedResult = await _unitOfWork.Exams.GetAllAsync(filter, includeProperties: "ExamType,Host,Reviewer,ExamType.Levels");
+                var total = await _unitOfWork.Exams.CountAsync(filter);
+                var queriedResult = await _unitOfWork.Exams.GetAllAsync(filter, includeProperties: "ExamType,Host,Reviewer,ExamType.Levels", pageNumber: request.PaginationRequest.Page,
+                    pageSize: request.PaginationRequest.Size);
+
                 List<ExamAsTaskDisplayDTO> subList = queriedResult.Where(x => !request.UserId.HasValue || x.HostId == request.UserId)
                     .Select(x => new ExamAsTaskDisplayDTO
 
@@ -680,6 +683,12 @@ namespace KEB.Application.Services.Implementations
                 {
                     response.Result = finalList.OrderByDescending(x => x.TakePlaceTime).ToList();
                     response.Message = $"{finalList.Count}";
+                    response.TotalCount = total;
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.PaginationRequest.Page,
+                        Size = request.PaginationRequest.Size
+                    };
                 }
             }
             catch (Exception)

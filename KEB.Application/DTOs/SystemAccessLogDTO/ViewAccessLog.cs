@@ -13,7 +13,7 @@ namespace KEB.Application.DTOs.SystemAccessLogDTO
         public bool? IsSuccess { get; set; }
         public string TargetObject { get; set; } = string.Empty;
         public string Action { get; set; } = string.Empty;
-        public DateTime? From { get; set; } = DateTime.MinValue;
+        public DateTime? From { get; set; } = DateTime.Now.AddDays(-30);
         public DateTime? To { get; set; } = DateTime.Now;
         public Pagination? PaginationRequest { get; set; } = new();
 

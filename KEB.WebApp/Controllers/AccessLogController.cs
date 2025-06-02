@@ -1,4 +1,5 @@
-﻿using KEB.Application.DTOs.ImportQuestionTaskDTO;
+﻿using KEB.Application.DTOs.Common;
+using KEB.Application.DTOs.ImportQuestionTaskDTO;
 using KEB.Application.DTOs.SystemAccessLogDTO;
 using KEB.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,8 +22,14 @@ namespace KEB.WebApp.Controllers
         {
             try
             {
-                var request = new ViewAccessLog(); // Gửi request trống hoặc có filter tùy ý
-
+                //var request = new ViewAccessLog(); // Gửi request trống hoặc có filter tùy ý
+                var request = new ViewAccessLog
+                {
+                    PaginationRequest = new Pagination { Page = 1, Size = 20 },
+                    //Action = search,
+                    From = DateTime.MinValue,
+                    To = DateTime.MaxValue
+                };
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}", request);
                 if (!response.IsSuccessStatusCode)
                 {
@@ -34,7 +41,8 @@ namespace KEB.WebApp.Controllers
                 if (result.IsSuccess)
                 {
                     ViewBag.Pagination = result.Pagination;
-                    ViewBag.TotalCount = result.Result.Count;
+                    ViewBag.TotalCount = result.TotalCount;
+                    ViewBag.ApiUrl = ApiUrl;
                     return View(result.Result);
                 }
                 return View(result.Result);

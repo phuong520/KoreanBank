@@ -8,11 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="~/css/chart.css" />
-    <style>
+   <style>
        .nav-link{
            height: 48px;
        }
-    </style>
+   </style>
 </head>
 <body>
     <div class="dashboard-container">
@@ -22,7 +22,7 @@
             <p>Hệ thống theo dõi và phân tích dữ liệu toàn diện</p>
         </div>
 
-        <!-- Summary Stats (Now at the top) -->
+        <!-- Summary Stats -->
         <div class="stats-summary">
             <div class="stat-item">
                 <div class="stat-number" id="totalQuestions">-</div>
@@ -102,8 +102,20 @@
                 return data.result || [];
             } catch (error) {
                 console.error('Fetch error:', error);
-                return [];
+                // Return mock data for all 12 months if API fails
+                return generateEmptyMonthsData();
             }
+        }
+
+        function generateEmptyMonthsData() {
+            const months = [];
+            for (let i = 1; i <= 12; i++) {
+                months.push({
+                    statisticName: new Date(2025, i - 1, 1).toLocaleDateString('en-US', { month: '2-digit', year: 'numeric' }).replace('/', '/'),
+                    statisticValue: 0
+                });
+            }
+            return months;
         }
 
         function createGradient(ctx, colors) {
@@ -178,8 +190,21 @@
             const data = await fetchData(endpoint);
             const ctx = document.getElementById(canvasId).getContext('2d');
 
-            const labels = data.map(x => x.statisticName);
-            const values = data.map(x => x.statisticValue);
+            // Ensure we always have 12 months of data
+            let processedData = data;
+            if (data.length < 12) {
+                processedData = generateEmptyMonthsData();
+                // Merge actual data with empty months
+                data.forEach(item => {
+                    const monthIndex = processedData.findIndex(p => p.statisticName === item.statisticName);
+                    if (monthIndex !== -1) {
+                        processedData[monthIndex] = item;
+                    }
+                });
+            }
+
+            const labels = processedData.map(x => x.statisticName);
+            const values = processedData.map(x => x.statisticValue);
 
             const gradient = createGradient(ctx, [color + '40', color + '10']);
 
@@ -211,7 +236,15 @@
                             backgroundColor: 'rgba(0,0,0,0.8)',
                             titleFont: { size: 14, weight: 'bold' },
                             bodyFont: { size: 13 },
-                            cornerRadius: 8
+                            cornerRadius: 8,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return `Tháng ${tooltipItems[0].label}`;
+                                },
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -224,14 +257,19 @@
                             ticks: {
                                 font: { size: 12 },
                                 color: '#666',
-                                stepSize: 1
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
                             }
                         },
                         x: {
                             grid: { display: false },
                             ticks: {
                                 font: { size: 12 },
-                                color: '#666'
+                                color: '#666',
+                                maxRotation: 45,
+                                minRotation: 0
                             }
                         }
                     },
@@ -262,6 +300,12 @@
         // Initialize dashboard
         async function initDashboard() {
             try {
+                // Show loading state
+                document.getElementById('totalQuestions').textContent = 'Đang tải...';
+                document.getElementById('totalExams').textContent = 'Đang tải...';
+                document.getElementById('totalPapers').textContent = 'Đang tải...';
+                document.getElementById('approvalRate').textContent = 'Đang tải...';
+
                 // Render all charts
                 await renderStatusChart();
 
@@ -285,6 +329,11 @@
 
             } catch (error) {
                 console.error('Dashboard initialization error:', error);
+                // Show error state
+                document.getElementById('totalQuestions').textContent = 'Lỗi';
+                document.getElementById('totalExams').textContent = 'Lỗi';
+                document.getElementById('totalPapers').textContent = 'Lỗi';
+                document.getElementById('approvalRate').textContent = 'Lỗi';
             }
         }
 

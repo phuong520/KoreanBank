@@ -1,0 +1,174 @@
+﻿@model KEB.Application.DTOs.UserDTO.UpdateUser
+@{
+    ViewData["Title"] = "Chỉnh sửa thông tin người dùng";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-edit"></i> @ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <h6>Vui lòng kiểm tra lại thông tin:</h6>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="UserId" />
+
+                        <div class="row">
+                            <!-- Avatar Section -->
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <div class="mb-3">
+                                        <img id="avatarPreview"
+                                             src="@(string.IsNullOrEmpty(ViewBag.CurrentAvatarUrl) ? "/images/default-avatar.png" : ViewBag.CurrentAvatarUrl)"
+                                             class="img-thumbnail rounded-circle"
+                                             style="width: 200px; height: 200px; object-fit: cover;"
+                                             alt="Avatar" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label asp-for="AvatarImage" class="form-label">Ảnh đại diện</label>
+                                        <input asp-for="AvatarImage" type="file" class="form-control" accept="image/*" id="avatarInput" />
+                                        <span asp-validation-for="AvatarImage" class="text-danger"></span>
+                                        <small class="form-text text-muted">Chọn file JPG, PNG (tối đa 5MB)</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Fields -->
+                            <div class="col-md-8">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label asp-for="FullName" class="form-label">Họ và tên *</label>
+                                            <input asp-for="FullName" class="form-control" required />
+                                            <span asp-validation-for="FullName" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Giới tính</label>
+                                            <div class="mt-2">
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" asp-for="Gender" value="true" id="genderMale" />
+                                                    <label class="form-check-label" for="genderMale">Nam</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" asp-for="Gender" value="false" id="genderFemale" />
+                                                    <label class="form-check-label" for="genderFemale">Nữ</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label asp-for="DateOfBirth" class="form-label">Ngày sinh *</label>
+                                            <input asp-for="DateOfBirth" type="date" class="form-control" required />
+                                            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Display only fields -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" value="@ViewBag.Email" readonly />
+                                            <small class="form-text text-muted">Email không thể thay đổi</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Số điện thoại</label>
+                                            <input type="text" class="form-control" value="@ViewBag.PhoneNumber"  />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Cập nhật thông tin
+                                </button>
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        $(document).ready(function () {
+            // Preview avatar when file selected
+            $('#avatarInput').change(function () {
+                const file = this.files[0];
+                if (file) {
+                    // Validate file size (5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File quá lớn! Vui lòng chọn file nhỏ hơn 5MB.');
+                        $(this).val('');
+                        return;
+                    }
+
+                    // Validate file type
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Chỉ chấp nhận file JPG, JPEG, PNG!');
+                        $(this).val('');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        $('#avatarPreview').attr('src', e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Form submission with loading state
+            $('form').submit(function () {
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+
+                submitBtn.html('<i class="spinner-border spinner-border-sm"></i> Đang cập nhật...')
+                    .prop('disabled', true);
+
+                // Re-enable button after 10 seconds as failsafe
+                setTimeout(() => {
+                    submitBtn.html(originalText).prop('disabled', false);
+                }, 10000);
+            });
+        });
+    </script>
+}
+

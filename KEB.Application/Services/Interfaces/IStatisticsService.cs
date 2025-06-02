@@ -12,7 +12,7 @@ namespace KEB.Application.Services.Interfaces
         Task<APIResponse<StatisticDto>> StatisticExamByExamType(DateTime? lowerBound, DateTime? upperBound);
         Task<APIResponse<StatisticDto>> StatisticExamByMonth(DateTime lowerBound, DateTime upperBound);
         Task<APIResponse<StatisticDto>> StatisticExamPaperByMonth(DateTime lowerBound, DateTime upperBound);
-        Task<APIResponse<StatisticDto>> StatisticExamPaperBySkill(DateTime? lowerBound, DateTime? upperBound);
+        Task<APIResponse<StatisticDto>> StatisticExamPaperBySkill(DateTime lowerBound, DateTime upperBound);
         Task<APIResponse<StatisticDto>> StatisticImportedQuestionsByDifficulty(DateTime? lowerBound, DateTime? upperBound);
         Task<APIResponse<StatisticDto>> StatisticImportedQuestionsByStatus(DateTime? lowerBound, DateTime? upperBound);
         Task<APIResponse<StatisticDto>> StatisticImportQuestionTasks(Guid? assigneeId, DateTime? lowerBound, DateTime? upperBound);

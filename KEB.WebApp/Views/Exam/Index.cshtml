@@ -1,7 +1,11 @@
 ﻿@model List<KEB.Application.DTOs.ExamDTO.ExamAsTaskDisplayDTO>
 
 @{
-    ViewData["Title"] = "Danh sách bài thi";
+    ViewData["Title"] = "Danh sách kỳ thi";
+    int currentPage = ViewBag.Page ?? 1;
+    int size = ViewBag.Size ?? 10;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int totalPages = (int)Math.Ceiling((double)totalCount / size);
 }
 
 <h2 class="text-xl font-semibold mb-4" style="text-align: center">Danh sách kỳ thi</h2>
@@ -57,4 +61,15 @@ else
             }
         </tbody>
     </table>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <li class="page-item @(p ==  currentPage ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = p, size = size })">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+
 }

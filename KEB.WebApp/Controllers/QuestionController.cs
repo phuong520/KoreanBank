@@ -60,7 +60,10 @@ namespace KEB.WebApp.Controllers
 
                 request.PaginationRequest = new Pagination { Page = 1, Size = 20 };
                 request.SortAscending = false;
-                request.Status = new List<QuestionStatus> { QuestionStatus.Ok };
+                if (request.Status == null || !request.Status.Any())
+                {
+                    request.Status = new List<QuestionStatus> { QuestionStatus.Ok };
+                }
                 var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", request); // request rỗng sẽ trả toàn bộ
                 if (response.IsSuccessStatusCode)
                 {

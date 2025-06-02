@@ -1,84 +1,221 @@
 ﻿@model List<KEB.Application.DTOs.UserDTO.UserDisplayDTO>
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh sách tài khoản</title>
+    <title>Quản lý tài khoản | KEB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-       
-        th, td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
+        :root {
+            --primary-color: #4e73df;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
         }
 
-        th {
-        background-color: #f2f2f2;
+        body {
+            background-color: #f8f9fc;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .nav-link{
+            height: 48px;
+        }
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         }
 
-        .active-badge {
-        background-color: #28a745;
-        color: white;
-        padding: 3px 8px;
-        border-radius: 4px;
-        font-size: 0.8em;
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 1.35rem;
         }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #5a5c69;
+        }
+
+            .table th {
+                padding: 1rem;
+                background-color: #f8f9fc;
+                color: #4e73df;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                letter-spacing: 0.05rem;
+                border-bottom: 1px solid #e3e6f0;
+            }
+
+            .table td {
+                padding: 1rem;
+                vertical-align: middle;
+                border-bottom: 1px solid #e3e6f0;
+            }
+
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+        }
+
+        .badge-active {
+            background-color: var(--success-color);
+        }
+
+        .badge-inactive {
+            background-color: var(--danger-color);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+            .btn-primary:hover {
+                background-color: #2e59d9;
+                border-color: #2653d4;
+            }
 
         .action-btn {
-        padding: 5px 10px;
-        margin-right: 5px;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 0.2rem;
         }
 
-        .view-btn {
-        background-color: #17a2b8;
-        color: white;
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
 
-        .edit-btn {
-        background-color: #ffc107;
-        color: black;
+        .page-link {
+            color: var(--primary-color);
         }
 
-        .delete-btn {
-        background-color: #dc3545;
-        color: white;
+        h1 {
+            color: var(--dark-color);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(78, 115, 223, 0.05);
         }
     </style>
 </head>
 <body>
-    <h1>Danh sách tài khoản</h1>
-    <div>
-        <a href="@Url.Action("Create", "Users")" class="btn btn-primary action-btn view-btn">Thêm tài khoản</a>
-    </div>
-    
-    <div class="card">
+    <div class="container-fluid py-4">
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="bi bi-people-fill me-2"></i>Quản lý tài khoản
+            </h1>
+            <a href="@Url.Action("Create", "Users")" class="btn btn-primary btn-sm d-none d-sm-inline-block">
+                <i class="bi bi-plus-circle me-1"></i> Thêm tài khoản
+            </a>
+        </div>
 
-        <div class="card-body">
-    <table class="table table-bordered table-striped shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>Họ và tên</th>
-                <th>Tên tài khoản</th>
-                <th>Email</th>
-                <th>Vai trò</th>
-                <th>Trạng thái</th>
-            </tr>
-        </thead>
-        @foreach (var user in Model)
-        {
-            <tbody>
-                <tr>
-                <td>@user.FullName</td>
-                <td>@user.UserName</td>
-                <td>@user.Email</td>
-                <td>@user.RoleName</td>
-                <td><span class="active-badge">@(user.IsActive ? "Hoạt động" :"Không hoạt động") </span></td>
-                
-            </tr>
-        </tbody>}
-    </table>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Danh sách tài khoản</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-three-dots-vertical text-gray-400"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
+                        <li><a class="dropdown-item" href="#">Xuất Excel</a></li>
+                        <li><a class="dropdown-item" href="#">In danh sách</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Làm mới</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="userTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Họ và tên</th>
+                                <th>Tên tài khoản</th>
+                                <th>Email</th>
+                                <th>Vai trò</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td>@user.FullName</td>
+                                    <td>@user.UserName</td>
+                                    <td>@user.Email</td>
+                                    <td>@user.RoleName</td>
+                                    <td>
+                                        <span class="badge @(user.IsActive ? "badge-active" : "badge-inactive")">
+                                            @(user.IsActive ? "Hoạt động" : "Không hoạt động")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-controller="Users" asp-action="Details" class="btn btn-info btn-sm action-btn" title="Xem chi tiết">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </a>
+                                            <a asp-controller="Users" asp-action="Edit" class="btn btn-warning btn-sm action-btn" title="Chỉnh sửa">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @if ((int)ViewBag.CurrentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { page = (int)ViewBag.CurrentPage - 1, size = ViewBag.PageSize })">Trước</a>
+                            </li>
+                        }
+
+                        @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+                        {
+                            <li class="page-item @(p == (int)ViewBag.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.PageSize })">@p</a>
+                            </li>
+                        }
+
+                        @if ((int)ViewBag.CurrentPage < (int)ViewBag.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="@Url.Action("Index", new { page = (int)ViewBag.CurrentPage + 1, size = ViewBag.PageSize })">Sau</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        </div>
     </div>
-    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Thêm các hàm JavaScript cần thiết ở đây
+        document.addEventListener('DOMContentLoaded', function() {
+            // Có thể thêm các xử lý tương tác tại đây
+        });
+    </script>
 </body>
+</html>

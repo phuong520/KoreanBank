@@ -20,9 +20,15 @@ namespace KEB.WebAPI.Controllers
         [HttpGet]
         [Route("get-all-exam-types")]
         //[Authorize(Roles = "Quản lý,Giảng viên")]
-        public async Task<IActionResult> GetAllExamTypes()
+        public async Task<IActionResult> GetAllExamTypes(int page = 1, int size = 10)
         {
-            var response = await _unitOfService.ExamTypeService.GetExamTypesAsync();
+            var paginationRequest = new Pagination
+            {
+                Page = page,
+                Size = size
+            };
+
+            var response = await _unitOfService.ExamTypeService.GetExamTypesAsync(paginationRequest);
             return Ok(response);
         }
 

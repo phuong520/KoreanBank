@@ -44,7 +44,9 @@ namespace KEB.WebApp.Controllers
                 }
             }
             request.UserId = userId1;
-            var queryParams = $"?userId={userId1}&levelId={request.LevelId}&occured={request.Occured}&host={request.Host}";
+            int page = request.PaginationRequest?.Page ?? 1;
+            int size = request.PaginationRequest?.Size ?? 10;
+            var queryParams = $"?userId={userId1}&levelId={request.LevelId}&occured={request.Occured}&host={request.Host}&page={page}&size={size}";
             try
             {
                 var response = await _httpClient.GetFromJsonAsync<APIResponse<ExamAsTaskDisplayDTO>>($"{BaseUrl}/Tasks/view-exam-as-task{queryParams}");
@@ -53,13 +55,16 @@ namespace KEB.WebApp.Controllers
                     TempData["Message"] = "Không có dữ liệu.";
                     return View(new List<ExamAsTaskDisplayDTO>());
                 }
-               
+                ViewBag.CurrentPage = page;
+                ViewBag.PageSize = size;
+                ViewBag.TotalCount = response.TotalCount;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)response.TotalCount / size);
                 return View(response.Result);
             }
             catch (Exception ex)
             {
                 TempData["Message"] = $"Lỗi: {ex.Message}";
-                return View(new List<ExamGeneralDisplayDTO>());
+                return View(new List<ExamAsTaskDisplayDTO>());
             }
         }
 

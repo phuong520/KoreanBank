@@ -40,5 +40,6 @@ namespace KEB.Infrastructure.Repository
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null);
         Task UpdateWithNoCommitAsync(T entity);
         Task RemoveAsync(T entity);
+        Task<int> CountAsync<T>(Expression<Func<T, bool>> filter = null) where T : class;
     }
 }

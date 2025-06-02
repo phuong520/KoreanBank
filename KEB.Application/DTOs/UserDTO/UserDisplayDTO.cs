@@ -1,4 +1,5 @@
 ﻿using KEB.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,7 @@ namespace KEB.Application.DTOs.UserDTO
         public DateOnly DateOfBirth { get; set; }
         
         public string RoleName { get; set; }
+        public string PhoneNumber { get; set; }
        // public bool PasswordNeedChange { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.InkML;
+﻿using Azure;
+using DocumentFormat.OpenXml.InkML;
 using KEB.Application.DTOs.UserDTO;
 using KEB.Application.Services;
 using KEB.Application.Services.Implementations;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Office.Core;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
@@ -27,9 +29,9 @@ namespace KEB.WebApp.Controllers
         }
 
         //[Authorize(Roles = "Quản trị viên")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int size = 10)
         {
-            var url = $"{ApiUrl}/get-all-users?page=1&size=10";
+            var url = $"{ApiUrl}/get-all-users?page={page}&size={size}";
 
             var result = await _httpClient.GetFromJsonAsync<APIResponse<UserDisplayDTO>>(url);
 
@@ -37,6 +39,10 @@ namespace KEB.WebApp.Controllers
             {
                 return View(new List<UserDisplayDTO>());
             }
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = size;
+            ViewBag.TotalCount = result.TotalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / size);
 
             return View(result.Result);
         }
@@ -144,40 +150,130 @@ namespace KEB.WebApp.Controllers
 
         public async Task<IActionResult> Edit(Guid id)
         {
-            var response = await _httpClient.GetAsync($"{ApiUrl}/{id}");
+            var token = Request.Cookies["token"];
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var url = $"{ApiUrl}/get-user-by-id";
+            var response = await _httpClient.GetAsync(url);
+
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var user = JsonSerializer.Deserialize<User>(content, new JsonSerializerOptions
+                var apiResponse = JsonSerializer.Deserialize<APIResponse1<UserDisplayDTO>>(content, new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
                 });
-                return View(user);
+                if (apiResponse?.IsSuccess == true)
+                {
+                    var user = apiResponse.Result;
+                    var updateUser = new UpdateUser
+                    {
+                        //AvatarImage = user.AvatarUrl,
+                        UserId = user.UserId,
+                        FullName = user.FullName,
+                        Gender = user.Gender,
+                        DateOfBirth = user.DateOfBirth,
+
+
+                    };
+
+                    // Truyền thông tin avatar hiện tại qua ViewBag
+                    ViewBag.CurrentAvatarUrl = user.AvatarUrl;
+                    ViewBag.Email = user.Email;
+                    ViewBag.PhoneNumber = user.PhoneNumber;
+
+                    return View(updateUser);
+                }
             }
-            return NotFound();
+            else if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound("Không tìm thấy người dùng");
+            }
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, User user)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, UpdateUser updateUser)
         {
-            if (id != user.Id)
+            if (id != updateUser.UserId)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var content = new StringContent(JsonSerializer.Serialize(user), Encoding.UTF8, "application/json");
-                var response = await _httpClient.PutAsync($"{ApiUrl}/{id}", content);
+                return View(updateUser);
+            }
+
+            try
+            {
+                // Prepare multipart form data for file upload
+                using var formData = new MultipartFormDataContent();
+
+                // Add form fields
+                formData.Add(new StringContent(updateUser.UserId.ToString()), "UserId");
+                formData.Add(new StringContent(updateUser.FullName ?? ""), "FullName");
+                formData.Add(new StringContent(updateUser.Gender.ToString()), "Gender");
+                formData.Add(new StringContent(updateUser.DateOfBirth.ToString("yyyy-MM-dd")), "DateOfBirth");
+
+                // Add file if exists
+                if (updateUser.AvatarImage != null && updateUser.AvatarImage.Length > 0)
+                {
+                    var fileContent = new StreamContent(updateUser.AvatarImage.OpenReadStream());
+                    fileContent.Headers.ContentType = new MediaTypeHeaderValue(updateUser.AvatarImage.ContentType);
+                    formData.Add(fileContent, "AvatarImage", updateUser.AvatarImage.FileName);
+                }
+
+                var response = await _httpClient.PutAsync($"{ApiUrl}/update-profile", formData);
+
                 if (response.IsSuccessStatusCode)
                 {
-                    return RedirectToAction(nameof(Index));
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<APIResponse<UserDisplayDTO>>(content, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (apiResponse?.IsSuccess == true)
+                    {
+                        TempData["SuccessMessage"] = apiResponse.Message ?? "Cập nhật thông tin thành công!";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", apiResponse?.Message ?? "Có lỗi xảy ra khi cập nhật");
+                    }
                 }
-                ModelState.AddModelError("", "Error updating user");
+                else if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    var errorResponse = JsonSerializer.Deserialize<APIResponse<object>>(errorContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                    ModelState.AddModelError("", errorResponse?.Message ?? "Dữ liệu không hợp lệ");
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return NotFound("Không tìm thấy người dùng");
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Lỗi server khi cập nhật thông tin");
+                }
             }
-            return View(user);
+            catch (HttpRequestException ex)
+            {
+                ModelState.AddModelError("", "Lỗi kết nối: " + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Có lỗi xảy ra: " + ex.Message);
+            }
+
+            return View(updateUser);
         }
-        
+
     }
 }
