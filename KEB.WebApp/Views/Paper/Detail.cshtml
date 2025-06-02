@@ -86,9 +86,9 @@
         }
 
         .attachment img {
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
         }
     </style>
 </head>
@@ -202,26 +202,26 @@
                             @for (int i = 0; i < halfCount; i++)
                             {
                                 var question = questions[i];
-                                <div class="attachment">
-                                    @if (question.AttachmentAudio != null)
-                                    {
-
-                                        <div class="mb-2">
-                                            <audio controls class="audio-preview mb-3">
-                                                <source src="data:audio/*;base64,@question.AttachmentAudio" type="audio/mpeg">
-                                                Trình duyệt của bạn không hỗ trợ audio.
-                                            </audio>
-                                        </div>
-                                    }
-                                    @if ((question.AttachmentImage != null))
-                                    {
-                                        <div class="mb-2">
-                                            <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 100%; max-height: 100px;" />
-                                        </div>
-
-                                    }
-                                </div>
                                 <div class="question-item">
+                                    <div class="attachment">
+                                        @if (question.AttachmentAudio != null)
+                                        {
+
+                                            <div class="mb-2">
+                                                <audio controls class="audio-preview mb-3">
+                                                    <source src="data:audio/*;base64,@question.AttachmentAudio" type="audio/mpeg">
+                                                    Trình duyệt của bạn không hỗ trợ audio.
+                                                </audio>
+                                            </div>
+                                        }
+                                        @if ((question.AttachmentImage != null))
+                                        {
+                                            <div class="mb-2">
+                                                <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 200px; max-height: 200px;" />
+                                            </div>
+
+                                        }
+                                    </div>
                                     <div class="question-content">
                                         @index. @question.QuestionContent
                                         <span class="search-icon">🔍</span>
@@ -250,8 +250,27 @@
                             {
                                 var question = questions[i];
                                 <div class="question-item">
+                                    <div class="attachment">
+                                        @if (question.AttachmentAudio != null)
+                                        {
+
+                                            <div class="mb-2">
+                                                <audio controls class="audio-preview mb-3">
+                                                    <source src="data:audio/*;base64,@question.AttachmentAudio" type="audio/mpeg">
+                                                    Trình duyệt của bạn không hỗ trợ audio.
+                                                </audio>
+                                            </div>
+                                        }
+                                        @if ((question.AttachmentImage != null))
+                                        {
+                                            <div class="mb-2">
+                                                <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="width: 200px; height: 200px;" />
+                                            </div>
+
+                                        }
+                                    </div>
                                     <div class="question-content">
-                                       @(index). @question.QuestionContent
+                                        @(index). @question.QuestionContent
                                         <span class="search-icon">🔍</span>
                                     </div>
                                     <div class="question-options">
@@ -268,6 +287,7 @@
                                         <a href="#">@question.ReferenceName</a>
                                     </div>
                                 </div>
+                                i++;
                             }
                         </div>
                     </div>

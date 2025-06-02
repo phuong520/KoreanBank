@@ -1,72 +1,205 @@
-﻿<h2 style="margin: 12px 0 15px 6px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #2c3e50; font-weight: 700;">
-    📊 Thống kê tổng quan
-</h2>
-<!-- Container chính chứa tất cả biểu đồ -->
-<div style="max-width: 80%; height: 70%; margin: 0 auto 20px auto; padding: 12px 15px; background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1);">
-
-    <!-- Biểu đồ tròn (doughnut) -->
-    <div style="margin-bottom: 25px; height: 50%;">
-        <h3 style="text-align: center; color: #34495e; font-weight: 600; margin-bottom: 10px;">Tỷ lệ câu hỏi theo trạng thái</h3>
-        <div style="position: relative; width: 100%; height: 100%;">
-            <canvas id="importedQuestionsStatusChart"></canvas>
-        </div>
-    </div>
-
-    <!-- Biểu đồ cột -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; height: 30%;">
-        <div style="background: #f8f9fa; padding: 10px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-            <h3 style="text-align: center; color: #2d3436; font-weight: 600; margin-bottom: 8px;">Kỳ thi theo tháng</h3>
-            <div style="position: relative; height: 175px;">
-                <canvas id="examChart"></canvas>
-            </div>
-        </div>
-        <div style="background: #f8f9fa; padding: 10px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-            <h3 style="text-align: center; color: #2d3436; font-weight: 600; margin-bottom: 8px;">Đề thi theo tháng</h3>
-            <div style="position: relative; height: 175px;">
-                <canvas id="examPaperChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const lowerBound = '2025-01-01T00:00:00';
-        const upperBound = '2025-12-31T23:59:59';
+    <link rel="stylesheet" href="~/css/chart.css" />
+    <style>
+       .nav-link{
+           height: 48px;
+       }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1>📊 Thống kê tổng quan</h1>
+            <p>Hệ thống theo dõi và phân tích dữ liệu toàn diện</p>
+        </div>
 
-        async function fetchData(url) {
-            const response = await fetch(url);
-            if (!response.ok) {
-                console.error('Fetch lỗi:', response.status, response.statusText);
+        <!-- Summary Stats (Now at the top) -->
+        <div class="stats-summary">
+            <div class="stat-item">
+                <div class="stat-number" id="totalQuestions">-</div>
+                <div class="stat-label">Tổng số câu hỏi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalExams">-</div>
+                <div class="stat-label">Tổng số kỳ thi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="totalPapers">-</div>
+                <div class="stat-label">Tổng số đề thi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="approvalRate">-</div>
+                <div class="stat-label">Tỷ lệ duyệt (%)</div>
+            </div>
+        </div>
+
+        <!-- Main Stats Grid -->
+        <div class="stats-grid">
+            <!-- Status Distribution Chart -->
+            <div class="chart-card status-chart-card">
+                <h3 class="chart-title">Phân bố trạng thái câu hỏi</h3>
+                <div class="chart-container status-chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Exams Line Chart -->
+            <div class="chart-card">
+                <h3 class="chart-title">Xu hướng kỳ thi theo tháng</h3>
+                <div class="chart-container line-chart-container">
+                    <canvas id="examChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Papers Line Chart -->
+            <div class="chart-card">
+                <h3 class="chart-title">Xu hướng đề thi theo tháng</h3>
+                <div class="chart-container line-chart-container">
+                    <canvas id="paperChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_BASE: 'https://localhost:7101/api/Statistics',
+            DATE_RANGE: {
+                lowerBound: '2025-01-01T00:00:00',
+                upperBound: '2025-12-31T23:59:59'
+            },
+            COLORS: {
+                primary: '#667eea',
+                secondary: '#764ba2',
+                success: '#27AE60',
+                warning: '#F1C40F',
+                danger: '#E74C3C',
+                gradient: ['#667eea', '#764ba2', '#f093fb', '#f5576c']
+            }
+        };
+
+        // Utility functions
+        async function fetchData(endpoint) {
+            try {
+                const url = `${CONFIG.API_BASE}/${endpoint}?lowerBound=${CONFIG.DATE_RANGE.lowerBound}&upperBound=${CONFIG.DATE_RANGE.upperBound}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.result || [];
+            } catch (error) {
+                console.error('Fetch error:', error);
                 return [];
             }
-            const data = await response.json();
-            return data.result || [];
         }
 
-        // Màu xanh dương chủ đạo cho biểu đồ cột
-        function generateBlueColors(count) {
-            const baseColor = '#3A78F0';
-            return Array(count).fill(baseColor);
+        function createGradient(ctx, colors) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            colors.forEach((color, index) => {
+                gradient.addColorStop(index / (colors.length - 1), color);
+            });
+            return gradient;
         }
 
-        async function renderBarChart(canvasId, labelText, apiUrl) {
-            const data = await fetchData(apiUrl);
+        // Chart rendering functions
+        async function renderStatusChart() {
+            const data = await fetchData('imported-questions-by-status');
+            const ctx = document.getElementById('statusChart').getContext('2d');
+
             const labels = data.map(x => x.statisticName);
             const values = data.map(x => x.statisticValue);
 
-            new Chart(document.getElementById(canvasId), {
-                type: 'bar',
+            const colorMap = {
+                'Denied': CONFIG.COLORS.danger,
+                'Pending': CONFIG.COLORS.warning,
+                'Ok': CONFIG.COLORS.success
+            };
+
+            const colors = labels.map(label => colorMap[label] || '#BDC3C7');
+
+            new Chart(ctx, {
+                type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: labelText,
                         data: values,
-                        backgroundColor: generateBlueColors(values.length),
-                        borderColor: '#2756c9',
-                        borderWidth: 1,
-                        borderRadius: 6,
+                        backgroundColor: colors,
+                        borderColor: '#fff',
+                        borderWidth: 3,
+                        hoverBorderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 14, weight: '500' },
+                                color: '#2c3e50'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 2000
+                    }
+                }
+            });
+
+            // Update summary stats
+            updateSummaryStats(data);
+        }
+
+        async function renderLineChart(canvasId, endpoint, label, color) {
+            const data = await fetchData(endpoint);
+            const ctx = document.getElementById(canvasId).getContext('2d');
+
+            const labels = data.map(x => x.statisticName);
+            const values = data.map(x => x.statisticValue);
+
+            const gradient = createGradient(ctx, [color + '40', color + '10']);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label,
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: color,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
                     }]
                 },
                 options: {
@@ -75,97 +208,88 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            enabled: true,
-                            backgroundColor: '#222',
+                            backgroundColor: 'rgba(0,0,0,0.8)',
                             titleFont: { size: 14, weight: 'bold' },
-                            bodyFont: { size: 13 }
+                            bodyFont: { size: 13 },
+                            cornerRadius: 8
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { stepSize: 1, color: '#555', font: { size: 10 } },
-                            grid: { color: '#eee' }
-                        },
-                        x: {
-                            ticks: { color: '#555', font: { size: 10 } },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-        }
-
-        async function renderDoughnutChart(canvasId, labelText, apiUrl) {
-            const data = await fetchData(apiUrl);
-            const labels = data.map(x => x.statisticName);
-            const values = data.map(x => x.statisticValue);
-
-            // Màu sắc theo trạng thái Denied (đỏ), Pending (vàng), Ok (xanh lá)
-            // Map tên label sang màu
-            const colorMap = {
-                'Denied': '#E74C3C',  // đỏ
-                'Pending': '#F1C40F', // vàng
-                'Ok': '#27AE60'       // xanh lá
-            };
-            // Nếu có label không có trong map, cho màu xám mặc định
-            const colors = labels.map(l => colorMap[l] || '#BDC3C7');
-
-            new Chart(document.getElementById(canvasId), {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: labelText,
-                        data: values,
-                        backgroundColor: colors,
-                        borderColor: '#fff',
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '50%',
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#333',
-                                font: { size: 12, weight: '400' },
-                                padding: 12,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#666',
+                                stepSize: 1
                             }
                         },
-                        tooltip: {
-                            enabled: true,
-                            backgroundColor: '#222',
-                            titleFont: { size: 13, weight: 'bold' },
-                            bodyFont: { size: 12 }
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#666'
+                            }
                         }
+                    },
+                    elements: {
+                        point: {
+                            hoverBackgroundColor: color
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
                     }
                 }
             });
+
+            return values.reduce((sum, val) => sum + val, 0);
         }
 
-        async function loadCharts() {
-            await renderDoughnutChart(
-                'importedQuestionsStatusChart',
-                'Câu hỏi nhập theo trạng thái',
-                `https://localhost:7101/api/Statistics/imported-questions-by-status?lowerBound=${lowerBound}&upperBound=${upperBound}`
-            );
-            await renderBarChart(
-                'examChart',
-                'Số kỳ thi theo tháng',
+        function updateSummaryStats(statusData) {
+            const totalQuestions = statusData.reduce((sum, item) => sum + item.statisticValue, 0);
+            const okQuestions = statusData.find(item => item.statisticName === 'Ok')?.statisticValue || 0;
+            const approvalRate = totalQuestions > 0 ? Math.round((okQuestions / totalQuestions) * 100) : 0;
 
-                `https://localhost:7101/api/Statistics/exams-by-month?lowerBound=${lowerBound}&upperBound=${upperBound}`
-            );
-            await renderBarChart(
-                'examPaperChart',
-                'Số đề thi theo tháng',
-                `https://localhost:7101/api/Statistics/exampapers-by-month?lowerBound=${lowerBound}&upperBound=${upperBound}`
-            );
+            document.getElementById('totalQuestions').textContent = totalQuestions.toLocaleString();
+            document.getElementById('approvalRate').textContent = approvalRate;
         }
 
-        loadCharts();
+        // Initialize dashboard
+        async function initDashboard() {
+            try {
+                // Render all charts
+                await renderStatusChart();
+
+                const totalExams = await renderLineChart(
+                    'examChart',
+                    'exams-by-month',
+                    'Số kỳ thi',
+                    CONFIG.COLORS.primary
+                );
+
+                const totalPapers = await renderLineChart(
+                    'paperChart',
+                    'exampapers-by-month',
+                    'Số đề thi',
+                    CONFIG.COLORS.secondary
+                );
+
+                // Update summary stats
+                document.getElementById('totalExams').textContent = totalExams.toLocaleString();
+                document.getElementById('totalPapers').textContent = totalPapers.toLocaleString();
+
+            } catch (error) {
+                console.error('Dashboard initialization error:', error);
+            }
+        }
+
+        // Start the dashboard
+        document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
-}
+</body>
+</html>

@@ -12,8 +12,8 @@ namespace KEB.Domain.Enums
     {
         [Description("Chờ duyệt")]
         Pending = 1,
-        [Description("Trùng lặp")]
-        Duplicated = 2,
+        //[Description("Trùng lặp")]
+        //Duplicated = 2,
         [Description("Từ chối")]
         Denied = 3,
         [Description("Đã duyệt")]

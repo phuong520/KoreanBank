@@ -35,7 +35,7 @@ builder.Services.AddCors(options =>
 
 
 // Add services to the container.
-builder.Services.AddDbContext<ExamBankContext>(ops => ops.UseSqlServer(builder.Configuration.GetConnectionString("ExamBankConnection"),sqlOptions => sqlOptions.CommandTimeout(180)));
+builder.Services.AddDbContext<ExamBankContext>(ops => ops.UseSqlServer(builder.Configuration.GetConnectionString("ExamBankConnection"),sqlOptions => sqlOptions.CommandTimeout(200)));
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddScoped(typeof(IGenericReposistory<>), typeof(GenericRepository<>));

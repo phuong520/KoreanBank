@@ -1094,7 +1094,7 @@ namespace KEB.Application.Services.Implementations
                 if (duplicateQuestion != null)
                 {
                     // Update status to duplicated
-                    question.Status = QuestionStatus.Duplicated;
+                    //question.Status = QuestionStatus.Duplicated;
                     await _unitOfWork.Questions.UpdateWithNoCommitAsync(question);
                     await _unitOfWork.CommitAsync();
 

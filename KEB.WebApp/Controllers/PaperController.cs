@@ -19,7 +19,7 @@ namespace KEB.WebApp.Controllers
         private const string BaseApiUrl = "https://localhost:7101/api";
         public PaperController(IHttpClientFactory httpClientFactory)
         {
-            _httpClient = httpClientFactory.CreateClient();
+            _httpClient = httpClientFactory.CreateClient("MyApiClient");
         }
         public async Task<IActionResult> Index(ViewExamPapersListRequest request)
         {

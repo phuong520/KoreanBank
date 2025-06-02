@@ -13,8 +13,9 @@ namespace KEB.Domain.Entities
         public Skill Skill {  get; set; }
         public PaperStatus PaperStatus {  get; set; }
         public bool IsReviewed { get; set; }
-        public string PaperFileUrl { get; set; }
-        public string AttachmentUrl { get; set; }
+        //public string PaperFileUrl { get; set; }
+        //public string AttachmentUrl { get; set; }
+
         public Exam Exam { get; set; }
         public Guid ExamId { get; set; }
         public List<PaperDetail> PaperDetails { get; set; }

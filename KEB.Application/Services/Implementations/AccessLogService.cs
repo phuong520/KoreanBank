@@ -137,7 +137,7 @@ namespace KEB.Application.Services.Implementations
                             TotalQuestions = relatedQuestions.Count,
                             ApprovedQuestions = relatedQuestions.Count(x => x.Status == Domain.Enums.QuestionStatus.Ok),
                             NeedReviewQuestions = relatedQuestions.Count(x => x.Status == Domain.Enums.QuestionStatus.Pending),
-                            DuplicatedQuestions = relatedQuestions.Count(x => x.Status == Domain.Enums.QuestionStatus.Duplicated),
+                            //DuplicatedQuestions = relatedQuestions.Count(x => x.Status == Domain.Enums.QuestionStatus.Duplicated),
                             DeniedQuestions = relatedQuestions.Count(x => x.Status == Domain.Enums.QuestionStatus.Denied),
                             TaskName = relatedQuestions.FirstOrDefault()?.AddQuestionTask?.TaskName ?? ""
                         };

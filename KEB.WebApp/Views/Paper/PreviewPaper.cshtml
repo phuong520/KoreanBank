@@ -58,15 +58,16 @@
                 <div class="questions">
                     @foreach (var question in typeGroup)
                     {
-                        @if ((question.AttachmentImage != null))
-                        {
-                            <div class="mb-2">
-                                <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 100%; max-height: 100px;" />
-                            </div>
-
-                        }
+                       
                         <div class="question-item">
                             <div class="question-content">@questionNumber. @question.QuestionContent</div>
+                            @if ((question.AttachmentImage != null))
+                            {
+                                <div class="mb-2">
+                                    <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 500px; max-height: 500px;" />
+                                </div>
+
+                            }
                             <div class="options">
                                 @for (int i = 0; i < question.Answers.Count(); i++)
                                 {
@@ -83,7 +84,7 @@
 
         <div class="action-buttons">
             <button class="print-button" onclick="window.print()">Tải đề thi</button>
-            <button class="close-button" onclick="window.close()">Đóng</button>
+            <button class="close-button" onclick="history.back()">Đóng</button>
         </div>
     </div>
 </body>

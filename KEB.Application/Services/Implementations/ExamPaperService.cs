@@ -245,7 +245,7 @@ namespace KEB.Application.Services.Implementations
                 var tmpQues = questions.Where(x => true
                                              && x.LevelDetail.LevelId == level.Id
                                              && x.IsDeleted == false
-                                             //&& x.Status == QuestionStatus.Ok
+                                             && x.Status == QuestionStatus.Ok
                                              && x.Difficulty == detail.Difficulty
                                              && x.IsMultipleChoice == detail.IsMultipleChoice
                                              && x.QuestionTypeId == detail.QuestionTypeId
@@ -631,8 +631,6 @@ namespace KEB.Application.Services.Implementations
                         Skill = constraint.Skill,
                         PaperStatus = PaperStatus.Creating,
                         PaperDetails = [],
-                        AttachmentUrl= "",
-                        PaperFileUrl = "",
                         IsReviewed = false,
                         IsDeleted = false,
                     };
@@ -698,7 +696,7 @@ namespace KEB.Application.Services.Implementations
                         PaperStatus = PaperStatus.Creating,
                         PaperDetails = [],
                         IsReviewed = false,
-                        Exam = exam,
+                        //Exam = exam,
                     };
                     newPapers.Add((newPaper, []));
                     //await _unitOfWork.Papers.AddAsync(newPaper);
@@ -706,17 +704,20 @@ namespace KEB.Application.Services.Implementations
                 await _unitOfWork.Papers.AddRangeAsync(newPapers.Select(x => x.Item1));
 
                 //int currentOrderInPaper = 1;
-                foreach (var detail in constraint.ConstraintDetails)
+                foreach (var d in constraint.ConstraintDetails)
                 {
+                    
+                    Console.WriteLine(d.Difficulty);
                     var tempPool = questionsPool.Where(x => true
                                             && x.Status == QuestionStatus.Ok
-                                            && x.LevelDetail?.LevelId == levelId
-                                            && x.QuestionType?.Skill == skill
-                                            && x.QuestionTypeId == detail.QuestionTypeId
-                                            && x.LevelDetail?.TopicId == detail.TopicId
-                                            && x.Difficulty == detail.Difficulty
-                                            && x.IsMultipleChoice == detail.IsMultipleChoice).ToList();
-                    if (tempPool.Count < detail.NumberOfQuestion)
+                                            //&& x.LevelDetailId == d.Id
+                                            //&& x.LevelDetail?.LevelId == levelId
+                                            //&& x.QuestionType?.Skill == skill
+                                            && x.QuestionTypeId == d.QuestionTypeId
+                                            //&& x.LevelDetail?.TopicId == d.TopicId
+                                            && x.Difficulty == d.Difficulty
+                                            && x.IsMultipleChoice == d.IsMultipleChoice).ToList();
+                    if (tempPool.Count < d.NumberOfQuestion)
                     {
                         throw new InvalidOperationException("Không đủ câu hỏi");
                     }
@@ -726,7 +727,7 @@ namespace KEB.Application.Services.Implementations
                         .OrderBy(_ => rand.Next())
                         .ToList();
                     int step = 0;
-                    while (step < detail.NumberOfQuestion)
+                    while (step < d.NumberOfQuestion)
                     {
                         int index = rand.Next(groupedByFileNamePool.Count());
                         var itemGroup = groupedByFileNamePool.ElementAt(index);
@@ -755,9 +756,9 @@ namespace KEB.Application.Services.Implementations
                                         {
                                             QuestionId = tmpQuestion.Id,
                                             PaperId = newPaper.Id,
-                                            Question = tmpQuestion,
-                                            Paper = newPaper,
-                                            Mark = detail.MarkPerQuestion,
+                                            //Question = tmpQuestion,
+                                            //Paper = newPaper,
+                                            Mark = d.MarkPerQuestion,
                                             AttachmentAudioId = tmpQuestion.AttachFileAudioId,
                                             AttachmentImageId = tmpQuestion.AttachFileImageId
                                             
@@ -779,15 +780,15 @@ namespace KEB.Application.Services.Implementations
                         question.OrderInPaper = index + 1;
                         return question;
                     }).ToList();
-                    await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
-                    {
-                        AccessTime = currentTime,
-                        ActionName = "Tự động tạo đề thi",
-                        IpAddress = "::1",
-                        IsSuccess = true,
-                        TargetObject = $"{newPaper.Item1.PaperName}",
-                        Details = ""
-                    });
+                    //await _unitOfWork.AccessLogs.AddAsync(new SystemAccessLog
+                    //{
+                    //    AccessTime = currentTime,
+                    //    ActionName = "Tự động tạo đề thi",
+                    //    IpAddress = "::1",
+                    //    IsSuccess = true,
+                    //    TargetObject = $"{newPaper.Item1.PaperName}",
+                    //    Details = ""
+                    //});
                     PaperDetailDisplayDTO mappedPaper = _mapper.Map<PaperDetailDisplayDTO>(newPaper.Item1);
                     mappedPaper.PaperConstraint = _mapper.Map<ConstraintToBeDisplayedDTO>(constraint);
                     result.Add(mappedPaper);

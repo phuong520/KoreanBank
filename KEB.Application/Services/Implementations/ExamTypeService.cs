@@ -152,10 +152,6 @@ namespace KEB.Application.Services.Implementations
         private async Task ValidateExamTypeConstraint(InputExamTypeConstraintDTO constraint, Skill skill)
         {
             var validationMessages = new List<string> { $"Bài thi {skill}:" };
-            Console.WriteLine($"Validating exam type constraint for skill: {skill}");
-            Console.WriteLine($"Number of papers: {constraint.NumberOfPapers}");
-            Console.WriteLine($"Total number of questions: {constraint.TotalNumberOfQuestions}");
-            Console.WriteLine($"Duration in minutes: {constraint.DurationInMinutes}");
 
             // 1. Số đề thi phải >= 1
             if (constraint.NumberOfPapers < 1)

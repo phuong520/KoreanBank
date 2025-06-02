@@ -80,8 +80,11 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.PaperDetails))
                 .ForMember(dest => dest.HostId, opt => opt.MapFrom(src => src.Exam.HostId))
                 .ForMember(dest => dest.ReviewerId, opt => opt.MapFrom(src => src.Exam.ReviewerId))
+                //.ForMember(dest => dest.QuestionsList[0].AttachmentImage, opt => opt.MapFrom(src => Convert.ToBase64String(src.PaperDetails[0].AttachmentImage.FileData)))
+                //.ForMember(dest => dest.QuestionsList[0].AttachmentAudio, opt => opt.MapFrom(src => Convert.ToBase64String(src.PaperDetails[0].AttachmentAudio.FileData)))
                 .ForMember(dest => dest.PaperStatus,
-                opt => opt.MapFrom(src => src.PaperStatus));
+                opt => opt.MapFrom(src => src.PaperStatus))
+                ;
 
 
             CreateMap<PaperDetail, QuestionInPaperDTO>()
@@ -109,7 +112,7 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.Question.Difficulty.ToString()))
                .ForMember(dest => dest.AttachmentImage,
                 opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentImage.FileData)))
-                .ForMember(dest => dest.AttachmentImage,
+                .ForMember(dest => dest.AttachmentAudio,
                 opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentAudio.FileData)))
                 .ForMember(dest => dest.Mark,
                 opt => opt.MapFrom(src => src.Mark))

@@ -21,7 +21,12 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddHttpClient();
+//builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("MyApiClient", client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5); 
+});
+
 builder.Services.AddSession(options =>
 {
     options.Cookie.Name = "KEB.Session";
