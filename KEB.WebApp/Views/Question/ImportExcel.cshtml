@@ -3,83 +3,138 @@
 @{
     ViewData["Title"] = "Upload Questions from Excel";
 }
-<body>
-    <div class="container mt-5">
-        <h2>Thêm câu hỏi từ Excel</h2>
 
-        @if (ViewBag.Error != null)
-        {
-            <div class="alert alert-danger">@ViewBag.Error</div>
-        }
-        @if (ViewBag.Success != null)
-        {
-            <div class="alert alert-success">@ViewBag.Success</div>
-            @if (ViewBag.Result != null)
+<div class="container py-5">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Thêm câu hỏi từ Excel</h2>
+        </div>
+
+        <div class="card-body">
+            @if (ViewBag.Error != null)
             {
-                <ul>
-                    @foreach (var message in ViewBag.Result.Messages)
-                    {
-                        <li>@message</li>
-                    }
-                </ul>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @ViewBag.Error
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             }
-        }
 
-        <form asp-action="ImportExcel" enctype="multipart/form-data" method="post" id="uploadForm">
-            <div class="mb-3">
-                <label class="form-label">Loại câu hỏi</label>
-                <select asp-for="ForMultipleChoice" class="form-select">
-                    <option value="true">Trắc nghiệm</option>
-                    <option value="false">Tự luận</option>
-                </select>
-            </div>
+            @if (ViewBag.Success != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @ViewBag.Success
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">Tác vụ (Task)</label>
-                <select asp-for="TaskId" class="form-select">
-                    <option value="">-- Chọn tác vụ --</option>
-                    @foreach (var task in ViewBag.Tasks)
-                    {
-                        <option value="@task.Value">@task.Text</option>
-                    }
-                </select>
-            </div>
+                @if (ViewBag.Result != null)
+                {
+                    <div class="mt-3">
+                        <ul class="list-group">
+                            @foreach (var message in ViewBag.Result.Messages)
+                            {
+                                <li class="list-group-item">@message</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
 
-            <div class="mb-3">
-                <label class="form-label">File Excel</label>
-                <input type="file" asp-for="ExcelFile" class="form-control" accept=".xlsx" required />
-                <small class="form-text">
-                    Tải template:
-                    <a href="@Url.Action("DownloadTemplate", new { forMultipleChoice = true })">Trắc nghiệm</a> |
-                    <a href="@Url.Action("DownloadTemplate", new { forMultipleChoice = false })">Tự luận</a>
-                </small>
-            </div>
+            <form asp-action="ImportExcel" enctype="multipart/form-data" method="post" id="uploadForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="ForMultipleChoice" class="form-label fw-bold">Loại câu hỏi</label>
+                            <select asp-for="ForMultipleChoice" class="form-select">
+                                <option value="true">Trắc nghiệm</option>
+                                <option value="false">Tự luận</option>
+                            </select>
+                        </div>
+                    </div>
 
-            <div class="mb-3">
-                <label class="form-label">Tệp đính kèm (hình ảnh/âm thanh)</label>
-                <input type="file" name="Attachments" class="form-control" multiple accept=".jpg,.jpeg,.png,.mp3,.wav" />
-                <small class="form-text">Hỗ trợ: .jpg, .jpeg, .png (max 5MB), .mp3, .wav (max 10MB)</small>
-            </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label asp-for="TaskId" class="form-label fw-bold">Tác vụ (Task)</label>
+                            <select asp-for="TaskId" class="form-select">
+                                <option value="">-- Chọn tác vụ --</option>
+                                @foreach (var task in ViewBag.Tasks)
+                                {
+                                    <option value="@task.Value">@task.Text</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
 
-            <button type="submit" class="btn btn-primary">Upload</button>
-        </form>
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label asp-for="ExcelFile" class="form-label fw-bold">File Excel</label>
+                            <input type="file" asp-for="ExcelFile" class="form-control" accept=".xlsx" required />
+                            <div class="form-text mt-1">
+                                Tải template:
+                                <a href="@Url.Action("DownloadTemplate", new { forMultipleChoice = true })" class="text-decoration-none">
+                                    <i class="fas fa-download"></i> Trắc nghiệm
+                                </a>
+                                |
+                                <a href="@Url.Action("DownloadTemplate", new { forMultipleChoice = false })" class="text-decoration-none">
+                                    <i class="fas fa-download"></i> Tự luận
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">Tệp đính kèm (hình ảnh/âm thanh)</label>
+                            <input type="file" name="Attachments" class="form-control" multiple accept=".jpg,.jpeg,.png,.mp3,.wav" />
+                            <div class="form-text mt-1">
+                                <i class="fas fa-info-circle"></i> Hỗ trợ: .jpg, .jpeg, .png (tối đa 5MB), .mp3, .wav (tối đa 10MB)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fas fa-upload me-2"></i> Upload
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
 
+@section Scripts {
     <script>
         $(document).ready(function () {
+            // Form validation
             $('#uploadForm').submit(function (e) {
-                var excelFile = $('#ExcelFile').val();
+                const excelFile = $('#ExcelFile').val();
                 if (!excelFile) {
-                    alert('Vui lòng chọn file Excel');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Vui lòng chọn file Excel',
+                        confirmButtonColor: '#0d6efd'
+                    });
                     e.preventDefault();
                     return;
                 }
+
                 if (!excelFile.endsWith('.xlsx')) {
-                    alert('Chỉ hỗ trợ file .xlsx');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Chỉ hỗ trợ file .xlsx',
+                        confirmButtonColor: '#0d6efd'
+                    });
                     e.preventDefault();
-                    return;
                 }
+            });
+
+            // Show file names when selected
+            $('input[type="file"]').change(function(e) {
+                const fileName = e.target.files[0]?.name || 'Chưa chọn file';
+                $(this).next('.form-text').append(`<div class="text-muted small mt-1">Đã chọn: ${fileName}</div>`);
             });
         });
     </script>
-</body>
+}

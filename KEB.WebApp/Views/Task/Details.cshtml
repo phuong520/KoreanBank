@@ -108,8 +108,9 @@
                                                 <thead>
                                                     <tr>
                                                         <th>STT</th>
-                                                        <th>Thông tin</th>
-                                                        <th>Giá trị</th>
+                                                        <th>Loại câu hỏi</th>
+                                                        <th>Độ khó</th>
+                                                        <th>Chi tiết cấp độ</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -117,7 +118,9 @@
                                                     {
                                                         <tr>
                                                             <td>@(i + 1)</td>
-                                                            <td colspan="2">@Model.SumUp[i]</td>
+                                                            <td colspan="">@Model.SumUp[i].QuestionTypeName</td>
+                                                            <td colspan="">@Model.SumUp[i].Difficulty</td>
+                                                            <td colspan="">@Model.SumUp[i].LevelDetail</td>
                                                         </tr>
                                                     }
                                                 </tbody>
@@ -142,27 +145,34 @@
                                         </h3>
                                     </div>
                                     <div class="card-body">
-                                        <div class="timeline">
-                                            @for (int i = 0; i < Model.ImportHistory.Count; i++)
-                                            {
-                                                <div class="time-label">
-                                                    <span class="bg-blue">Import #@(i + 1)</span>
-                                                </div>
-                                                <div>
-                                                    <i class="fas fa-file-import bg-green"></i>
-                                                    <div class="timeline-item">
-                                                        <div class="timeline-body">
-                                                            @Model.ImportHistory[i]
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            }
-                                        </div>
+                                        <table class="table table-bordered table-striped">
+                                            <thead class="thead-dark">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Tên Action</th>
+                                                    <th>Thời gian</th>
+                                                    <th>Số câu được duyệt</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @for (int i = 0; i < Model.ImportHistory.Count; i++)
+                                                {
+                                                    <tr>
+                                                        <td>@(i + 1)</td>
+                                                        <td>@Model.ImportHistory[i].ActionName</td>
+                                                        <td>@Model.ImportHistory[i].AccessTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                                        <td>@Model.ImportHistory[i].ApprovedQuestions</td>
+
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     }
+
                 </div>
 
                 <div class="card-footer">

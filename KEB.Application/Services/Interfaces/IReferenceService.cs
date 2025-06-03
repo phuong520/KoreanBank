@@ -10,7 +10,7 @@ namespace KEB.Application.Services.Interfaces
 {
     public interface IReferenceService
     {
-        Task<APIResponse<ReferenceDisplayDto>> GetAllReferences();
+        Task<APIResponse<ReferenceDisplayDto>> GetAllReferences(Pagination request);
         Task<APIResponse<ReferenceDisplayDto>> AddNewReference(AddReferenceDto request);
         Task<APIResponse<ReferenceDisplayDto>> UpdateReference(UpdateReference request);
         Task<APIResponse<ReferenceDisplayDto>> DeleteReference(Delete request);

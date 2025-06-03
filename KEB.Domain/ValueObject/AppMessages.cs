@@ -9,11 +9,11 @@ namespace KEB.Domain.ValueObject
     public class AppMessages
     {
         #region Common 
-        public const string INTERNAL_SERVER_ERROR = "MS-121"; // Có lỗi ở phía server
-        public const string TARGET_ITEM_NOTFOUND = "MS-123"; // Không tìm thấy dữ liệu, chắc là bị xóa mất ruii ~
-        public const string NO_CHANGES_DETECTED = "MS-124"; // Không có thay đổi gì ~
-        public const string NO_PERMISSION = "MS-24"; // Bạn 0 đủ trình để thực hiện chức năng này ~ liên hệ Admin nhen
-        public const string NO_CONTENT = "MS-29"; // 0 có dữ liệu
+        public const string INTERNAL_SERVER_ERROR = "Có lỗi phía server"; // Có lỗi ở phía server
+        public const string TARGET_ITEM_NOTFOUND = "Không tìm thấy dữ liệu"; // Không tìm thấy dữ liệu, chắc là bị xóa mất ruii ~
+        public const string NO_CHANGES_DETECTED = "Không có thay đổi gì"; // Không có thay đổi gì ~
+        public const string NO_PERMISSION = "Bạn không có quyền thực hiện tác vụ này"; // Bạn 0 đủ trình để thực hiện chức năng này ~ liên hệ Admin nhen
+        public const string NO_CONTENT = "Không có dữ liệu"; // 0 có dữ liệu
         #endregion Common 
         #region Login
         public const string USERNAME_REQUIRED = "MS-01"; // Username field is empty
@@ -63,13 +63,13 @@ namespace KEB.Domain.ValueObject
         public const string EMPTY_PUBLISHED_YEAR = "MS-31"; // Published year field is empty
         public const string EMPTY_REFERENCE_LINK = "MS-32"; // Reference link field is empty
         public const string EMPTY_AUTHOR = "MS-33"; // Author field is empty
-        public const string REFERENCE_CREATE_SUCCESS = "MS-34"; // Create reference successfully
-        public const string REFERENCE_UPDATE_SUCCESS = "MS-35"; // Update reference successfully
-        public const string REFERENCE_DELETE_SUCCESS = "MS-36"; // Delete reference successfully
+        public const string REFERENCE_CREATE_SUCCESS = "Tạo tài liệu tham khảo thành công"; // Create reference successfully
+        public const string REFERENCE_UPDATE_SUCCESS = "Cập nhật tài liệu tham khảo thành công"; // Update reference successfully
+        public const string REFERENCE_DELETE_SUCCESS = "Xóa tài liệu tham khảo thành công"; // Delete reference successfully
         public const string REFERENCE_DELETE_CONFIRM = "MS-37"; // Confirm reference deletion
 
-        public const string REFERENCE_EXISTED = "MS-69"; // Reference exists in the system
-        public const string REFERENCE_DELETE_FAILED = "MS-125"; // Delete reference failed
+        public const string REFERENCE_EXISTED = "Tài liệu tham khảo này đã tồn tại"; // Reference exists in the system
+        public const string REFERENCE_DELETE_FAILED = "Lỗi khi xóa tài liệu tham khảo vì có dữ liệu liên quan"; // Delete reference failed
         public const string INVALID_REFERENCE_YEAR = "MS-160"; // reference's published year > current year
         #endregion References
         #region Questiontypes
@@ -84,28 +84,28 @@ namespace KEB.Domain.ValueObject
         public const string QUESTION_TYPE_DELETE_FAILED = "MS-126"; // Delete question type failed
         #endregion Questiontypes
         #region Levels & Topics
-        public const string LEVEL_CREATE_SUCCESS = "MS-44"; // Create level successfully
+        public const string LEVEL_CREATE_SUCCESS = "Tạo cấp độ thành công"; // Create level successfully
         public const string LEVEL_EMPTY_NAME = "MS-45"; // Level name field is empty
-        public const string LEVEL_UPDATE_SUCCESS = "MS-46"; // Update level successfully
-        public const string LEVEL_DELETE_SUCCESS = "MS-47"; // Delete level successfully
+        public const string LEVEL_UPDATE_SUCCESS = "Cập nhật cấp độ thành công"; // Update level successfully
+        public const string LEVEL_DELETE_SUCCESS = "Xóa cấp độ thành công"; // Delete level successfully
         public const string LEVEL_DELETE_CONFIRM = "MS-48"; // Confirm level deletion
         public const string LEVEL_ADDTOPIC_SUCCESS = "MS-49"; // Add topic for level successfully
         public const string LEVEL_NOTOPIC_SELECTED = "MS-50"; // Topic field is empty
 
         public const string TOPIC_REMOVE_FROM_LEVEL_SUCCESS = "MS-51"; // Remove topic out of level successfully
         public const string TOPIC_REMOVE_FROM_LEVEL_FAILED = "MS-52"; // Remove topic out of level failed
-        public const string TOPIC_CREATE_SUCCESS = "MS-53"; // Create topic successfully
+        public const string TOPIC_CREATE_SUCCESS = "Tạo chủ đề thành công"; // Create topic successfully
         public const string TOPIC_EMPTY_NAME = "MS-54"; // Topic name field is empty
         public const string TOPIC_NOLEVEL_SELECTED = "MS-55"; // Topic must be create with a level
-        public const string TOPIC_UPDATE_SUCCESS = "MS-56"; // Update topic successfully
-        public const string TOPIC_DELETE_SUCCESS = "MS-57"; // Delete topic successfully
+        public const string TOPIC_UPDATE_SUCCESS = "Cập nhật chủ đề thành công"; // Update topic successfully
+        public const string TOPIC_DELETE_SUCCESS = "Xóa chủ đề thành công"; // Delete topic successfully
         public const string TOPIC_DELETE_CONFIRM = "MS-58"; // Confirm topic deletion
 
         public const string LEVEL_EXISTED = "MS-71"; // Level exists in the system
         public const string TOPIC_EXISTED = "MS-72"; // Topic exists in the system
 
-        public const string LEVEL_DELETE_FAILED = "MS-127"; // Delete level failed
-        public const string TOPIC_DELETE_FAILED = "MS-128"; // Delete topic failed
+        public const string LEVEL_DELETE_FAILED = "Không thể xóa cấp độ vì có dữ liệu liên quan"; // Delete level failed
+        public const string TOPIC_DELETE_FAILED = "Không thể xóa chủ đề này vì có dữ liệu liên quan"; // Delete topic failed
 
         public const string TOPIC_ASSIGN_EMPTY = "MS-145"; // Assign no topics for level
 

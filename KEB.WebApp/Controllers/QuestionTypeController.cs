@@ -1,4 +1,5 @@
-﻿using KEB.Application.DTOs.ExamDTO;
+﻿using Azure;
+using KEB.Application.DTOs.ExamDTO;
 using KEB.Application.DTOs.QuestionTypeDTO;
 using KEB.Application.DTOs.ReferenceDTO;
 using KEB.Application.Services;
@@ -18,7 +19,7 @@ namespace KEB.WebApp.Controllers
         {
             _httpClient = httpClientFactory.CreateClient();
         }
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int size = 10)
         {
             var token = HttpContext.Request.Cookies["token"];
             var handler = new JwtSecurityTokenHandler();
@@ -34,7 +35,12 @@ namespace KEB.WebApp.Controllers
                 }
             }
             ViewBag.CurrentUserId = userId;
-            var result = await _httpClient.GetFromJsonAsync<APIResponse<QuestionTypeDisplayDto>>($"{ApiUrl}/get-all-questiontypes");
+
+            var result = await _httpClient.GetFromJsonAsync<APIResponse<QuestionTypeDisplayDto>>($"{ApiUrl}/get-all-questiontypes?page={page}&size={size}");
+            ViewBag.Page = page;
+            ViewBag.Size = size;
+            ViewBag.TotalCount = result.TotalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / size);
             return View(result.Result);
         }
 

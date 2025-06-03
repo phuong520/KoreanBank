@@ -209,6 +209,7 @@ namespace KEB.Application.Services.Implementations
             // Perform Get
             try
             {
+                var total = await _unitOfWork.QuestionTypes.CountAsync(filter);
                 var queryResult = await _unitOfWork.QuestionTypes.GetAllAsync(filter: filter,
                                         includeProperties: "Questions",
                                         orderBy: src => src.OrderByDescending(item => item.CreatedDate));
@@ -227,6 +228,13 @@ namespace KEB.Application.Services.Implementations
                     response.IsSuccess = true;
                     response.StatusCode = System.Net.HttpStatusCode.OK;
                     response.Message = " Tìm thấy " + finalResult.Count + " bản ghi!";
+                    response.TotalCount = total;
+                    response.Pagination = new DTOs.Common.Pagination
+                    {
+                        Page = request.PaginationRequest.Page,
+                        Size = request.PaginationRequest.Size
+                    };
+                       
                 }
                 return response;
             }

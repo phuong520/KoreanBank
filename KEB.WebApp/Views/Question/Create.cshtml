@@ -22,7 +22,7 @@
         @foreach (var skill in skills)
         {
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(skill == skills.First() ? "active" : "")" id="@skill-tab" data-bs-toggle="tab" data-bs-target="#skill-content" type="button" role="tab" aria-controls="skill-content" aria-selected="@(skill == skills.First() ? "true" : "false")" onclick="updateSkill('@skill')">@skill</button>
+                <button style="color: black" class="nav-link @(skill == skills.First() ? "active" : "")" id="@skill-tab" data-bs-toggle="tab" data-bs-target="#skill-content" type="button" role="tab" aria-controls="skill-content" aria-selected="@(skill == skills.First() ? "true" : "false")" onclick="updateSkill('@skill')">@skill</button>
             </li>
         }
     </ul>

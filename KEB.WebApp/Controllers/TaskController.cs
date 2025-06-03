@@ -1,3 +1,4 @@
+using Azure;
 using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.ExamPaperDTO;
 using KEB.Application.DTOs.ImportQuestionTaskDTO;
@@ -30,7 +31,7 @@ namespace KEB.WebApp.Controllers
             _httpClient = httpClientFactory.CreateClient();
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int page = 1, int size = 10)
         {
             try
             {
@@ -40,6 +41,10 @@ namespace KEB.WebApp.Controllers
                     TempData["Error"] = "Không thể tải danh sách nhiệm vụ";
                     return View(new List<TaskGeneralDisplayDTO>());
                 }
+                ViewBag.Page = result.Pagination.Page;
+                ViewBag.Size = result.Pagination.Size;
+                ViewBag.TotalCount = result.TotalCount;
+                ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / result.Pagination.Size);
                 return View(result.Result);
             }
             catch (Exception ex)
@@ -297,7 +302,10 @@ namespace KEB.WebApp.Controllers
 
                     // Pass current status to ViewBag to maintain tab selection
                     ViewBag.CurrentStatus = request.Status;
-
+                    ViewBag.Page = apiResponse.Pagination.Page;
+                    ViewBag.Size = apiResponse.Pagination.Size;
+                    ViewBag.TotalCount = apiResponse.TotalCount;
+                    ViewBag.TotalPages = (int)Math.Ceiling((double)apiResponse.TotalCount / apiResponse.Pagination.Size);
                     return View(apiResponse.Result);
                 }
                 return RedirectToAction(nameof(Index));

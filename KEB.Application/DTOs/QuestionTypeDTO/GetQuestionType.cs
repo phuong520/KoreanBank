@@ -1,4 +1,5 @@
-﻿using KEB.Domain.Enums;
+﻿using KEB.Application.DTOs.Common;
+using KEB.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,7 @@ namespace KEB.Application.DTOs.QuestionTypeDTO
         public Guid? CreatedBy { get; set; }
         public DateTime? FromTime { get; set; }
         public bool? IsDeleted { get; set; }
+        public Pagination? PaginationRequest { get; set; } = new();
 
     }
 }

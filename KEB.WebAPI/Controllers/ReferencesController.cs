@@ -19,9 +19,15 @@ namespace KEB.WebAPI.Controllers
         }
         [HttpGet]
         [Route("get-all-references")]
-        public async Task<IActionResult> GetAllReferences()
+        public async Task<IActionResult> GetAllReferences(int page = 1, int size = 10)
         {
-            var response = await _unitOfService.ReferenceService.GetAllReferences();
+
+            var paginationRequest = new Pagination
+            {
+                Page = page,
+                Size = size
+            };
+            var response = await _unitOfService.ReferenceService.GetAllReferences(paginationRequest);
             return Ok(response);
         }
         [HttpPost("add-ref")]

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Spreadsheet;
 using FSAKEB.Application.Extensions.FluentValidationRules.ReferenceValidators;
 using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.ReferenceDTO;
@@ -140,14 +141,18 @@ namespace KEB.Application.Services.Implementations
             return response; ;
         }
 
-        public async Task<APIResponse<ReferenceDisplayDto>> GetAllReferences()
+        public async Task<APIResponse<ReferenceDisplayDto>> GetAllReferences(Pagination request)
         {
             APIResponse<ReferenceDisplayDto> response = new();
             Expression<Func<References, bool>> filter = x => true;
             try
             {
+                var total = await _unitOfWork.References.CountAsync(filter);
                 var result = await _unitOfWork.References.GetAllAsync(filter: filter,
-                    includeProperties: "Questions", orderBy: x => x.OrderByDescending(x => x.CreatedBy));
+                    includeProperties: "Questions", orderBy: x => x.OrderByDescending(x => x.CreatedBy),
+                    pageNumber: request.Page,
+                    pageSize: request.Size
+                    );
                 
                 foreach (var item in result)
                 {
@@ -164,6 +169,13 @@ namespace KEB.Application.Services.Implementations
                 {
                     response.Message = $"~ {count} ~";
                     response.Result = _mapper.Map<List<ReferenceDisplayDto>>(result);
+                    response.TotalCount = total;
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.Page,
+                        Size = request.Size
+                    };
+
                 }
             }
             catch (Exception)

@@ -1,4 +1,5 @@
-﻿using KEB.Application.DTOs.LevelDTO;
+﻿using Azure;
+using KEB.Application.DTOs.LevelDTO;
 using KEB.Application.DTOs.TopicDTO;
 using KEB.Application.Services;
 using KEB.Domain.Entities;
@@ -40,6 +41,10 @@ namespace KEB.WebApp.Controllers
             var result = await _httpClient.GetFromJsonAsync<APIResponse<TopicDisplayDto>>(ApiUrl);
             var levels = await _httpClient.GetFromJsonAsync<APIResponse<LevelDisplayBriefDTO>>($"{BaseApiUrl}/Levels/get-all-levels");
             ViewBag.Levels = new SelectList(levels.Result, "LevelId", "LevelName");
+            ViewBag.Page = result.Pagination.Page;
+            ViewBag.Size = result.Pagination.Size;
+            ViewBag.TotalCount = result.TotalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / result.Pagination.Size);
             if (result == null || !result.IsSuccess)
             {
                 return View(new List<TopicDisplayDto>());

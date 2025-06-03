@@ -1,4 +1,5 @@
-﻿using KEB.Application.DTOs.ReferenceDTO;
+﻿using Azure;
+using KEB.Application.DTOs.ReferenceDTO;
 using KEB.Application.DTOs.TopicDTO;
 using KEB.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +16,7 @@ namespace KEB.WebApp.Controllers
         {
             _httpClient = httpClientFactory.CreateClient();
         }
-        public async Task< IActionResult> Index()
+        public async Task< IActionResult> Index(int page = 1, int size = 10)
         {
             var token = HttpContext.Request.Cookies["token"];
             var handler = new JwtSecurityTokenHandler();
@@ -31,7 +32,7 @@ namespace KEB.WebApp.Controllers
                 }
             }
             ViewBag.CurrentUserId = userId;
-            var url = $"{ApiUrl}/get-all-references";
+            var url = $"{ApiUrl}/get-all-references?page={page}&size={size}";
             var result = await _httpClient.GetFromJsonAsync<APIResponse<ReferenceDisplayDto>>(url);
 
             // Kiểm tra nếu không có kết quả hoặc có lỗi
@@ -39,7 +40,10 @@ namespace KEB.WebApp.Controllers
             {
                 return View(new List<ReferenceDisplayDto>());
             }
-
+            ViewBag.Page = result.Pagination.Page;
+            ViewBag.Size = result.Pagination.Size;
+            ViewBag.TotalCount = result.TotalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / result.Pagination.Size);
             // Trả về view với danh sách các chủ đề
             return View(result.Result);
         }

@@ -14,7 +14,7 @@ namespace KEB.Application.Services.Interfaces
         Task<APIResponse<DetailDisplayDTO>> GetLevelNameDashTopic();
         Task<APIResponse<LevelDisplayDetailDTO>> GetLevelDetails(Guid levelId);
 
-        Task<APIResponse<LevelDisplayBriefDTO>> GetAllLevels();
+        Task<APIResponse<LevelDisplayBriefDTO>> GetAllLevels(Pagination request);
         Task<APIResponse<LevelDisplayBriefDTO>> GetLevel(Guid id);
 
         Task<APIResponse<LevelDisplayDetailDTO>> AddLevel(AddLevelRequest request, string ipAddress);

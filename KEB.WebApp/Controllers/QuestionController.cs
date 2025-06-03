@@ -44,7 +44,7 @@ namespace KEB.WebApp.Controllers
             _httpClient = httpClientFactory.CreateClient();
         }
         //[Authorize(Roles = "Giảng viên")]
-        public async Task<IActionResult> Index(GetQuestionsRequest request)
+        public async Task<IActionResult> Index(GetQuestionsRequest request, int page= 1, int size = 10)
         {
             try
             {
@@ -58,20 +58,24 @@ namespace KEB.WebApp.Controllers
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 await LoadDropdownData();
 
-                request.PaginationRequest = new Pagination { Page = 1, Size = 20 };
+                request.PaginationRequest = new Pagination { Page = page, Size = size };
                 request.SortAscending = false;
                 if (request.Status == null || !request.Status.Any())
                 {
                     request.Status = new List<QuestionStatus> { QuestionStatus.Ok };
                 }
-                var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions", request); // request rỗng sẽ trả toàn bộ
+                var response = await _httpClient.PostAsJsonAsync($"{ApiUrl}/get-questions?page={page}&size={size}", request); // request rỗng sẽ trả toàn bộ
                 if (response.IsSuccessStatusCode)
                 {
                     var apiResponse = await response.Content.ReadFromJsonAsync<APIResponse<QuestionDisplayDto>>();
+                    ViewBag.Page = apiResponse.Pagination.Page;
+                    ViewBag.Size = apiResponse.Pagination.Size;
+                    ViewBag.TotalCount = apiResponse.TotalCount;
+                    ViewBag.TotalPages = (int)Math.Ceiling((double)apiResponse.TotalCount / apiResponse.Pagination.Size);
+                    TempData["ErrorMessage"] = "Không lấy được dữ liệu câu hỏi.";
                     return View(apiResponse.Result);
                 }
-
-                TempData["ErrorMessage"] = "Không lấy được dữ liệu câu hỏi.";
+               
                 return View(new List<QuestionDisplayDto>());
             }
             catch (Exception ex)

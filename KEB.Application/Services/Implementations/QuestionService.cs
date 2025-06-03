@@ -152,7 +152,7 @@ namespace KEB.Application.Services.Implementations
                 Expression<Func<Question, bool>> timeFilter = x => x.CreatedDate >= request.FromTime && x.CreatedDate <= request.ToTime;
                 filter = ExpressionExtension.CombineFilters(filter, timeFilter);
             }
-
+            var total = await _unitOfWork.Questions.CountAsync(filter);
             var queryResult = await _unitOfWork.Questions.GetAllAsync(
                     filter: filter,
                     includeProperties: "QuestionType,Answers,LevelDetail,References,LevelDetail.Level,LevelDetail.Topic,AttachmentFileImage,AttachmentFileAudio ",
@@ -171,6 +171,7 @@ namespace KEB.Application.Services.Implementations
                 Message = "Lấy danh sách câu hỏi thành công",
                 StatusCode = HttpStatusCode.OK,
                 IsSuccess = true,
+                TotalCount = total,
                 Pagination = new Pagination
                 {
                     Page = request.PaginationRequest.Page,

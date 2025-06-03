@@ -1,4 +1,5 @@
-﻿using KEB.Application.DTOs.LevelDTO;
+﻿using Azure;
+using KEB.Application.DTOs.LevelDTO;
 using KEB.Application.DTOs.TopicDTO;
 using KEB.Application.DTOs.UserDTO;
 using KEB.Application.Services;
@@ -45,7 +46,10 @@ namespace KEB.WebApp.Controllers
             {
                 return View(new List<LevelDisplayBriefDTO>());
             }
-
+            ViewBag.Page = result.Pagination.Page;
+            ViewBag.Size = result.Pagination.Size;
+            ViewBag.TotalCount = result.TotalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / result.Pagination.Size);
             return View(result.Result);
         }
 

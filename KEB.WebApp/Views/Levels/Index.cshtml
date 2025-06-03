@@ -106,19 +106,19 @@
             </tbody>
         </table>
     </div>
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
-    <div class="d-flex justify-content-center">
-        <nav aria-label="Page navigation">
-            <ul class="pagination">
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">...</a></li>
-                <li class="page-item"><a class="page-link" href="#">67</a></li>
-                <li class="page-item"><a class="page-link" href="#">68</a></li>
-            </ul>
-        </nav>
-    </div>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+            {
+                <li class="page-item @(p ==  (int)ViewBag.Page ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.Size })">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
 </div>
 
 <!-- Modal Thêm Cấp Độ -->
@@ -227,7 +227,29 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
+            //show message
+                    function showSuccessMessage(message) {
+            showAlert(message, 'success');
+        }
 
+        function showErrorMessage(message) {
+            showAlert(message, 'danger');
+        }
+
+        function showAlert(message, type) {
+            const alertId = 'alert-' + Date.now();
+            const alertHtml = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+            $('#alert-container').append(alertHtml);
+
+            // Tự động đóng sau 5 giây
+            setTimeout(() => {
+                $('#' + alertId).alert('close');
+            }, 5000);
+        }
             // Khởi tạo Select2 cho form thêm mới
             $("#topicSelect").select2({
                 placeholder: "-- Chọn chủ đề --",
@@ -332,10 +354,11 @@
             $("#deleteLevelForm").on("submit", function (e) {
                 e.preventDefault(); // Ngăn form submit mặc định
 
+                        let submitBtn = $(this).find("button[type='submit']");
+        let originalText = submitBtn.text();
+        submitBtn.prop('disabled', true).text("Đang xử lý...");
                 let targetId = $("#deleteTargetObjectId").val();
                 let userId = $("#deleteRequestedUserId").val();
-
-                // Lấy IP address của người dùng (hoặc để trống nếu không có)
                 let ipAddress = $("#deleteIpAddress").val();
                 let hardDelete = $("#deleteHardDelete").val() === "true";
 
@@ -349,24 +372,105 @@
 
                 console.log("Sending delete request:", requestData);
 
-                $.ajax({
+                        $.ajax({
                     url: 'https://localhost:7101/api/Levels/delete-level',
                     type: "DELETE",
                     contentType: "application/json",
                     data: JSON.stringify(requestData),
-                    success: function (res) {
-                        alert("Xóa cấp độ thành công!");
-                        $("#deleteLevelModal").modal('hide');
-                        location.reload();
+                    timeout: 30000, // 30 giây timeout
+                    success: function (response) {
+                        try {
+                            if (response && response.isSuccess) {
+                                showSuccessMessage(response.message || "Xóa cấp độ thành công!");
+                                $("#deleteLevelModal").modal('hide');
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 1500);
+                            } else {
+                                const errorMsg = response?.message || "Xóa cấp độ thất bại.";
+                                showErrorMessage(errorMsg);
+                            }
+                        } catch (parseError) {
+                            console.error("Error parsing success response:", parseError);
+                            showErrorMessage("Lỗi xử lý phản hồi từ server.");
+                        }
                     },
                     error: function (xhr, status, error) {
-                        console.error("Ajax error:", xhr, status, error);
-                        alert("Lỗi khi xóa cấp độ: " + xhr.responseText);
+                        console.error("Ajax error details:", {
+                            status: status,
+                            error: error,
+                            responseText: xhr.responseText,
+                            statusCode: xhr.status
+                        });
+
+                        let errorMessage = "Đã xảy ra lỗi khi xóa cấp độ.";
+
+                        try {
+                            switch (xhr.status) {
+                                case 0:
+                                    errorMessage = "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.";
+                                    break;
+                                case 400:
+                                    errorMessage = "Dữ liệu gửi đi không hợp lệ.";
+                                    break;
+                                case 401:
+                                    errorMessage = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+                                    setTimeout(() => {
+                                        window.location.href = '/Account/Login';
+                                    }, 2000);
+                                    break;
+                                case 403:
+                                    errorMessage = "Bạn không có quyền thực hiện thao tác này.";
+                                    break;
+                                case 404:
+                                    errorMessage = "Không tìm thấy cấp độ cần xóa.";
+                                    break;
+                                case 409:
+                                    errorMessage = "Không thể xóa cấp độ này vì có dữ liệu liên quan (câu hỏi, kỳ thi, v.v.).";
+                                    break;
+                                case 500:
+                                    errorMessage = "Lỗi server nội bộ. Vui lòng thử lại sau.";
+                                    break;
+                                case 502:
+                                case 503:
+                                case 504:
+                                    errorMessage = "Server đang bảo trì. Vui lòng thử lại sau.";
+                                    break;
+                                default:
+                                    if (xhr.responseText) {
+                                        try {
+                                            const errorResponse = JSON.parse(xhr.responseText);
+                                            if (errorResponse.message) {
+                                                errorMessage = errorResponse.message;
+                                            } else if (errorResponse.errors) {
+                                                const validationErrors = Object.values(errorResponse.errors).flat();
+                                                errorMessage = validationErrors.join('; ');
+                                            }
+                                        } catch (parseError) {
+                                            console.error("Cannot parse error response:", parseError);
+                                            errorMessage = `Lỗi ${xhr.status}: ${xhr.statusText || 'Không rõ lỗi'}`;
+                                        }
+                                    }
+                                    break;
+                            }
+
+                            if (status === 'timeout') {
+                                errorMessage = "Thao tác quá lâu không phản hồi. Vui lòng thử lại.";
+                            }
+
+                        } catch (processingError) {
+                            console.error("Error processing ajax error:", processingError);
+                            errorMessage = "Đã xảy ra lỗi không xác định.";
+                        }
+
+                        showErrorMessage(errorMessage);
+                    },
+                    complete: function () {
+                        submitBtn.prop('disabled', false).text(originalText);
                     }
                 });
             });
         });
-
         // Hàm mở modal chỉnh sửa và lấy dữ liệu
         function openEditModal(levelId) {
             // Hiển thị modal

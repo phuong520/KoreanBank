@@ -62,19 +62,19 @@
             </tbody>
         </table>
     </div>
+    <div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
-    <div class="d-flex justify-content-center mt-3">
-        <nav aria-label="Page navigation">
-            <ul class="pagination">
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">...</a></li>
-                <li class="page-item"><a class="page-link" href="#">67</a></li>
-                <li class="page-item"><a class="page-link" href="#">68</a></li>
-            </ul>
-        </nav>
-    </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+            {
+                <li class="page-item @(p ==  (int)ViewBag.Page ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.Size })">@p</a>
+                </li>
+
+            }
+        </ul>
+    </nav>
 </div>
 <!-- Modal Xóa Tài Liệu -->
 <div class="modal fade" id="deleteReferenceModal" tabindex="-1" aria-labelledby="deleteReferenceModalLabel" aria-hidden="true">
@@ -110,6 +110,29 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 });
             });
+                //show message
+                        function showSuccessMessage(message) {
+                showAlert(message, 'success');
+            }
+
+            function showErrorMessage(message) {
+                showAlert(message, 'danger');
+            }
+
+            function showAlert(message, type) {
+                const alertId = 'alert-' + Date.now();
+                const alertHtml = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`;
+                $('#alert-container').append(alertHtml);
+
+                // Tự động đóng sau 5 giây
+                setTimeout(() => {
+                    $('#' + alertId).alert('close');
+                }, 5000);
+            }
              // Xử lý khi nhấn nút xóa
             $(document).on("click", ".delete-reference-btn", function() {
                 let referenceId = $(this).data("reference-id");
@@ -125,44 +148,86 @@
                 $("#deleteReferenceName").text(referenceName);
             });
 
-            // Xử lý form xóa
-            $("#deleteReferenceForm").on("submit", function(e) {
-                e.preventDefault();
+                   $("#deleteReferenceForm").on("submit", function(e) {
+            e.preventDefault();
 
-                let referenceId = $("#deleteReferenceId").val();
-                let requestedUserId = $("#deleteRequestedUserId").val();
+            let referenceId = $("#deleteReferenceId").val();
+            let requestedUserId = $("#deleteRequestedUserId").val();
+            let submitBtn = $(this).find("button[type='submit']");
+            let originalBtnText = submitBtn.text();
 
-                if (!referenceId || !requestedUserId) {
-                    alert("Dữ liệu không hợp lệ.");
-                    return;
-                }
+            if (!referenceId || !requestedUserId) {
+                alert("Dữ liệu không hợp lệ.");
+                return;
+            }
 
-                let requestData = {
-                    TargetObjectId: referenceId,
-                    RequestedUserId: requestedUserId,
-                    HardDelete: true
-                };
+            // Disable nút submit
+            submitBtn.prop("disabled", true).text("Đang xóa...");
 
-                $.ajax({
-                    url: 'https://localhost:7101/api/References/delete-reference',
-                    type: "DELETE",
-                    contentType: "application/json",
-                    data: JSON.stringify(requestData),
-                    success: function(res) {
-                        if (res.isSuccess) {
-                            alert(res.message || "Xóa tài liệu thành công!");
-                            $("#deleteReferenceModal").modal('hide');
-                            location.reload();
+            let requestData = {
+                TargetObjectId: referenceId,
+                RequestedUserId: requestedUserId,
+                HardDelete: true
+            };
+
+            $.ajax({
+                url: 'https://localhost:7101/api/References/delete-reference',
+                type: "DELETE",
+                contentType: "application/json",
+                data: JSON.stringify(requestData),
+                success: function(res) {
+                    if (res && res.isSuccess) {
+                        if (typeof showSuccessMessage === "function") {
+                            showSuccessMessage(res.message || "Xóa tài liệu thành công!");
                         } else {
-                            alert(res.message || "Lỗi khi xóa tài liệu.");
+                            alert("Xóa tài liệu thành công!");
                         }
-                    },
-                    error: function(xhr) {
-                        let errorMessage = xhr.responseJSON?.message || "Lỗi khi xóa tài liệu.";
-                        alert(errorMessage);
+                        $("#deleteReferenceModal").modal("hide");
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        if (typeof showErrorMessage === "function") {
+                            showErrorMessage(res?.message || "Không thể xóa tài liệu.");
+                        } else {
+                            alert("Không thể xóa tài liệu.");
+                        }
                     }
-                });
+                },
+                error: function(xhr) {
+                    let errorMsg = "Lỗi khi xóa tài liệu.";
+                    switch (xhr.status) {
+                        case 0:
+                            errorMsg = "Không thể kết nối tới server.";
+                            break;
+                        case 400:
+                            errorMsg = "Yêu cầu không hợp lệ.";
+                            break;
+                        case 401:
+                            errorMsg = "Bạn chưa đăng nhập.";
+                            break;
+                        case 403:
+                            errorMsg = "Bạn không có quyền thực hiện thao tác này.";
+                            break;
+                        case 404:
+                            errorMsg = "Không tìm thấy tài liệu.";
+                            break;
+                        case 500:
+                            errorMsg = "Lỗi server. Vui lòng thử lại sau.";
+                            break;
+                    }
+
+                    if (typeof showErrorMessage === "function") {
+                        showErrorMessage(errorMsg);
+                    } else {
+                        alert(errorMsg);
+                    }
+
+                    console.error("Chi tiết lỗi:", xhr);
+                },
+                complete: function() {
+                    submitBtn.prop("disabled", false).text(originalBtnText);
+                }
             });
         });
+    });
     </script>
 }

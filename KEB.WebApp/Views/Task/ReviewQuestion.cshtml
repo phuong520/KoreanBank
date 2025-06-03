@@ -411,7 +411,20 @@
             }
         </div>
     </div>
-
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+            {
+                <li class="page-item @(p == (int)ViewBag.Page ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("ReviewQuestion", new {
+                    page = p,
+                    size = ViewBag.Size,
+                    status = (int)currentStatus
+                })">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
     <!-- Thanh công cụ duyệt hàng loạt (chỉ hiện ở tab Chờ duyệt) -->
     <div class="bulk-actions" id="bulkActions">
         <span class="selected-count">Đã chọn <span id="selectedCount">0</span> câu hỏi</span>
@@ -423,7 +436,7 @@
         </button>
         <div class="bulk-comment-container" id="bulkCommentContainer">
             <label>Lý do từ chối:</label>
-            <input type="text" class="bulk-comment-input" id="bulkCommentInput" placeholder="Nhập lý do từ chối..." />
+            @* <input type="text" class="bulk-comment-input" id="bulkCommentInput" placeholder="Nhập lý do từ chối..." /> *@
             <button type="button" class="btn btn-bulk-reject" onclick="bulkReviewQuestion(3)" style="margin-left: 10px;">
                 Xác nhận từ chối
             </button>
@@ -443,7 +456,15 @@
                 window.location.href = `/Task/ReviewQuestion?status=${status}`;
             });
         });
-
+         //xu ly phan trang
+                    document.querySelectorAll('.pagination .page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = new URL(this.href);
+                url.searchParams.set('status', '@((int)currentStatus)');
+                window.location.href = url.toString();
+            });
+        });
         // Hiển thị thông báo
         function showNotification(message, type) {
             const notify = document.getElementById('notification');
@@ -581,6 +602,7 @@
             });
 
             document.getElementById('bulkReviewForm').submit();
+           
         }
     </script>
 </body>

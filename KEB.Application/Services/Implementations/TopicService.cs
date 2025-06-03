@@ -132,7 +132,7 @@ namespace KEB.Application.Services.Implementations
                 var targetTopic = await _unitOfWork.Topics.GetByIdAsync(request.TargetObjectId);
                 if (targetTopic == null)
                 {
-                    response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                    response.StatusCode = HttpStatusCode.NotFound;
                     response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
                     return response;
                 }
@@ -188,7 +188,7 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
 
-        public async Task<APIResponse<TopicDisplayDto>> GetAllTopics(Guid? levelId = null, bool includedSoftDeleted = false)
+        public async Task<APIResponse<TopicDisplayDto>> GetAllTopics(Guid? levelId = null, bool includedSoftDeleted = false, int page = 1, int size = 10)
         {
             APIResponse<TopicDisplayDto> response = new();
             Expression<Func<Topic, bool>> filter = x => true;
@@ -202,6 +202,7 @@ namespace KEB.Application.Services.Implementations
             }
             try
             {
+                var total = await _unitOfWork.Topics.CountAsync(filter);
                 ICollection<Topic> topics;
                 if (includedSoftDeleted)
                     topics = await _unitOfWork.Topics.GetAllAsync(filter: filter,
@@ -212,17 +213,20 @@ namespace KEB.Application.Services.Implementations
                 var count = topics.Count;
                 if (count == 0)
                 {
-                    response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                    response.StatusCode = HttpStatusCode.NoContent;
                     response.Message = AppMessages.NO_CONTENT;
                 }
                 else
                 {
-                    //if (levelId != null)
-                    //{
-                    //    var details = topics.Select(x => x.LevelDetails);
-                    //}
+                    response.TotalCount = total;
+                    response.Pagination = new Pagination
+                    {
+                        Page = page,
+                        Size = size
+                    };
                     response.Message = count + "";
                     response.Result = _mapper.Map<List<TopicDisplayDto>>(topics.OrderByDescending(x => x.CreatedDate).ToList());
+
                 }
             }
             catch (Exception)

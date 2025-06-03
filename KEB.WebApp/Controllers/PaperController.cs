@@ -46,6 +46,10 @@ namespace KEB.WebApp.Controllers
 
                 if (apiResponse.IsSuccess)
                 {
+                    ViewBag.Page = apiResponse.Pagination.Page;
+                    ViewBag.Size = apiResponse.Pagination.Size;
+                    ViewBag.TotalCount = apiResponse.TotalCount;
+                    ViewBag.TotalPages = (int)Math.Ceiling((double)apiResponse.TotalCount / apiResponse.Pagination.Size);
                     return View(apiResponse.Result);
                 }
 

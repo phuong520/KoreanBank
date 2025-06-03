@@ -660,6 +660,7 @@ namespace KEB.Application.Services.Implementations
             }
             try
             {
+                var total = await _unitOfWork.AddQuestionTasks.CountAsync(filter);
                 var queriedResult = await _unitOfWork.AddQuestionTasks.GetAllAsync(
                     filter: filter,
                     includeProperties: "User,Questions,QuestionType,Questions.QuestionType,LevelDetail,LevelDetail.Topic,LevelDetail.Level",
@@ -672,6 +673,12 @@ namespace KEB.Application.Services.Implementations
                 {
                     var finalResult = _mapper.Map<List<TaskGeneralDisplayDTO>>(queriedResult.ToList());
                     response.Result = finalResult;
+                    response.TotalCount = total;
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.PaginationRequest.Page,
+                        Size = request.PaginationRequest.Size
+                    };
                 }
                 else // else return no content
                 {

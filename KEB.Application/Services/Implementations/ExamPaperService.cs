@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using DocumentFormat.OpenXml.Wordprocessing;
 using KEB.Application.DTOs.ExamPaperDTO;
 using KEB.Application.DTOs.ExamTypeConstraintDTO;
 using KEB.Application.DTOs.SystemAccessLogDTO;
@@ -18,6 +19,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using static KEB.Domain.ValueObject.LogicString;
+using Level = KEB.Domain.Entities.Level;
 
 namespace KEB.Application.Services.Implementations
 {
@@ -1079,11 +1081,11 @@ namespace KEB.Application.Services.Implementations
             }
             try
             {
+                var total = await _unitOfWork.Papers.CountAsync(filter);
                 var papers = await _unitOfWork.Papers.GetAllAsync(filter: filter,
                         includeProperties: "Exam,Exam.ExamType,Exam.ExamType.Levels",
-                        orderBy: x => x.OrderByDescending(x => x.CreatedDate),
-                        pageNumber: request.PaginationRequest.Page,
-                        pageSize: request.PaginationRequest.Size);
+                        orderBy: x => x.OrderByDescending(x => x.CreatedDate)
+                        );
                 var count = papers.Count;
                 if (count == 0)
                 {
@@ -1096,6 +1098,12 @@ namespace KEB.Application.Services.Implementations
                     response.IsSuccess = true;
                     response.Message = $"{count} ~";
                     response.Result = _mapper.Map<List<PaperGeneralDisplayDTO>>(papers);
+                    response.TotalCount = total;
+                    response.Pagination = new DTOs.Common.Pagination
+                    {
+                        Page = request.PaginationRequest.Page,
+                        Size = request.PaginationRequest.Size
+                    };
                 }
             }
             catch (Exception e)

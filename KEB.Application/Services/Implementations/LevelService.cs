@@ -157,12 +157,13 @@ namespace KEB.Application.Services.Implementations
             return response;
         }
       
-        public async Task<APIResponse<LevelDisplayBriefDTO>> GetAllLevels()
+        public async Task<APIResponse<LevelDisplayBriefDTO>> GetAllLevels(Pagination request)
         {
             APIResponse<LevelDisplayBriefDTO> response = new();
             Expression<Func<Level, bool>> filter = x => true;
             try
             {
+                var total = await _unitOfWork.Levels.CountAsync(filter);
                 ICollection<Level> levels = await _unitOfWork.Levels
                                                 .GetAllAsync(
                     filter: filter,
@@ -175,6 +176,12 @@ namespace KEB.Application.Services.Implementations
                 else
                 {
                     response.Result = _mapper.Map<List<LevelDisplayBriefDTO>>(levels.ToList().OrderByDescending(x => x.CreatedDate));
+                    response.TotalCount = total;
+                    response.Pagination = new Pagination
+                    {
+                        Page = request.Page,
+                        Size = request.Size
+                    };
                 }
             }
             catch (Exception)

@@ -20,9 +20,15 @@ namespace KEB.WebAPI.Controllers
         [HttpGet]
         [Route("get-all-levels")]
         //[Authorize(Roles = "Giảng viên, Quản lý, Quản trị viên")]
-        public async Task<IActionResult> GetAllLevels()
+        public async Task<IActionResult> GetAllLevels(int page = 1, int size = 10)
         {
-            var response = await _unitOfService.LevelService.GetAllLevels();
+            var paginationRequest = new Pagination
+            {
+                Page = page,
+                Size = size
+            };
+
+            var response = await _unitOfService.LevelService.GetAllLevels(paginationRequest);
             return Ok(response);
         }
 

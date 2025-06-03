@@ -119,18 +119,18 @@
                 }
             </tbody>
         </table>
-    </div>
 
-    <div class="pagination">
-        <div class="page-item disabled">«</div>
-        <div class="page-item active">1</div>
-        <div class="page-item">2</div>
-        <div class="page-item">3</div>
-        <div class="page-item">4</div>
-        <div class="page-item">...</div>
-        <div class="page-item">7</div>
-        <div class="page-item">»</div>
     </div>
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+            {
+                <li class="page-item @(p ==  (int)ViewBag.Page ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.Size })">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
 
     <!-- Modal Popup để thêm đề thi mới -->
     <div id="addExamModal" class="modal">

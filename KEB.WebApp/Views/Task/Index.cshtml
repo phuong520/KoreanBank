@@ -4,42 +4,44 @@
     ViewData["Title"] = "Danh sách nhiệm vụ";
 }
 
-<div class="container-fluid">
-    <h2 class="mb-4">Danh sách nhiệm vụ</h2>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Danh sách nhiệm vụ</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Tạo nhiệm vụ mới
+        </a>
+    </div>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["Success"]
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-      
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          
-            <a asp-action="Create" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Tạo nhiệm vụ mới
-            </a>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Nhiệm vụ hiện có</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Tên nhiệm vụ</th>
+                            <th class="ps-4">Tên nhiệm vụ</th>
                             <th>Người thực hiện</th>
-                            <th>DeadLine</th>
+                            <th>Deadline</th>
                             <th>Trạng thái</th>
-                            <th>Thao tác</th>
+                            <th class="text-end pe-4">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,28 +50,22 @@
                             foreach (var task in Model)
                             {
                                 <tr>
-                                    <td>@task.TaskName</td>
+                                    <td class="ps-4 fw-medium">@task.TaskName</td>
                                     <td>@task.AssigneeName</td>
                                     <td>@task.Deadline</td>
                                     <td>
-                                        <span>
+                                        <span class="badge bg-@GetStatusBadgeColor(task.Status.ToString())">
                                             @task.Status
                                         </span>
                                     </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a asp-action="Details" asp-route-id="@task.Id" 
-                                               class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i> Chi tiết
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="@Url.Action("Details", "Task", new { id = task.Id })" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i>
                                             </a>
-                                            <form asp-action="Delete" asp-route-id="@task.Id" method="post" 
-                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhiệm vụ này?');" 
-                                                  style="display: inline;">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-danger btn-sm">
-                                                    <i class="fas fa-trash"></i> Xóa
-                                                </button>
-                                            </form>
+                                            <a href="@Url.Action("Delete", "Task", new { id = task.Id })" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
                                         </div>
                                     </td>
                                 </tr>
@@ -78,15 +74,49 @@
                         else
                         {
                             <tr>
-                                <td colspan="5" class="text-center">Không có nhiệm vụ nào</td>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="fas fa-tasks fa-2x mb-3"></i>
+                                    <p class="mb-0">Không có nhiệm vụ nào được tìm thấy</p>
+                                </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
         </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+                {
+                    <li class="page-item @(p ==  (int)ViewBag.Page ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.Size })">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
     </div>
 </div>
+
+@functions {
+    string GetStatusBadgeColor(string status)
+    {
+        switch (status.ToLower())
+        {
+            case "completed":
+                return "success";
+            case "in progress":
+                return "primary";
+            case "pending":
+                return "warning";
+            case "cancelled":
+                return "secondary";
+            case "overdue":
+                return "danger";
+            default:
+                return "info";
+        }
+    }
+}
 
 @section Scripts {
     <script>

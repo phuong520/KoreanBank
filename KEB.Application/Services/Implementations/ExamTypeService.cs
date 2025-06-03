@@ -475,7 +475,7 @@ namespace KEB.Application.Services.Implementations
             try
             {
                 var total = await _unitOfWork.ExamTypes.GetAllAsync(includeProperties: "");
-                var queriedResult = await _unitOfWork.ExamTypes.GetAllAsync(includeProperties: "Levels,ExamTypeConstraints,Exams");
+                var queriedResult = await _unitOfWork.ExamTypes.GetAllAsync(includeProperties: "Levels,ExamTypeConstraints,Exams", pageNumber: request.Page, pageSize: request.Size);
                 var count = queriedResult.Count;
                 if (count == 0)
                 {
