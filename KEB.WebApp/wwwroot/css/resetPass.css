@@ -1,0 +1,233 @@
+﻿
+.background-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: -1;
+}
+
+.form-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+    .form-header h1 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .form-header p {
+        color: #666;
+        font-size: 14px;
+        margin: 0;
+    }
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #444;
+        font-size: 14px;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+        .form-group input:focus {
+            border-color: #4a90e2;
+            outline: none;
+        }
+
+.text-danger {
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+    .submit-button:hover {
+        background-color: #3a7bc8;
+    }
+
+.back-to-login {
+    text-align: center;
+    margin-top: 20px;
+}
+
+    .back-to-login a {
+        color: #4a90e2;
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s;
+    }
+
+        .back-to-login a:hover {
+            color: #3a7bc8;
+        }
+
+.alert {
+    padding: 12px 15px;
+    border-radius: 4px;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top: 4px solid #4a90e2;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex; /* Dùng flexbox cho body để chứa sidebar và main content */
+    /* justify-content và align-items không cần thiết ở đây nếu có sidebar */
+    background-color: #f5f5f5;
+    position: relative;
+}
+.topbar {
+    background-color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 1px 15px rgba(0,0,0,0.04);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+.sidebar {
+    width: 280px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    color: white;
+    position: fixed;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    z-index: 1000;
+}
+
+.sidebar-brand {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+    .sidebar-brand img {
+        height: 40px;
+    }
+
+.sidebar-nav {
+    padding: 1rem 0;
+}
+
+.nav-item {
+    margin: 0.25rem 1rem;
+}
+
+.main-content {
+    flex-grow: 1; /* Cho phép main-content lấp đầy không gian còn lại */
+    display: flex; /* Dùng flexbox để căn giữa form-card bên trong main-content */
+    justify-content: center; /* Căn giữa ngang */
+    align-items: center; /* Căn giữa dọc */
+    height: 100vh; /* Đảm bảo main-content cao bằng viewport */
+    position: relative; /* Quan trọng để background-overlay và loading-overlay hoạt động đúng */
+    overflow: auto; /* Thêm scroll nếu nội dung quá dài */
+}
+
+.background-overlay {
+    position: absolute; /* Thay đổi từ fixed thành absolute để nó chỉ bao phủ .main-content */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+    z-index: -1;
+}
+
+.form-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 100%; /* Đảm bảo form-card chiếm đủ chiều rộng trong giới hạn max-width */
+    max-width: 400px; /* Giới hạn chiều rộng tối đa của form */
+    box-sizing: border-box; /* Quan trọng để padding không làm tăng width vượt quá max-width */
+}
+
+/* Giữ nguyên các style khác của form-header, form-group, input, button, alert, loading-overlay, spinner */
+/* ... */
+
+.loading-overlay {
+    position: absolute; /* Thay đổi từ fixed thành absolute nếu bạn muốn nó chỉ bao phủ .main-content */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+

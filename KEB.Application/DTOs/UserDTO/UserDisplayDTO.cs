@@ -18,7 +18,7 @@ namespace KEB.Application.DTOs.UserDTO
         public string? AvatarUrl { get; set; }
         public bool IsActive { get; set; }
         public DateOnly DateOfBirth { get; set; }
-        
+        public Guid RoleId { get; set; }
         public string RoleName { get; set; }
         public string PhoneNumber { get; set; }
        // public bool PasswordNeedChange { get; set; }

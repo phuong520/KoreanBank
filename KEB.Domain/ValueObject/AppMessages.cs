@@ -18,11 +18,11 @@ namespace KEB.Domain.ValueObject
         #region Login
         public const string USERNAME_REQUIRED = "MS-01"; // Username field is empty
         public const string PASSWORD_REQUIRED = "MS-02"; // Password field is empty
-        public const string WRONG_LOGIN_INFO = "MS-03"; // Username or password is not correct
-        public const string LOCKED_ACCOUNT = "MS-04"; // Account is locked when login
+        public const string WRONG_LOGIN_INFO = "Sai tên đăng nhập hoặc mật khẩu"; // Username or password is not correct
+        public const string LOCKED_ACCOUNT = "Tài khoản bị khóa, vui lòng liên hệ Admin hỗ trợ"; // Account is locked when login
         public const string SESSION_EXPIRED = "MS-05"; // Login session has expired after 60 minutes
 
-        public const string LOGIN_SUCCESS = "MS-117"; // Login Successfully
+        public const string LOGIN_SUCCESS = "Đăng nhập thành công"; // Login Successfully
         public const string LOGIN_SUCCESS_BUT_PASS_NEED_CHANGED = "MS-118"; // Login Successfully
         #endregion Login
         #region Reset & Change pass
@@ -45,16 +45,16 @@ namespace KEB.Domain.ValueObject
         #region Create account & changestatus
         public const string EMPTY_FULL_NAME = "MS-15"; // Full name field is empty
         public const string AGE_UNDER_18 = "MS-16"; // Age is smaller than 18
-        public const string UPDATE_PROFILE_SUCCESS = "MS-17"; // Update profile successfully
+        public const string UPDATE_PROFILE_SUCCESS = "Cập nhật vai trò thành công"; // Update profile successfully
         public const string UPDATE_AVATAR_SUCCESS = "MS-18"; // Update avatar successfully
         public const string EMPTY_DOB = "MS-19"; // Date of birth field is empty
         public const string EMPTY_ROLE = "MS-20"; // Role field is empty
         public const string EMPTY_SEX = "MS-21"; // Sex field is empty
-        public const string CREATE_ACCOUNT_SUCCESS = "MS-22"; // Create account successfully
+        public const string CREATE_ACCOUNT_SUCCESS = "Tạo tài khoản thành công"; // Create account successfully
         public const string INVALID_FULL_NAME = "MS-23"; // Full name is invalid
-        public const string ACTIVATE_ACCOUNT_SUCCESS = "MS-25"; // Activate account successfully
+        public const string ACTIVATE_ACCOUNT_SUCCESS = "Mở khóa tài khoản thành công"; // Activate account successfully
         public const string ACCOUNT_ACTIVATION_CONFIRM = "MS-26"; // Confirm account activation
-        public const string LOCK_ACCOUNT_SUCCESS = "MS-27"; // Lock account successfully
+        public const string LOCK_ACCOUNT_SUCCESS = "Tài khoản đã bị khóa"; // Lock account successfully
         public const string ACCOUNT_LOCK_CONFIRM = "MS-28"; // Confirm account lock
         #endregion Create account & changestatus
 
@@ -192,19 +192,19 @@ namespace KEB.Domain.ValueObject
         public const string EXAM_DATE_BEFORE_CURRENT = "MS-104"; // Exam date before current date or equal current date
         public const string EMPTY_HOST = "MS-105"; // Host field is empty
         public const string EMPTY_REVIEWER = "MS-106"; // Reviewer field is empty
-        public const string EXAM_NAME_EXISTS = "MS-107"; // Exam name exists in the system
-        public const string EXAM_CREATE_SUCCESS = "MS-108"; // Create exam successfully
-        public const string EXAM_UPDATE_SUCCESS = "MS-109"; // Update exam successfully
-        public const string EXAM_DELETE_SUCCESS = "MS-110"; // Delete exam successfully
+        public const string EXAM_NAME_EXISTS = "Tên kỳ thi đã có"; // Exam name exists in the system
+        public const string EXAM_CREATE_SUCCESS = "Tạo kỳ thi thành công"; // Create exam successfully
+        public const string EXAM_UPDATE_SUCCESS = "Cập nhật kỳ thi thành công"; // Update exam successfully
+        public const string EXAM_DELETE_SUCCESS = "Xóa kỳ thi thành công"; // Delete exam successfully
         public const string EXAM_DELETE_CONFIRM = "MS-111"; // Exam deletion confirmation
         public const string COMMENT_SUCCESS = "MS-112"; // Comment on test successfully
         public const string TEST_UPDATE_SUCCESS = "MS-113"; // Update test successfully
         public const string CONSTRAINTS_NOT_MET = "MS-114"; // Test does not meet constraints
         public const string EMPTY_COMMENT = "MS-115"; // Comment field is empty
-        public const string REVIEW_SEND_SUCCESS = "MS-116"; // Send to reviewer successfully
+        public const string REVIEW_SEND_SUCCESS = "Đã gửi đến reviewer"; // Send to reviewer successfully
 
-        public const string UPDATE_EXAM_HAS_PAPER = "MS-142"; // Can not update exam because it has been containing several exam papers
-        public const string CAN_ONLY_UPDATE_EXAM_WITHIN_LIMIT_TIME = "MS-149"; // Can not update exam because it has been containing several exam papers
+        public const string UPDATE_EXAM_HAS_PAPER = "Không thể cập nhật vì kỳ thi đang có đề thi."; // Can not update exam because it has been containing several exam papers
+        public const string CAN_ONLY_UPDATE_EXAM_WITHIN_LIMIT_TIME = "Chỉ có thể sửa trong thời gian quy định"; // Can not update exam because it has been containing several exam papers
         public const string CAN_ONLY_DELETE_EXAM_IN_LIMIT_TIME = "MS-150";
         public const string CAN_NOT_HIDE_OR_DISPLAY_EXAM_BEFORE_HAPPENING = "MS-151";
         #endregion Exam and test (exam paper)

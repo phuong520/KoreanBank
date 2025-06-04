@@ -1,0 +1,65 @@
+﻿@model List<KEB.Application.DTOs.NotificationDTO.NotificationDisplayDto>
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Notifications";
+}
+
+    <style>
+        .table {
+            width: 100%;
+            margin-bottom: 1rem;
+            color: #212529;
+        }
+
+            .table th,
+            .table td {
+                padding: 0.75rem;
+                vertical-align: top;
+                border-top: 1px solid #dee2e6;
+            }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+    </style>
+<h2>Thông báo</h2>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info" role="alert">
+        @ViewBag.Message
+    </div>
+}
+
+@if (Model == null || Model.Count == 0)
+{
+    <p>No notifications available.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+
+                <th>Description</th>
+                <th>Status</th>
+                <th>Created Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var notification in Model)
+            {
+                <tr>
+                    <td>@notification.Description</td>
+                    <td>@(notification.IsRead ? "Đã đọc" : "Chưa đọc")</td>
+                    <td>@notification.CreatedTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<script>
+    document.body.dataset.page = "notification-index";
+</script>
+

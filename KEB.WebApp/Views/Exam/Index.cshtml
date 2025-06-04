@@ -46,8 +46,8 @@ else
                     <td style="border-right: none;" name="ExamName">@exam.ExamName</td>
                     <td style="border-right: none;" name="ExamType">@exam.ExamType</td>
                     <td style="border-right: none;" name="LevelName">@exam.LevelName</td>
-                    <td style="border-right: none;" name="TakePlaceTime">@exam.TakePlaceTime</td>
-                    <td style="border-right: none;" name="Occured">@(exam.Occured ? "Chưa diễn ra" : "Đã diễn ra")</td>
+                    <td style="border-right: none;" name="TakePlaceTime">@exam.TakePlaceTime.ToString("dd/MM/yyyy")</td>
+                    <td style="border-right: none;" name="Occured">@(exam.Occured ? "Đã diễn ra" : "Sắp diễn ra")</td>
                     <td style="border-right: none;">
                         <a href="@Url.Action("Edit", "Exam", new { id = exam.ExamId })" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil"></i>

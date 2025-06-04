@@ -50,7 +50,7 @@ namespace KEB.Application.Services.Implementations
             if (creator == null)
             {
                 response.IsSuccess = false;
-                response.StatusCode = System.Net.HttpStatusCode.MethodNotAllowed;
+                response.StatusCode = HttpStatusCode.MethodNotAllowed;
                 response.Message = "Không tìm thấy người dùng";
                 return response;
             }
@@ -60,7 +60,7 @@ namespace KEB.Application.Services.Implementations
             if (!adminCreate && !leaderCreate)
             {
                 response.IsSuccess = false;
-                response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                response.StatusCode = HttpStatusCode.Forbidden;
                 response.Message = "Bạn không có quyền thực hiện tác vụ này!";
                 return response;
             }
@@ -71,7 +71,7 @@ namespace KEB.Application.Services.Implementations
             if (!validateResult.IsValid)
             {
                 response.Message = string.Join(" ", validateResult.Errors.First().ErrorMessage);
-                response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                response.StatusCode = HttpStatusCode.BadRequest;
                 response.IsSuccess = false;
                 return response;
             }
@@ -225,7 +225,7 @@ namespace KEB.Application.Services.Implementations
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
                 return response;
             }
-            var targetUser = await _unitOfWork.Users.GetAsync(x => x.Id == request.TargertUserId, includeProperties: "Role");
+            var targetUser = await _unitOfWork.Users.GetAsync(x => x.Id == request.TargetUserId, includeProperties: "Role");
             if (targetUser == null)
             {
                 response.IsSuccess = false;
@@ -265,12 +265,6 @@ namespace KEB.Application.Services.Implementations
                 }
                 else
                 {
-                    var randomPassword = CommonUntils.RandomGenerateString(LogicString.Common.PossibleCharsInPassword, 8);
-                    using (SHA256 sha256Hash = SHA256.Create())
-                    {
-                        string hash = CommonUntils.GetHash(sha256Hash, randomPassword);
-                        //targetUser.PasswordHash = hash;
-                    }
                     subject = LogicString.Common.REACTIVATESUBJECT;
                     body = string.Format(
                         LogicString.Common.REACTIVATEEMAIL,
@@ -278,21 +272,21 @@ namespace KEB.Application.Services.Implementations
                         LogicString.Common.ACTIVEALLOWEDTIMEVALUE,
                         targetUser.Email,
                         targetUser.UserName,
-                        randomPassword);
+                        targetUser.Password
+                        );
                     accessLog.ActionName = "Activate";
                     accessLog.Details = string.Format(LogicString.AccessLogConstant.ACTIVE_SUCCESS, updateUser.UserName, targetUser.UserName);
                     //  targetUser.PasswordNeedChange = true;
                     // ScheduleJob
-                    var scheduleTime = DateTime.Now.AddSeconds(LogicString.Common.ACTIVEALLOWEDTIME);
-                    _unitOfWork.Schedule<UserService>((x) => x.AutoDeactiveAccount(targetUser.Id), TimeSpan.FromMinutes(LogicString.Common.ACTIVEALLOWEDTIME));
+                    //var scheduleTime = DateTime.Now.AddSeconds(LogicString.Common.ACTIVEALLOWEDTIME);
+                    //_unitOfWork.Schedule<UserService>((x) => x.AutoDeactiveAccount(targetUser.Id), TimeSpan.FromMinutes(LogicString.Common.ACTIVEALLOWEDTIME));
                     response.Message = AppMessages.ACTIVATE_ACCOUNT_SUCCESS;
-
                 }
                 targetUser.IsActive = !targetUser.IsActive;
                 targetUser.UpdatedDate = DateTime.Now;
                 targetUser.UpdatedBy = request.UpdatedBy;
                 await _unitOfWork.Users.UpdateAsync(targetUser);
-                //_unitOfWork.EmailService.SendEmail(targetUser.Email, subject, body, targetUser.FullName);
+                _unitOfWork.EmailService.SendEmail(targetUser.Email, subject, body, targetUser.FullName);
 
                 // Access logging
                 await _unitOfWork.AccessLogs.AddAsync(accessLog);
@@ -305,7 +299,7 @@ namespace KEB.Application.Services.Implementations
             catch (Exception ex)
             {
                 response.IsSuccess = false;
-                response.StatusCode = System.Net.HttpStatusCode.InternalServerError;
+                response.StatusCode = HttpStatusCode.InternalServerError;
                 response.Message = AppMessages.INTERNAL_SERVER_ERROR;
             }
             return response;
@@ -381,7 +375,7 @@ namespace KEB.Application.Services.Implementations
             {
                 response.IsSuccess = false;
                 response.Message = AppMessages.NO_PERMISSION;
-                response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                response.StatusCode = HttpStatusCode.Forbidden;
                 return response;
             }
             var targetUser = await _unitOfWork.Users.GetAsync(x => x.Id == request.TargetUserId, includeProperties: "Role");
@@ -389,7 +383,7 @@ namespace KEB.Application.Services.Implementations
             {
                 response.IsSuccess = false;
                 response.Message = AppMessages.TARGET_ITEM_NOTFOUND;
-                response.StatusCode = System.Net.HttpStatusCode.NotFound;
+                response.StatusCode = HttpStatusCode.NotFound;
                 return response;
             }
             //Mapp DTO to entity
@@ -410,8 +404,9 @@ namespace KEB.Application.Services.Implementations
             // Perform Update
             try
             {
+                string newRoleName = await _unitOfWork.Roles.GetRoleName(request.RoleId);
                 changeDetails = "Thay đổi chức vụ từ " + targetUser.Role.RoleName +
-                    " thành " + _unitOfWork.Roles.GetRoleName(request.RoleId).Result + ".";
+                    " thành {newRoleName}.";
                 if (targetUser.IsActive != request.IsActive)
                 {
                     if (request.IsActive) changeDetails += "Mở khóa tài khoản";
@@ -434,7 +429,7 @@ namespace KEB.Application.Services.Implementations
                     Details = changeDetails,
                 };
                 await _unitOfWork.AccessLogs.AddAsync(accessLog);
-
+                await _unitOfWork.SaveChangesAsync();
                 var result = _mapper.Map<UserDisplayDTO>(targetUser);
                 response.Result.Add(result);
                 response.Message = AppMessages.UPDATE_PROFILE_SUCCESS;

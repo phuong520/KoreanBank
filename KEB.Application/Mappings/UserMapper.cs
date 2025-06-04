@@ -19,6 +19,8 @@ namespace KEB.Application.Mappings
             CreateMap<User, UserDisplayDTO>()
                 .ForMember(dest => dest.UserId,
                 opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.RoleId,
+                opt => opt.MapFrom(src => src.RoleId))
                 .ForMember(dest => dest.RoleName,
                     opt => opt.MapFrom(src => src.Role.RoleName))
                 .ForMember(dest => dest.AvatarUrl, opt => opt.MapFrom(src => src.ImageFile))

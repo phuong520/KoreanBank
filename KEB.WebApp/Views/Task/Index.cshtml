@@ -52,7 +52,7 @@
                                 <tr>
                                     <td class="ps-4 fw-medium">@task.TaskName</td>
                                     <td>@task.AssigneeName</td>
-                                    <td>@task.Deadline</td>
+                                    <td>@task.Deadline.ToString("dd/MM/yyyy")</td>
                                     <td>
                                         <span class="badge bg-@GetStatusBadgeColor(task.Status.ToString())">
                                             @task.Status

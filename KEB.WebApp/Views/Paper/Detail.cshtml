@@ -246,6 +246,7 @@
 
                         <!-- Right Column -->
                         <div class="question-column">
+                            
                             @for (int i = halfCount; i < questions.Count; i++)
                             {
                                 var question = questions[i];
@@ -264,7 +265,7 @@
                                         @if ((question.AttachmentImage != null))
                                         {
                                             <div class="mb-2">
-                                                <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="width: 200px; height: 200px;" />
+                                                <img src="data:Image/*;base64,@question.AttachmentImage" alt="Question Image" class="img-fluid" style="max-width: 200px; max-height: 200px;" />
                                             </div>
 
                                         }
@@ -287,7 +288,7 @@
                                         <a href="#">@question.ReferenceName</a>
                                     </div>
                                 </div>
-                                i++;
+                                index++;
                             }
                         </div>
                     </div>
@@ -305,29 +306,34 @@
             }
 
             <!-- Bottom buttons with conditional rendering based on role and status -->
-            <div class="button-group" style="text-align: center;">
-                <button class="btn" onclick="history.back()">Quay Lại</button>
-                    <form asp-action="PreviewPaper" asp-controller="Paper" method="get" style="display: inline-block;">
-                        <input type="hidden" name="paperId" value="@Model.PaperId" />
-                        <button type="submit" class="btn btn-primary">Xem trước</button>
-                    </form>
-                <button class="btn">Tải Xuống</button>
+         <!-- Bottom buttons with conditional rendering based on role and status -->
+<div class="button-group-custom">
+    <button class="btn-custom btn-back" onclick="history.back()">🔙 Quay Lại</button>
 
-                @if (isPaperCreating && isHost)
-                {
-                    <button class="btn btn-send" onclick="sendToReviewerAPI('@Model.PaperId', '@userId')">Gửi Cho Reviewer</button>
-                }
-                @if (isPaperInReview && isHost)
-                {
-                    <button class="btn btn-send" onclick="sendToReviewer('@Model.PaperId', '@userId')">Gửi Cho Reviewer</button>
-                }
+    <form asp-action="PreviewPaper" asp-controller="Paper" method="get" style="display: inline;">
+        <input type="hidden" name="paperId" value="@Model.PaperId" />
+        <button type="submit" class="btn-custom btn-preview">👁 Xem trước</button>
+    </form>
 
-                @if (isPaperInReview && isReviewer)
-                {
-                    <button class="btn btn-suggest" onclick="suggestChanges('@Model.PaperId', '@userId')">Đề Xuất Chỉnh Sửa</button>
-                    <button class="btn btn-review" onclick="approvePaper('@Model.PaperId', '@userId')">Duyệt Đề Thi</button>
-                }
-            </div>
+    @* <button class="btn-custom btn-download">⬇️ Tải Xuống</button> *@
+
+    @if (isPaperCreating && isHost)
+    {
+        <button class="btn-custom btn-send" onclick="sendToReviewerAPI('@Model.PaperId', '@userId')">📤 Gửi Cho Reviewer</button>
+    }
+
+    @if (isPaperInReview && isHost)
+    {
+        <button class="btn-custom btn-send" onclick="sendToReviewer('@Model.PaperId', '@userId')">📤 Gửi Cho Reviewer</button>
+    }
+
+    @if (isPaperInReview && isReviewer)
+    {
+        <button class="btn-custom btn-suggest" onclick="suggestChanges('@Model.PaperId', '@userId')">✏️ Đề Xuất Chỉnh Sửa</button>
+        <button class="btn-custom btn-review" onclick="approvePaper('@Model.PaperId', '@userId')">✅ Duyệt Đề Thi</button>
+    }
+</div>
+
         </div>
 
         <!-- Paper Activities Tab -->

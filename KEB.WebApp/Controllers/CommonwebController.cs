@@ -95,10 +95,10 @@ namespace KEB.WebApp.Controllers
         [HttpGet]
         public IActionResult ChangePassword()
         {
-            var userIdClaim = User.FindFirst("UserId");
+            Guid userId = Guid.Parse(User.FindFirst(ClaimTypes.Sid).Value);
             var model = new ChangePassword
             {
-                userId = Guid.Parse(userIdClaim.Value)
+                userId = userId
             };
             return View(model);
         }

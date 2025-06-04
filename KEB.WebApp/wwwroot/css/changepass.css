@@ -1,0 +1,255 @@
+﻿:root {
+    --primary-color: #4361ee;
+    --primary-light: #3a86ff;
+    --error-color: #ef233c;
+    --success-color: #4cc9f0;
+    --text-color: #2b2d42;
+    --light-gray: #f8f9fa;
+    --medium-gray: #e9ecef;
+    --dark-gray: #6c757d;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --transition: all 0.3s ease;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    background-color: #f5f7ff;
+    line-height: 1.6;
+}
+
+.password-change-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.password-change-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+    .password-change-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    }
+
+.password-change-header {
+    padding: 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+}
+
+    .password-change-header svg {
+        margin-bottom: 1rem;
+        stroke: white;
+    }
+
+    .password-change-header h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .password-change-header p {
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+.alert {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin: 0 2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    position: relative;
+    overflow: hidden;
+    transform: translateY(-1rem);
+    opacity: 0;
+    animation: slideIn 0.3s ease-out forwards;
+}
+
+.alert-success {
+    background-color: #f0fdf4;
+    color: var(--success-color);
+    border-left: 4px solid var(--success-color);
+}
+
+.alert svg {
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+}
+
+.alert-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: var(--transition);
+}
+
+    .alert-close:hover {
+        opacity: 1;
+    }
+
+.password-change-form {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+    .form-group label {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-color);
+    }
+
+        .form-group label svg {
+            margin-right: 0.5rem;
+            stroke: var(--primary-color);
+        }
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+    .input-with-icon input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        padding-right: 2.5rem;
+        border: 1px solid var(--medium-gray);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+        .input-with-icon input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+
+.toggle-password {
+    position: absolute;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--dark-gray);
+    transition: var(--transition);
+}
+
+    .toggle-password:hover {
+        color: var(--primary-color);
+    }
+
+    .toggle-password svg {
+        display: block;
+    }
+
+.password-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.strength-bar {
+    height: 4px;
+    width: 20%;
+    background-color: var(--medium-gray);
+    border-radius: 2px;
+    transition: var(--transition);
+}
+
+.strength-text {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--dark-gray);
+}
+
+.validation-message {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--error-color);
+}
+
+.submit-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 1rem;
+}
+
+    .submit-button:hover {
+        background-color: var(--primary-light);
+        transform: translateY(-2px);
+    }
+
+    .submit-button svg {
+        margin-left: 0.5rem;
+        transition: var(--transition);
+    }
+
+    .submit-button:hover svg {
+        transform: translateX(3px);
+    }
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-1rem);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 576px) {
+    .password-change-container {
+        padding: 1rem;
+    }
+
+    .password-change-header,
+    .password-change-form {
+        padding: 1.5rem;
+    }
+}

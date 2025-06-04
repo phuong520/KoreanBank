@@ -8,7 +8,7 @@ namespace KEB.Application.DTOs.UserDTO
 {
     public class ChangeActiveStatus
     {
-        public Guid TargertUserId { get; set; }
+        public Guid TargetUserId { get; set; }
         public Guid UpdatedBy {  get; set; }
     }
 }

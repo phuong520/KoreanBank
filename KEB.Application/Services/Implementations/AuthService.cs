@@ -162,9 +162,42 @@ namespace KEB.Application.Services.Implementations
             }
         }
 
-        public Task<APIResponse<UserDisplayDTO>> ResetPasswordAsync(ResetPassword userResetPasswordDTO)
+        public async Task<APIResponse<UserDisplayDTO>> ResetPasswordAsync(ResetPassword userResetPasswordDTO)
         {
-            throw new NotImplementedException();
+            var response = new APIResponse<UserDisplayDTO>();
+
+            // 1. Tìm người dùng theo email
+            var user = await _unitOfWork.Users.GetAsync(u => u.Email == userResetPasswordDTO.Email);
+            if (user == null)
+            {
+                response.IsSuccess = false;
+                response.Message = "Email không tồn tại trong hệ thống.";
+                return response;
+            }
+            
+            // 2. Cập nhật mật khẩu thành '1234567' (mã hóa lại nếu cần)
+            var newPassword = "1234567";
+            string passwordHash = BitConverter.ToString(
+          SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(newPassword))
+          ).Replace("-", "").ToLower();
+            user.Password = passwordHash;
+
+            _unitOfWork.Users.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            string subject = LogicString.Common.RESETPASSWORDSUBJECT;
+            string body = string.Format(LogicString.Common.RESETPASSWORDEMAIL,
+                                        user.UserName,
+                                        LogicString.Common.ACTIVEALLOWEDTIMEVALUE,
+                                        newPassword);
+            _unitOfWork.EmailService.SendEmail(user.Email, subject, body, user.FullName);
+
+            // 4. Trả về thông tin user
+            var resultDto = _mapper.Map<UserDisplayDTO>(user);
+            response.IsSuccess = true;
+            response.Result[0] = resultDto;
+            response.Message = "Mật khẩu đã được đặt lại và gửi về email.";
+            return response;
         }
     }
 }

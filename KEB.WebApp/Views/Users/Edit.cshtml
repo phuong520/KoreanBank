@@ -1,7 +1,23 @@
-﻿@model KEB.Application.DTOs.UserDTO.UpdateUser
+﻿@using System.IdentityModel.Tokens.Jwt
+@model KEB.Application.DTOs.UserDTO.UpdateUser
 @{
     ViewData["Title"] = "Chỉnh sửa thông tin người dùng";
 }
+@{
+    var token = Context.Request.Cookies["token"];
+    var avatarUrl = Url.Content("~/images/default-avatar.png");
+   
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            if (jsonToken != null)
+            {
+                    var avatarId = jsonToken.Claims.FirstOrDefault(c => c.Type == "avatar")?.Value;
+                    avatarUrl = string.IsNullOrEmpty(avatarId)
+                        ? Url.Content("~/images/default-avatar.png")
+                        : $"https://localhost:7101/api/ImageFile/Download?id={avatarId}";
+            }
+         
+    }
 
 <div class="container">
     <div class="row justify-content-center">
@@ -34,7 +50,7 @@
                                 <div class="text-center">
                                     <div class="mb-3">
                                         <img id="avatarPreview"
-                                             src="@(string.IsNullOrEmpty(ViewBag.CurrentAvatarUrl) ? "/images/default-avatar.png" : ViewBag.CurrentAvatarUrl)"
+                                             src="@avatarUrl"
                                              class="img-thumbnail rounded-circle"
                                              style="width: 200px; height: 200px; object-fit: cover;"
                                              alt="Avatar" />
@@ -111,8 +127,8 @@
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save"></i> Cập nhật thông tin
                                 </button>
-                                <a asp-action="Index" class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                                <a asp-action="Details" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Quay lại
                                 </a>
                             </div>
                         </div>

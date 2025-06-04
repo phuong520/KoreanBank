@@ -1,8 +1,6 @@
 ﻿@model KEB.Application.DTOs.Common.ResetPassword
 @{
     ViewData["Title"] = "Quên mật khẩu";
-    // Thêm Layout nếu bạn có
-    // Layout = "_Layout";
 }
 
 <!DOCTYPE html>
@@ -11,171 +9,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: flex-start; /* Align content to the left */
-            align-items: center;
-            /* Set the background image to cover the entire viewport */
-            /* Đảm bảo đường dẫn ảnh đúng với vị trí file ảnh login.png của bạn trong wwwroot */
-            background-image: url('/images/login.png');
-            background-size: cover;
-            background-position: center center;
-            background-repeat: no-repeat;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .background-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.3); /* Semi-transparent white overlay */
-            z-index: 1;
-        }
-
-        .form-container-wrapper {
-            position: relative;
-            z-index: 2;
-            width: 50%; /* Take up the left half of the screen */
-            display: flex;
-            justify-content: center; /* Center the form within its half */
-            align-items: center;
-            height: 100%;
-            padding-left: 5%; /* Add some padding on the left */
-            box-sizing: border-box;
-            background-color: rgba(255, 255, 255, 0.7); /* Slightly transparent white background for the form area */
-        }
-
-        .form-card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 400px; /* Slightly wider for better spacing */
-            padding: 40px; /* More padding */
-            box-sizing: border-box;
-            max-width: 90%;
-            text-align: center; /* Center header text */
-        }
-
-        .form-header h1 {
-            color: #333;
-            font-size: 32px; /* Larger and bolder */
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .form-header p {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-
-        .form-group {
-            margin-bottom: 25px; /* More space between groups */
-            text-align: left; /* Align labels left */
-        }
-
-            .form-group label {
-                display: block;
-                margin-bottom: 8px;
-                font-weight: 500;
-                color: #555;
-                font-size: 15px;
-            }
-
-            .form-group input {
-                width: 100%;
-                padding: 14px; /* More padding */
-                border: 1px solid #ddd;
-                border-radius: 6px; /* Slightly more rounded corners */
-                font-size: 16px;
-                box-sizing: border-box;
-                transition: border-color 0.3s ease;
-            }
-
-                .form-group input:focus {
-                    outline: none;
-                    border-color: #4285f4;
-                    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
-                }
-
-        .submit-button {
-            width: 100%;
-            padding: 14px;
-            background-color: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 18px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin-top: 15px; /* Space after input */
-        }
-
-            .submit-button:hover {
-                background-color: #3367d6;
-                transform: translateY(-2px);
-            }
-
-            .submit-button:active {
-                transform: translateY(0);
-            }
-
-        .back-to-login {
-            margin-top: 25px;
-            font-size: 15px;
-        }
-
-            .back-to-login a {
-                color: #4285f4;
-                text-decoration: none;
-                font-weight: 500;
-                transition: color 0.3s ease;
-            }
-
-                .back-to-login a:hover {
-                    color: #3367d6;
-                    text-decoration: underline;
-                }
-
-        .text-danger {
-            color: #e74c3c; /* A more distinct red */
-            font-size: 13px;
-            margin-top: 5px;
-            display: block;
-            text-align: left; /* Align error messages with labels */
-        }
-
-        /* Styles for alert messages */
-        .alert {
-            padding: 12px 20px;
-            border-radius: 6px;
-            margin-top: 20px;
-            font-size: 15px;
-            text-align: left;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/resetPass.css"/>
 </head>
 <body>
     <div class="background-overlay"></div>
@@ -187,36 +21,93 @@
                 <p>Vui lòng nhập địa chỉ email của bạn để nhận liên kết đặt lại mật khẩu.</p>
             </div>
 
-            <form asp-action="ForgotPassword" method="post">
+            <form id="resetPasswordForm" method="post">
                 <div class="form-group">
                     <label asp-for="Email"></label>
                     <input asp-for="Email" placeholder="ví dụ: email@example.com" autocomplete="email" autofocus>
                     <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
 
-                <button type="submit" class="submit-button">Gửi liên kết đặt lại</button>
+                <button type="submit" class="submit-button">Reset</button>
 
                 <div class="back-to-login">
                     <a asp-action="Login">Quay lại Đăng nhập</a>
                 </div>
 
-                @if (TempData["SuccessMessage"] != null)
-                {
-                    <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
-                }
+                <div id="messageContainer">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success mt-3">@TempData["SuccessMessage"]</div>
+                    }
 
-                @if (ViewData["ErrorMessage"] != null)
-                {
-                    <div class="alert alert-danger mt-3">@ViewData["ErrorMessage"]</div>
-                }
+                    @if (ViewData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger mt-3">@ViewData["ErrorMessage"]</div>
+                    }
+                </div>
             </form>
         </div>
     </div>
 
-    @section Scripts {
-        @{
-            await Html.RenderPartialAsync("_ValidationScriptsPartial");
-        }
-    }
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#resetPasswordForm').on('submit', async function (e) {
+                e.preventDefault(); // Prevent default form submission
+
+                if (!$(this).valid()) {
+                    return; // Stop if validation fails
+                }
+
+                const email = $('#Email').val();
+                const apiEndpoint = 'https://localhost:7101/api/Common/reset-password';
+                const loadingOverlay = $('#loadingOverlay');
+                const messageContainer = $('#messageContainer');
+
+                // Clear previous messages
+                messageContainer.empty();
+
+                loadingOverlay.css('display', 'flex'); // Show loading overlay
+
+                try {
+                    const response = await fetch(apiEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // If your API requires authorization for this endpoint, add it here:
+                            // 'Authorization': 'Bearer YOUR_AUTH_TOKEN'
+                        },
+                        body: JSON.stringify({ Email: email })
+                    });
+
+                    const result = await response.json(); // Assuming your API returns JSON
+
+                    if (response.ok) { // Check if the HTTP status is 2xx
+                        if (result.isSuccess) {
+                            messageContainer.html('<div class="alert alert-success mt-3">' + (result.message || 'Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.') + '</div>');
+                            // Optionally, clear the email field:
+                            // $('#Email').val('');
+                        } else {
+                            messageContainer.html('<div class="alert alert-danger mt-3">' + (result.message || 'Đã xảy ra lỗi khi gửi yêu cầu đặt lại mật khẩu.') + '</div>');
+                        }
+                    } else {
+                        // Handle HTTP errors (e.g., 400 Bad Request, 500 Internal Server Error)
+                        messageContainer.html('<div class="alert alert-danger mt-3">' + (result.message || 'Lỗi từ máy chủ: ' + response.statusText) + '</div>');
+                    }
+                } catch (error) {
+                    console.error('Lỗi khi gọi API:', error);
+                    messageContainer.html('<div class="alert alert-danger mt-3">Không thể kết nối đến máy chủ. Vui lòng thử lại sau.</div>');
+                } finally {
+                    loadingOverlay.css('display', 'none'); // Hide loading overlay
+                }
+            });
+        });
+    </script>
 </body>
 </html>

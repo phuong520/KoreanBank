@@ -32,7 +32,7 @@ namespace KEB.WebAPI.Controllers
             }
         }
 
-        [HttpGet("get-all/{userId}")]
+        [HttpGet("get-all/{userId:guid}")]
         public async Task<ActionResult<List<NotificationDisplayDto>>> GetAllNoti(Guid userId)
         {
             try
@@ -50,7 +50,7 @@ namespace KEB.WebAPI.Controllers
             }
         }
 
-        [HttpPut("mark-all-as-read/{userId}")]
+        [HttpPut("mark-all-as-read/{userId:guid}")]
         public async Task<ActionResult> MarkAllNotiAsRead(Guid userId)
         {
             try
@@ -68,7 +68,7 @@ namespace KEB.WebAPI.Controllers
             }
         }
 
-        [HttpPut("markasread/{notiId}")]
+        [HttpPut("markasread/{notiId:guid}")]
         public async Task<ActionResult> MarkAsRead(Guid notiId)
         {
             try

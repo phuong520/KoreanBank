@@ -76,7 +76,7 @@ namespace KEB.WebApp.Controllers
             List<UserDisplayDTO> hosts = new List<UserDisplayDTO>();
             if (response != null && response.IsSuccess)
             {
-                 hosts = response.Result.Where(user => user.RoleName == "Quản lý").ToList();
+                 hosts = response.Result.Where(user => user.RoleName == "Giảng viên").ToList();
             }
             ViewBag.Hosts = new SelectList(hosts, "UserId", "UserName");
             return View();

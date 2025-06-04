@@ -1,4 +1,34 @@
-﻿@model List<KEB.Application.DTOs.UserDTO.UserDisplayDTO>
+﻿@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@model List<KEB.Application.DTOs.UserDTO.UserDisplayDTO>
+@{
+    var token = Context.Request.Cookies["token"] ?? "";
+    var userId = string.Empty;
+    var username = string.Empty;
+    var role = string.Empty;
+    var avatarUrl = Url.Content("~/images/default-avatar.png");
+
+    if (!string.IsNullOrEmpty(token))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            if (jsonToken != null)
+            {
+                userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value ?? "";
+                role = jsonToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "";
+                username = jsonToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value ?? "";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error in production, avoid Console.WriteLine
+        }
+    }
+    ViewBag.CurrentUserId = userId;
+    ViewBag.AuthToken = token;
+}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,7 +36,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý tài khoản | KEB</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
@@ -18,14 +48,15 @@
             --light-color: #f8f9fc;
             --dark-color: #5a5c69;
         }
+        .nav-link{
+            height: 48px;
+        }
 
         body {
             background-color: #f8f9fc;
             font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
-        .nav-link{
-            height: 48px;
-        }
+
         .card {
             border: none;
             border-radius: 0.35rem;
@@ -68,15 +99,41 @@
             font-weight: 500;
             padding: 0.35em 0.65em;
             font-size: 0.75em;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
+
+            .badge:hover {
+                transform: scale(1.05);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
 
         .badge-active {
             background-color: var(--success-color);
+            color: white;
         }
 
         .badge-inactive {
             background-color: var(--danger-color);
+            color: white;
         }
+
+        .role-select {
+            background: none;
+            border: 1px solid #e3e6f0;
+            color: #5a5c69;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+        }
+
+            .role-select:hover {
+                background-color: #f8f9fc;
+                color: var(--primary-color);
+            }
 
         .btn-primary {
             background-color: var(--primary-color);
@@ -112,9 +169,63 @@
         .table-hover tbody tr:hover {
             background-color: rgba(78, 115, 223, 0.05);
         }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
     </style>
 </head>
 <body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Confirm Role Change Modal -->
+    <div class="modal fade" id="confirmRoleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác nhận thay đổi vai trò</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Bạn có chắc chắn muốn thay đổi vai trò thành <span id="roleName"></span>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="confirmRoleChange">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid py-4">
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">
@@ -128,17 +239,6 @@
         <div class="card shadow mb-4">
             <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 font-weight-bold text-primary">Danh sách tài khoản</h6>
-                <div class="dropdown no-arrow">
-                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-three-dots-vertical text-gray-400"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="dropdownMenuLink">
-                        <li><a class="dropdown-item" href="#">Xuất Excel</a></li>
-                        <li><a class="dropdown-item" href="#">In danh sách</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Làm mới</a></li>
-                    </ul>
-                </div>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -154,67 +254,254 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var user in Model)
+                            @if (Model == null || !Model.Any())
                             {
                                 <tr>
-                                    <td>@user.FullName</td>
-                                    <td>@user.UserName</td>
-                                    <td>@user.Email</td>
-                                    <td>@user.RoleName</td>
-                                    <td>
-                                        <span class="badge @(user.IsActive ? "badge-active" : "badge-inactive")">
-                                            @(user.IsActive ? "Hoạt động" : "Không hoạt động")
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a asp-controller="Users" asp-action="Details" class="btn btn-info btn-sm action-btn" title="Xem chi tiết">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </a>
-                                            <a asp-controller="Users" asp-action="Edit" class="btn btn-warning btn-sm action-btn" title="Chỉnh sửa">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </a>
-                                        </div>
-                                    </td>
+                                    <td colspan="6" class="text-center">Không có dữ liệu người dùng</td>
                                 </tr>
+                            }
+                            else
+                            {
+                                @foreach (var user in Model)
+                                {
+                                    <tr data-user-id="@user.UserId">
+                                        <td>@user.FullName</td>
+                                        <td>@user.UserName</td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            <select id="role-select-@user.UserId" data-user-id="@user.UserId" data-current-role-id="@user.RoleId" class="role-select">
+                                                @foreach (var item in (SelectList)ViewBag.Roles)
+                                                {
+                                                    if (item.Value == user.RoleId.ToString())
+                                                    {
+                                                        <option value="@item.Value" data-role-name="@item.Text" selected>@item.Text</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.Value" data-role-name="@item.Text">@item.Text</option>
+                                                    }
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <span class="badge status-badge @(user.IsActive ? "badge-active" : "badge-inactive")" data-status="@user.IsActive.ToString().ToLower()">
+                                                @(user.IsActive ? "Hoạt động" : "Không hoạt động")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a asp-controller="Users" asp-action="Details" asp-route-id="@user.UserId" class="btn btn-info btn-sm action-btn" title="Xem chi tiết">
+                                                    <i class="bi bi-eye-fill"></i>
+                                                </a>
+                                                <a asp-controller="Users" asp-action="Edit" asp-route-id="@user.UserId" class="btn btn-warning btn-sm action-btn" title="Chỉnh sửa">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </a>
+                                                <a asp-controller="CommonWeb" asp-action="ResetPass" class="btn btn-danger btn-sm action-btn" title="Chỉnh sửa">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
                 </div>
 
-                <nav aria-label="Page navigation" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        @if ((int)ViewBag.CurrentPage > 1)
-                        {
-                            <li class="page-item">
-                                <a class="page-link" href="@Url.Action("Index", new { page = (int)ViewBag.CurrentPage - 1, size = ViewBag.PageSize })">Trước</a>
-                            </li>
-                        }
+                @if (Model != null && Model.Any())
+                {
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            @if ((int)ViewBag.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = (int)ViewBag.CurrentPage - 1, size = ViewBag.PageSize })">Trước</a>
+                                </li>
+                            }
 
-                        @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
-                        {
-                            <li class="page-item @(p == (int)ViewBag.CurrentPage ? "active" : "")">
-                                <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.PageSize })">@p</a>
-                            </li>
-                        }
+                            @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == (int)ViewBag.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.PageSize })">@p</a>
+                                </li>
+                            }
 
-                        @if ((int)ViewBag.CurrentPage < (int)ViewBag.TotalPages)
-                        {
-                            <li class="page-item">
-                                <a class="page-link" href="@Url.Action("Index", new { page = (int)ViewBag.CurrentPage + 1, size = ViewBag.PageSize })">Sau</a>
-                            </li>
-                        }
-                    </ul>
-                </nav>
+                            @if ((int)ViewBag.CurrentPage < (int)ViewBag.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { page = (int)ViewBag.CurrentPage + 1, size = ViewBag.PageSize })">Sau</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
     <script>
-        // Thêm các hàm JavaScript cần thiết ở đây
         document.addEventListener('DOMContentLoaded', function() {
-            // Có thể thêm các xử lý tương tác tại đây
+            const roleSelects = document.querySelectorAll('.role-select');
+            const currentUserId = '@ViewBag.CurrentUserId' || '';
+            const token = '@ViewBag.AuthToken' || '';
+            const apiBaseUrl = 'https://localhost:7101'; // Ideally, move this to a config or environment variable
+
+            if (!token || !currentUserId) {
+                showToast('Không tìm thấy token hoặc ID người dùng. Vui lòng đăng nhập lại!', 'error');
+                return;
+            }
+
+            // Handle status change
+            document.querySelectorAll('.status-badge').forEach(badge => {
+                badge.addEventListener('click', async function() {
+                    const row = this.closest('tr');
+                    const userId = row.getAttribute('data-user-id');
+                    const currentStatus = this.getAttribute('data-status') === 'true';
+
+                    if (!confirm(`Bạn có chắc chắn muốn ${currentStatus ? 'khóa' : 'mở khóa'} tài khoản này?`)) {
+                        return;
+                    }
+
+                    try {
+                        showLoading();
+                        const response = await fetch(`${apiBaseUrl}/api/Users/change-status`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`,
+                            },
+                            body: JSON.stringify({
+                                targetUserId: userId,
+                                updatedBy: currentUserId
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+
+                        const result = await response.json();
+
+                        if (result.isSuccess) {
+                            const newStatus = !currentStatus;
+                            this.setAttribute('data-status', newStatus.toString());
+                            this.className = `badge status-badge ${newStatus ? 'badge-active' : 'badge-inactive'}`;
+                            this.textContent = newStatus ? 'Hoạt động' : 'Không hoạt động';
+                            showToast(result.message || 'Cập nhật trạng thái thành công!');
+                        } else {
+                            showToast(result.message || 'Có lỗi xảy ra khi cập nhật trạng thái!', 'error');
+                        }
+                    } catch (error) {
+                        showToast('Có lỗi xảy ra khi kết nối server!', 'error');
+                    } finally {
+                        hideLoading();
+                    }
+                });
+            });
+
+            // Handle role change
+            let pendingRoleChange = null;
+            roleSelects.forEach(select => {
+                select.addEventListener('change', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const newRoleId = this.value;
+                    const newRoleName = this.options[this.selectedIndex].getAttribute('data-role-name');
+                    const currentRoleId = this.getAttribute('data-current-role-id');
+
+                    if (newRoleId === currentRoleId) {
+                        return;
+                    }
+
+                    // Show modal
+                    document.getElementById('roleName').textContent = newRoleName;
+                    pendingRoleChange = { userId, newRoleId, newRoleName, select, currentStatus: this.closest('tr').querySelector('.status-badge').getAttribute('data-status') === 'true' };
+                    const modal = new bootstrap.Modal(document.getElementById('confirmRoleModal'));
+                    modal.show();
+                });
+            });
+
+            // Handle confirm role change
+            document.getElementById('confirmRoleChange').addEventListener('click', async function() {
+                if (!pendingRoleChange) return;
+
+                const { userId, newRoleId, newRoleName, select, currentStatus } = pendingRoleChange;
+
+                try {
+                    showLoading();
+                    const response = await fetch(`${apiBaseUrl}/api/Users/change-role`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            targetUserId: userId,
+                            roleId: newRoleId,
+                            updatedBy: currentUserId,
+                            isActive: currentStatus
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.isSuccess) {
+                        select.setAttribute('data-current-role-id', newRoleId);
+                        showToast(result.message || 'Cập nhật vai trò thành công!');
+                    } else {
+                        select.value = select.getAttribute('data-current-role-id');
+                        showToast(result.message || 'Có lỗi xảy ra khi cập nhật vai trò!', 'error');
+                    }
+                } catch (error) {
+                    select.value = select.getAttribute('data-current-role-id');
+                    showToast('Có lỗi xảy ra khi kết nối server!', 'error');
+                } finally {
+                    hideLoading();
+                    pendingRoleChange = null;
+                    bootstrap.Modal.getInstance(document.getElementById('confirmRoleModal')).hide();
+                }
+            });
+
+            // Handle modal cancel (revert select value)
+            document.querySelector('#confirmRoleModal .btn-secondary').addEventListener('click', function() {
+                if (pendingRoleChange) {
+                    pendingRoleChange.select.value = pendingRoleChange.select.getAttribute('data-current-role-id');
+                    pendingRoleChange = null;
+                }
+            });
+
+            function showLoading() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+
+            function hideLoading() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                `;
+                document.getElementById('toastContainer').appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+                toast.addEventListener('hidden.bs.toast', () => {
+                    toast.remove();
+                });
+            }
         });
     </script>
 </body>

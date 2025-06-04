@@ -1,5 +1,6 @@
 ﻿using Azure;
 using DocumentFormat.OpenXml.InkML;
+using KEB.Application.DTOs.RoleDTO;
 using KEB.Application.DTOs.UserDTO;
 using KEB.Application.Services;
 using KEB.Application.Services.Implementations;
@@ -7,6 +8,7 @@ using KEB.Application.Services.Interfaces;
 using KEB.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Office.Core;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -39,11 +41,13 @@ namespace KEB.WebApp.Controllers
             {
                 return View(new List<UserDisplayDTO>());
             }
+            var getRole = await _httpClient.GetFromJsonAsync<APIResponse<RoleDisplayDto>>("https://localhost:7101/api/Roles/get-all-roles");
             ViewBag.CurrentPage = page;
             ViewBag.PageSize = size;
             ViewBag.TotalCount = result.TotalCount;
             ViewBag.TotalPages = (int)Math.Ceiling((double)result.TotalCount / size);
-
+            var roleSelectList = new SelectList(getRole.Result, "Id", "RoleName");
+            ViewBag.Roles = roleSelectList;
             return View(result.Result);
         }
         public async Task<IActionResult> Details()
@@ -168,11 +172,12 @@ namespace KEB.WebApp.Controllers
                     var user = apiResponse.Result;
                     var updateUser = new UpdateUser
                     {
-                        //AvatarImage = user.AvatarUrl,
+                        //AvatarImage = user.,
                         UserId = user.UserId,
                         FullName = user.FullName,
                         Gender = user.Gender,
                         DateOfBirth = user.DateOfBirth,
+                        
 
 
                     };
@@ -189,7 +194,7 @@ namespace KEB.WebApp.Controllers
             {
                 return NotFound("Không tìm thấy người dùng");
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details));
         }
 
         [HttpPost]

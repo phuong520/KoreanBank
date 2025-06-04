@@ -59,31 +59,31 @@ namespace KEB.Application.Services.Implementations
                 validateRequestResult.Add("Không tìm thấy loại kỳ thi");
 
             if (string.IsNullOrEmpty(request.ExamName))
-                validateRequestResult.Add("Tên kỳ thi không được để trống như v ~");
+                validateRequestResult.Add("Tên kỳ thi không được để trống");
 
             if (request.TakePlaceTime < earliestTakePlaceTime)
                 validateRequestResult.Add($"Ngày thi của kỳ thi mới phải cách bây giờ " +
-                            $"ít nhất {SystemDataFormat.EARLIEST_EXAM_TAKEPLACETIME_FROMNOW} ngày, không thì ai mà làm cho kịp?!!?");
+                            $"ít nhất {SystemDataFormat.EARLIEST_EXAM_TAKEPLACETIME_FROMNOW} ngày");
 
             var host = await _unitOfWork.Users.GetByIdAsync(request.HostId);
             if (host == null || !host.IsActive || host.RoleId.ToString() == LogicString.Role.AdminRoleId)
-                validateRequestResult.Add("Người dùng này 0 thể nhận vai trò làm host cho kỳ thi ~");
+                validateRequestResult.Add("Người dùng này không thể nhận vai trò làm host cho kỳ thi ~");
             //else if (host.RoleId.ToString() == LocalizationString.Role.AdminRoleId)
             //    validateRequestResult.Add("Bạn không đủ trình giao nhiệm vụ cho admin đâu ~");
 
             var reviewer = await _unitOfWork.Users.GetByIdAsync(request.ReviewerId);
             if (reviewer == null || !reviewer.IsActive || reviewer.RoleId.ToString() == LogicString.Role.AdminRoleId)
-                validateRequestResult.Add("Người dùng này 0 thể nhận vai trò reviewer cho kỳ thi ~");
+                validateRequestResult.Add("Người dùng này không thể nhận vai trò reviewer cho kỳ thi ~");
             //else if (reviewer.RoleId.ToString() != LocalizationString.Role.LecturerRoleId)
             //    validateRequestResult.Add("Bạn không đủ trình giao nhiệm vụ cho admin đâu ~");
 
             if (request.HostId == request.ReviewerId)
-                validateRequestResult.Add("Host và Reviewer phải là 2 người khác nhau để đúp bồ chếck");
+                validateRequestResult.Add("Host và Reviewer phải là 2 người khác nhau");
 
             if (validateRequestResult.Count > 0)
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                response.Message = "<strong>Kỳ thi mới có nhiều điểm 0 hợp lệ</strong> ~ <br/>" + string.Join(". ", validateRequestResult);
+                response.Message = "<strong>Kỳ thi mới có nhiều điểm không hợp lệ</strong> ~ <br/>" + string.Join(". ", validateRequestResult);
                 response.Result = validateRequestResult.Select(x => (object)x).ToList();
             }
             else

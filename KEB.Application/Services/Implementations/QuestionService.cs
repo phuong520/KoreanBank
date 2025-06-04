@@ -312,7 +312,7 @@ namespace KEB.Application.Services.Implementations
                     CreatedDate = currentTime,
                     Description = $"Quản lý {requestedUser.UserName} " +
                                   $"đã duyệt {approved} câu hỏi và từ chối {denied} câu hỏi" +
-                                  $"lý do là {request.Requests[0].Reason}",
+                                  $" lý do là {request.Requests[0].Reason}",
                 });
 
                 // Send email to the created user
@@ -1133,32 +1133,7 @@ namespace KEB.Application.Services.Implementations
                     response.Message = "Nội dung câu hỏi không được để trống";
                     return response;
                 }
-                // Kiểm tra trùng lặp trước khi tạo câu hỏi
-                //var existingQuestions = await _unitOfWork.Questions.GetAllAsync(
-                //    filter: x => x.QuestionContent.Trim().ToLower() == request.QuestionContent.Trim().ToLower(),
-                //    includeProperties: "Answers",
-                //    asTracking: false
-                //);
-
-                //var duplicateQuestion = existingQuestions.FirstOrDefault(q =>
-                //{
-                //    // Compare answers (assuming order doesn't matter)
-                //    bool answersMatch = q.Answers != null && request.Answers != null &&
-                //        q.Answers.Count == request.Answers.Count &&
-                //        q.Answers.Select(a => a.AnswerContent.Trim().ToLower())
-                //            .OrderBy(a => a)
-                //            .SequenceEqual(request.Answers.Select(a => a.Content.Trim().ToLower()).OrderBy(a => a));
-
-                //    return answersMatch;
-                //});
-
-                //if (duplicateQuestion != null)
-                //{
-                //    response.IsSuccess = false;
-                //    response.StatusCode = HttpStatusCode.BadRequest;
-                //    response.Message = $"Câu hỏi trùng lặp với câu hỏi ID: {duplicateQuestion.Id}";
-                //    return response;
-                //}
+                
                 var attach = new ImageFile();
                 if (request.AttachmentFileImage != null)
                 {
@@ -1205,7 +1180,7 @@ namespace KEB.Application.Services.Implementations
                 };
                 await _unitOfWork.AccessLogs.AddAsync(systemAccessLog);
                 question.LogId = systemAccessLog.Id;
-
+                
                 // Handle task creation (if needed)
                 if (request.TaskId.HasValue)
                 {
@@ -1304,6 +1279,14 @@ namespace KEB.Application.Services.Implementations
                                 "Vui lòng truy cập hệ thống để kiểm tra và duyệt câu hỏi.",
                                 taskCreator.FullName
                             );
+                            //noti
+                            await _unitOfWork.Notifications.AddAsync(new Notification
+                            {
+                                UserId = taskCreator.Id,
+                                CreatedDate = DateTime.Now,
+                                Description = $"Quản lý {actor.UserName} " +
+                                             $"đã thêm câu hỏi vào tác vụ bạn đã tạo lúc {DateTime.Now:dd/MM/yyyy HH:mm}"
+                            });
                         }
                     }
                     else

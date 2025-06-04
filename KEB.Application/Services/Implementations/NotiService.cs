@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using KEB.Application.DTOs.Common;
 using KEB.Application.DTOs.NotificationDTO;
 using KEB.Application.Services.Interfaces;
 using KEB.Infrastructure.UnitOfWorks;
@@ -47,6 +48,7 @@ namespace KEB.Application.Services.Implementations
             List<NotificationDisplayDto> response = new List<NotificationDisplayDto>();
             try
             {
+
                 var queried = await _unitOfWork.Notifications.GetAllAsync(x => x.UserId == userId,
                                             orderBy: x => x.OrderByDescending(x => x.CreatedDate));
                 response = queried.Select(x => new NotificationDisplayDto
@@ -67,7 +69,7 @@ namespace KEB.Application.Services.Implementations
         {
             try
             {
-                var notifications = await _unitOfWork.Notifications.GetAllAsync(x => x.UserId == userId && !x.IsRead);
+                var notifications = await _unitOfWork.Notifications.GetAllAsync(x => x.UserId == userId && !x.IsRead, asTracking: true);
 
                 if (notifications.Any())
                 {
@@ -75,7 +77,8 @@ namespace KEB.Application.Services.Implementations
                     {
                         notification.IsRead = true;
                     }
-                    await _unitOfWork.CommitAsync();
+                    
+                    await _unitOfWork.SaveChangesAsync();
                     return true;
                 }
                 return false;
@@ -91,10 +94,12 @@ namespace KEB.Application.Services.Implementations
         {
             try
             {
+                await _unitOfWork.BeginTransactionAsync();
                 var notification = await _unitOfWork.Notifications.GetByIdAsync(notiId);
                 if (notification != null && !notification.IsRead)
                 {
                     notification.IsRead = true;
+                    await _unitOfWork.Notifications.UpdateWithNoCommitAsync(notification);
                     await _unitOfWork.CommitAsync();
                     return true;
                 }

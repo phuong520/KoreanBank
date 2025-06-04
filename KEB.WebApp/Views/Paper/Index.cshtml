@@ -1,6 +1,35 @@
 ﻿@model List<KEB.Application.DTOs.ExamPaperDTO.PaperGeneralDisplayDTO>
 @using KEB.Domain.Enums
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+@{
+    var token = Context.Request.Cookies["token"] ?? "";
+    var userId = string.Empty;
+    var username = string.Empty;
+    var role = string.Empty;
+    var avatarUrl = Url.Content("~/images/default-avatar.png");
 
+    if (!string.IsNullOrEmpty(token))
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            if (jsonToken != null)
+            {
+                userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value ?? "";
+                role = jsonToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value ?? "";
+                username = jsonToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value ?? "";
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log error in production, avoid Console.WriteLine
+        }
+    }
+    ViewBag.CurrentUserId = userId;
+    ViewBag.AuthToken = token;
+}
 @{
     ViewBag.Title = "Ngân hàng đề thi";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -39,7 +68,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ngân Hàng Đề Thi</title>
-     <link rel="stylesheet" href="~/css/PaperIndex.css" />
+    <link rel="stylesheet" href="~/css/PaperIndex.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 350px;
+        }
+
+            .notification.success {
+                background-color: #28a745;
+            }
+
+            .notification.error {
+                background-color: #dc3545;
+            }
+
+            .notification.hidden {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+
+            .notification i {
+                font-size: 1.2em;
+            }
+    </style>
 </head>
 <body>
     <div class="header">
@@ -76,10 +141,9 @@
             <thead>
                 <tr>
                     <th style="width: 30px;">STT</th>
-
                     <th>Kỳ Thi</th>
                     <th>Trình độ</th>
-                    <th>Tiêu đề bài thi </th>
+                    <th>Tiêu đề bài thi</th>
                     <th>Ngày Thi</th>
                     <th>Tình Trạng</th>
                     <th>Hoạt động</th>
@@ -93,19 +157,19 @@
                     {
                         <tr>
                             <td>@i</td>
-                            
                             <td>@paper.ExamName</td>
                             <td>@paper.LevelName</td>
                             <td>@paper.PaperName</td>
-                            <td>@paper.TakePlaceTime</td>
+                            <td>@paper.TakePlaceTime.ToString(format: "dd/MM/yyyy")</td>
                             <td><span class="exam-status status-completed">@paper.PaperStatus</span></td>
-                            <td>
                             <td>
                                 <form asp-action="Detail" asp-controller="Paper" method="get" style="display: inline-block;">
                                     <input type="hidden" name="paperId" value="@paper.PaperId" />
                                     <button type="submit" class="btn btn-sm btn-primary">👁️</button>
                                 </form>
-                                <button class="download-btn">⬇️</button>
+                                <button class="btn btn-sm btn-outline-danger delete-level-btn" data-level-id="@paper.PaperId" data-level-name="@paper.PaperName">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                         i++;
@@ -119,13 +183,12 @@
                 }
             </tbody>
         </table>
-
     </div>
     <nav aria-label="Page navigation">
         <ul class="pagination justify-content-center">
             @for (int p = 1; p <= (int)ViewBag.TotalPages; p++)
             {
-                <li class="page-item @(p ==  (int)ViewBag.Page ? "active" : "")">
+                <li class="page-item @(p == (int)ViewBag.Page ? "active" : "")">
                     <a class="page-link" href="@Url.Action("Index", new { page = p, size = ViewBag.Size })">@p</a>
                 </li>
             }
@@ -137,7 +200,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">Thêm Đề Thi Mới</h3>
-                <button class="close-btn" id="closeModal">&times;</button>
+                <button class="close-btn" id="closeModal">×</button>
             </div>
             <form id="addExamForm" method="post" action="/Paper/Create">
                 <div class="form-group">
@@ -155,37 +218,144 @@
         </div>
     </div>
 
+    <!-- Modal Popup để xác nhận xóa -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Xác Nhận Xóa</h3>
+                <button class="close-btn" id="closeDeleteModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa đề thi "<span id="deletePaperName"></span>" không?</p>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" id="cancelDelete">Hủy</button>
+                <button type="button" class="btn-submit" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
     <script>
-        // JavaScript để điều khiển modal popup
         document.addEventListener('DOMContentLoaded', function() {
+            // Hàm hiển thị thông báo
+            function showNotification(message, type) {
+                const container = document.getElementById('notificationContainer');
+                const notification = document.createElement('div');
+                notification.className = 'notification ' + type;
+                notification.innerHTML = `
+                    <i class="${type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'}"></i>
+                    <span>${message}</span>
+                `;
+                container.appendChild(notification);
+
+                // Hiển thị thông báo
+                setTimeout(() => {
+                    notification.classList.remove('hidden');
+                }, 10);
+
+                // Ẩn và xóa thông báo sau 3 giây
+                setTimeout(() => {
+                    notification.classList.add('hidden');
+                    setTimeout(() => {
+                        container.removeChild(notification);
+                    }, 500);
+                }, 3000);
+            }
+
+            // JavaScript cho modal "Thêm mới"
             const addNewBtn = document.getElementById('addNewBtn');
             const modal = document.getElementById('addExamModal');
             const closeBtn = document.getElementById('closeModal');
             const cancelBtn = document.getElementById('cancelAdd');
 
-            // Mở modal khi nhấn nút "Thêm mới"
             addNewBtn.addEventListener('click', function() {
                 modal.style.display = 'flex';
             });
 
-            // Đóng modal khi nhấn nút đóng
             closeBtn.addEventListener('click', function() {
                 modal.style.display = 'none';
             });
 
-            // Đóng modal khi nhấn nút hủy
             cancelBtn.addEventListener('click', function() {
                 modal.style.display = 'none';
             });
 
-            // Đóng modal khi nhấn bên ngoài modal
             window.addEventListener('click', function(event) {
                 if (event.target == modal) {
                     modal.style.display = 'none';
                 }
             });
 
-            // Thêm tìm kiếm
+            // JavaScript cho modal xác nhận xóa
+            const deleteButtons = document.querySelectorAll('.delete-level-btn');
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            const closeDeleteBtn = document.getElementById('closeDeleteModal');
+            const cancelDeleteBtn = document.getElementById('cancelDelete');
+            const confirmDeleteBtn = document.getElementById('confirmDelete');
+            const deletePaperName = document.getElementById('deletePaperName');
+            let currentPaperId = null;
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    currentPaperId = this.getAttribute('data-level-id');
+                    const paperName = this.getAttribute('data-level-name');
+                    deletePaperName.textContent = paperName;
+                    deleteModal.style.display = 'flex';
+                });
+            });
+
+            closeDeleteBtn.addEventListener('click', function() {
+                deleteModal.style.display = 'none';
+            });
+
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target == deleteModal) {
+                    deleteModal.style.display = 'none';
+                }
+            });
+
+            // Xử lý khi xác nhận xóa
+            confirmDeleteBtn.addEventListener('click', function() {
+                if (currentPaperId) {
+                    fetch('https://localhost:7101/api/Exams/delete-exam', {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Authorization': 'Bearer @ViewBag.AuthToken'
+                        },
+                        body: new URLSearchParams({
+                            'requestedUserId': '@ViewBag.CurrentUserId',
+                            'examId': currentPaperId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        deleteModal.style.display = 'none';
+                        if (data.isSuccess) {
+                            showNotification('Xóa đề thi thành công!', 'success');
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        } else {
+                            showNotification('Xóa thất bại: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Lỗi:', error);
+                        deleteModal.style.display = 'none';
+                        showNotification('Đã xảy ra lỗi khi xóa đề thi.', 'error');
+                    });
+                }
+            });
+
+            // Tìm kiếm
             const searchInput = document.querySelector('.search-input');
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();

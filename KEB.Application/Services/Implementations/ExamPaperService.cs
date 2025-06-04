@@ -985,14 +985,12 @@ namespace KEB.Application.Services.Implementations
                     bool review = exam.ReviewerId == request.RequestedUserId;
                     bool host = exam.HostId == request.RequestedUserId;
 
-                    if (examTookPlace || examSuspended)
-                    {
-                        isAuthorized = true;
-                        // if exam took place or is suspended, everyone can view its papers unless they was locked/hidden
-                    }
-                    else
-                    {
-                        // If the exam hasn't taken place & is not suspended
+                    //if (examTookPlace || examSuspended)
+                    //{
+                    //    isAuthorized = true;
+                    //    // if exam took place or is suspended, everyone can view its papers unless they was locked/hidden
+                    //}
+                    
                         if (examInEdit || examInPrepare)
                         {
                             isAuthorized = review || host || isTeamLead;
@@ -1002,10 +1000,10 @@ namespace KEB.Application.Services.Implementations
                         }
                         else
                         {
-                            isAuthorized = false;
+                            isAuthorized = true;
                         }
                     }
-                }
+                
                 if (!isAuthorized) throw new UnauthorizedAccessException("You are not allowed to view the paper details at this time");
                 else
                 {
