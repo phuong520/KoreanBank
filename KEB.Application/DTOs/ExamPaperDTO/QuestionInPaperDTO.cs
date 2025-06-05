@@ -25,6 +25,7 @@ namespace KEB.Application.DTOs.ExamPaperDTO
         public IEnumerable<AddAnswerDTO> Answers { get; set; }
         public float Mark { get; set; }
         public int OrderInPaper { get; set; }
+        public bool IsMultiChoice { get; set; }
 
     }
 }

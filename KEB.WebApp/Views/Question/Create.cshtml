@@ -2,7 +2,7 @@
 @model KEB.Application.DTOs.QuestionAddDTO.AddSingleQuestionRequest
 @{
     ViewBag.Title = "Nhập Câu Hỏi";
-    Layout = "_Layout";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     var difficulties = Enum.GetValues(typeof(Difficulty)).Cast<Difficulty>().ToList();
     var skills = Enum.GetValues(typeof(Skill)).Cast<Skill>().ToList(); // Assuming Skill is the enum with Nghe, Đọc, Nói, Viết
 }

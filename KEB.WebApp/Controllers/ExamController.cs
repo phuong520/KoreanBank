@@ -79,6 +79,11 @@ namespace KEB.WebApp.Controllers
                  hosts = response.Result.Where(user => user.RoleName == "Giảng viên").ToList();
             }
             ViewBag.Hosts = new SelectList(hosts, "UserId", "UserName");
+            if (response != null && response.IsSuccess)
+            {
+                hosts = response.Result.Where(user => user.RoleName == "Quản lý").ToList();
+            }
+            ViewBag.Reviewer = new SelectList(hosts, "UserId", "UserName");
             return View();
         }
 

@@ -75,13 +75,13 @@ namespace KEB.Domain.ValueObject
         #region Questiontypes
         public const string QUESTION_TYPE_EMPTY_NAME = "MS-38"; // Question type is empty
         public const string QUESTION_TYPE_EMPTY_CONTENT = "MS-39"; // Content field is empty
-        public const string QUESTION_TYPE_CREATE_SUCCESS = "MS-40"; // Create question type successfully
-        public const string QUESTION_TYPE_UPDATE_SUCCESS = "MS-41"; // Update question type successfully
+        public const string QUESTION_TYPE_CREATE_SUCCESS = "Tạo loại câu hỏi thành công"; // Create question type successfully
+        public const string QUESTION_TYPE_UPDATE_SUCCESS = "Cập nhật loại câu hỏi thành công"; // Update question type successfully
         public const string QUESTION_TYPE_DELETE_CONFIRM = "MS-42"; // Confirm question type deletion
-        public const string QUESTION_TYPE_DELETE_SUCCESS = "MS-43"; // Delete question type successfully
+        public const string QUESTION_TYPE_DELETE_SUCCESS = "Xóa loại câu hỏi thành công"; // Delete question type successfully
 
         public const string QUESTION_TYPE_NAME_EXISTED = "MS-70"; // Question type name exists in the system
-        public const string QUESTION_TYPE_DELETE_FAILED = "MS-126"; // Delete question type failed
+        public const string QUESTION_TYPE_DELETE_FAILED = "Lỗi khi xóa vì có dữ liệu liên quan"; // Delete question type failed
         #endregion Questiontypes
         #region Levels & Topics
         public const string LEVEL_CREATE_SUCCESS = "Tạo cấp độ thành công"; // Create level successfully

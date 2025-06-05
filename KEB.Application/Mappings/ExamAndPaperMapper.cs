@@ -80,8 +80,9 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.PaperDetails))
                 .ForMember(dest => dest.HostId, opt => opt.MapFrom(src => src.Exam.HostId))
                 .ForMember(dest => dest.ReviewerId, opt => opt.MapFrom(src => src.Exam.ReviewerId))
-                //.ForMember(dest => dest.QuestionsList[0].AttachmentImage, opt => opt.MapFrom(src => Convert.ToBase64String(src.PaperDetails[0].AttachmentImage.FileData)))
-                //.ForMember(dest => dest.QuestionsList[0].AttachmentAudio, opt => opt.MapFrom(src => Convert.ToBase64String(src.PaperDetails[0].AttachmentAudio.FileData)))
+                    //.ForMember(dest => dest.QuestionsList[0].AttachmentImage, opt => opt.MapFrom(src => Convert.ToBase64String(src.PaperDetails[0].AttachmentImage.FileData)))
+                    //.ForMember(dest => dest.QuestionsList[0].AttachmentAudio, opt => opt.MapFrom(src => Convert.ToBase64String(src.PaperDetails[0].AttachmentAudio.FileData)))
+                 
                 .ForMember(dest => dest.PaperStatus,
                 opt => opt.MapFrom(src => src.PaperStatus))
                 ;
@@ -102,6 +103,8 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.Question.QuestionContent))
                 .ForMember(dest => dest.Answers,
                 opt => opt.MapFrom(src => src.Question.Answers))
+                .ForMember(dest => dest.IsMultiChoice,
+                opt => opt.MapFrom(src => src.Question.IsMultipleChoice))
                 .ForMember(dest => dest.LevelName,
                 opt => opt.MapFrom(src => src.Question.LevelDetail.Level.LevelName))
                 .ForMember(dest => dest.TopicName,
@@ -142,7 +145,7 @@ namespace KEB.Application.Mappings
                 opt => opt.MapFrom(src => src.Difficulty.ToString()))
                 .ForMember(dest => dest.AttachmentImage,
                 opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileImage.FileData)))
-                .ForMember(dest => dest.AttachmentImage,
+                .ForMember(dest => dest.AttachmentAudio,
                 opt => opt.MapFrom(src => Convert.ToBase64String(src.AttachmentFileAudio.FileData)));
         }
 

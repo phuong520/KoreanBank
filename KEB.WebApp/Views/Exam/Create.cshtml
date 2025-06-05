@@ -65,7 +65,7 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label asp-for="ReviewerId" class="form-label">Reviewer:</label>
-                    <select asp-for="ReviewerId" asp-items="ViewBag.Hosts" class="form-select">
+                    <select asp-for="ReviewerId" asp-items="ViewBag.Reviewer" class="form-select">
                         <option value="">-- Chọn reviewer --</option>
                     </select>
                     <span asp-validation-for="ReviewerId" class="text-danger"></span>

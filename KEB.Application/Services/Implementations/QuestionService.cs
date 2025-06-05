@@ -882,10 +882,12 @@ namespace KEB.Application.Services.Implementations
             var typeText = sheet.Cells[row, 3].Text;
             if (!string.IsNullOrEmpty(typeText))
             {
+                //var typeParts = typeText.Split('-');
                 var typeParts = typeText.Split('-');
                 var skill = typeParts[0];
                 var typeName = typeParts.Length > 1 ? typeParts[1] : "";
-                var questionType = await _unitOfWork.QuestionTypes.GetAsync(x => x.Skill.ToString() == skill && x.TypeName == typeName);
+               // var questionType = await _unitOfWork.QuestionTypes.GetAsync(x => x.Skill.ToString() == skill && x.TypeName == typeName);
+                var questionType = await _unitOfWork.QuestionTypes.GetAsync(x => x.TypeName == typeName);
                 if (questionType != null)
                     request.QuestionTypeId = questionType.Id;
                 else

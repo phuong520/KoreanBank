@@ -104,7 +104,7 @@ namespace KEB.Application.Services.Implementations
                         var tokenDesc = new SecurityTokenDescriptor
                         {
                             Subject = new ClaimsIdentity(claims),
-                            Expires = DateTime.Now.AddMinutes(60),
+                            Expires = DateTime.Now.AddMinutes(180),
                             SigningCredentials = signInCredentials,
                             Issuer = _configuration["Jwt:Issuer"],
                             Audience = _configuration["Jwt:Audience"],

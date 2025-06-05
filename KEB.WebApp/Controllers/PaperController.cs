@@ -86,9 +86,11 @@ namespace KEB.WebApp.Controllers
             var response = await _httpClient.GetFromJsonAsync<APIResponse<PaperDetailDisplayDTO>> ($"{ApiUrl}/gen-papers-for-exam{queryParams}");
             if (response.IsSuccess)
             {
+                
                 TempData["Success"] = "Tạo đề thi thành công!";
                 return RedirectToAction(nameof(Index));
             }
+            Console.WriteLine(response.Message + response.Result);
             ModelState.AddModelError("", "Không thể tạo loại câu hỏi. Vui lòng thử lại.");
             TempData["ErrorMessage"] = "Không thể tạo loại câu hỏi. Vui lòng thử lại.";
             return RedirectToAction("Index");

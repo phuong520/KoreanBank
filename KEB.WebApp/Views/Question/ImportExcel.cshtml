@@ -54,13 +54,10 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label asp-for="TaskId" class="form-label fw-bold">Tác vụ (Task)</label>
-                            <select asp-for="TaskId" class="form-select">
+                            <select asp-for="TaskId" class="form-select" asp-items="ViewBag.Tasks">
                                 <option value="">-- Chọn tác vụ --</option>
-                                @foreach (var task in ViewBag.Tasks)
-                                {
-                                    <option value="@task.Value">@task.Text</option>
-                                }
                             </select>
+
                         </div>
                     </div>
 

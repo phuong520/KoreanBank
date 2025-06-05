@@ -22,6 +22,7 @@ namespace KEB.Application.DTOs.ExamPaperDTO
         public bool Reviewed { get; set; }
         public Guid HostId { get; set; }
         public Guid ReviewerId { get; set; }
+        
 
     }
 }

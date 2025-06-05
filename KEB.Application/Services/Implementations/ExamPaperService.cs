@@ -491,15 +491,7 @@ namespace KEB.Application.Services.Implementations
                 exam = await _unitOfWork.Exams.GetAsync(x => x.Id == examId,
                                                     includeProperties: "Host,Reviewer,ExamType,Papers")
                         ?? throw new InvalidOperationException("Exam not found ~");
-                //bool inEditingTime = currentTime > exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION)
-                //        && currentTime < exam.CreatedDate.AddDays(SystemDataFormat.EXAM_INFO_EDIT_DURATION + SystemDataFormat.EXAM_PAPERS_EDIT_DURATION);
-                //if (!inEditingTime)
-                //{
-                //    response.StatusCode = System.Net.HttpStatusCode.Forbidden;
-                //    response.Message = "Papers can only be generated within the editing time (within 2 days from exam finish creating)";
-                //    response.IsSuccess = false;
-                //    return response;
-                //}
+                
                 bool isAuthorized = false;
                 if (requestedUserId == exam.HostId || requestedUserId == exam.ReviewerId)
                 {
@@ -551,6 +543,7 @@ namespace KEB.Application.Services.Implementations
                         response.Result.Add(item);
                     }
                 }
+                //await _unitOfWork.CommitAsync();
                 await _unitOfWork.SaveChangesAsync();
                 // End
                 await _unitOfWork.CommitAsync();
@@ -605,7 +598,7 @@ namespace KEB.Application.Services.Implementations
                         && qtypes.Contains(x.QuestionTypeId)
                         && (!allMultipleChoice || x.IsMultipleChoice)
                         && (!noMultipleChoice || !x.IsMultipleChoice),
-                includeProperties: "References,Answers");
+                includeProperties: "References,Answers, AttachmentFileImage, LevelDetail, QuestionType", asTracking: false) ;
 
             return [.. result];
         }
@@ -635,10 +628,12 @@ namespace KEB.Application.Services.Implementations
                         PaperDetails = [],
                         IsReviewed = false,
                         IsDeleted = false,
+                        
                     };
                     time--;
                     
                     await _unitOfWork.Papers.AddAsync(newPaper);
+                    newPaper.Exam = exam;
                     PaperDetailDisplayDTO mappedPaper = _mapper.Map<PaperDetailDisplayDTO>(newPaper);
                     foreach (var detail in constraint.ConstraintDetails)
                     {
@@ -660,6 +655,8 @@ namespace KEB.Application.Services.Implementations
                                 //Question = question,
                                 PaperId = newPaper.Id,
                                 Mark = detail.MarkPerQuestion,
+                                //AttachmentAudioId = question.AttachFileAudioId,
+                                AttachmentImageId = question.AttachFileImageId
 
                             });
                             var mappedQuestion = _mapper.Map<QuestionInPaperDTO>(question);
@@ -712,11 +709,11 @@ namespace KEB.Application.Services.Implementations
                     Console.WriteLine(d.Difficulty);
                     var tempPool = questionsPool.Where(x => true
                                             && x.Status == QuestionStatus.Ok
-                                            //&& x.LevelDetailId == d.Id
-                                            //&& x.LevelDetail?.LevelId == levelId
-                                            //&& x.QuestionType?.Skill == skill
+                                            && x.LevelDetailId == d.Id
+                                            && x.LevelDetail?.LevelId == levelId
+                                            && x.QuestionType?.Skill == skill
                                             && x.QuestionTypeId == d.QuestionTypeId
-                                            //&& x.LevelDetail?.TopicId == d.TopicId
+                                            && x.LevelDetail?.TopicId == d.TopicId
                                             && x.Difficulty == d.Difficulty
                                             && x.IsMultipleChoice == d.IsMultipleChoice).ToList();
                     if (tempPool.Count < d.NumberOfQuestion)
@@ -808,7 +805,6 @@ namespace KEB.Application.Services.Implementations
                 && x.QuestionTypeId == request.ConstraintDetail.QuestionTypeId
                 && x.LevelDetail?.TopicId == request.ConstraintDetail.TopicId
                 && x.Difficulty == request.ConstraintDetail.Difficulty
-                //&&x.LevelDetailId == 
                 && x.IsMultipleChoice == request.ConstraintDetail.IsMultipleChoice).ToList();
 
             int randomNumber = new Random().Next(4);

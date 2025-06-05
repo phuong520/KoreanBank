@@ -593,6 +593,7 @@ namespace KEB.WebApp.Controllers
             }
             else
             {
+                await LoadDropdownData();
                 ModelState.AddModelError("", apiResponse.Message);
                 if (apiResponse.Result.Any())
                 {

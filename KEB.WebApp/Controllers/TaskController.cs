@@ -35,7 +35,8 @@ namespace KEB.WebApp.Controllers
         {
             try
             {
-                var result = await _httpClient.GetFromJsonAsync<APIResponse<TaskGeneralDisplayDTO>>($"{ApiUrl}/view-import-question-tasks");
+
+                var result = await _httpClient.GetFromJsonAsync<APIResponse<TaskGeneralDisplayDTO>>($"{ApiUrl}/view-import-question-tasks?page=1&&size=10");
                 if (!result.IsSuccess)
                 {
                     TempData["Error"] = "Không thể tải danh sách nhiệm vụ";
@@ -285,7 +286,7 @@ namespace KEB.WebApp.Controllers
             return RedirectToAction(nameof(Details), new { id = request.TargetTaskId });
         }
 
-        public async Task<IActionResult> ReviewQuestion(GetQuestionsRequest request)
+        public async Task<IActionResult> ReviewQuestion(GetQuestionsRequest request, int page= 1, int size = 10)
         {
             try
             {
@@ -295,6 +296,7 @@ namespace KEB.WebApp.Controllers
                     return RedirectToAction("Login", "Commonweb");
                 }
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.PaginationRequest = new Pagination { Page = page, Size = size };
                 var response = await _httpClient.PostAsJsonAsync($"{BaseApiUrl}/Questions/get-questions", request);
                 if (response.IsSuccessStatusCode)
                 {

@@ -8,27 +8,13 @@
     var role = string.Empty;
     var userId = string.Empty;
     var avatarUrl = Url.Content("~/images/default-avatar.png");
-    var isAuthenticated = false;
-    var redirectToLogin = false;
-
-    if (string.IsNullOrEmpty(token))
-    {
-        redirectToLogin = true; // Không có token, yêu cầu đăng nhập
-    }
-    else
-    {
+   
         try
         {
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
             if (jsonToken != null)
             {
-                if (jsonToken.ValidTo.ToUniversalTime() < DateTime.UtcNow)
-                {
-                    redirectToLogin = true; // Token hết hạn
-                }
-                else
-                {
                     role = jsonToken.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
                     username = jsonToken.Claims.FirstOrDefault(c => c.Type == "unique_name")?.Value;
                     userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
@@ -36,12 +22,8 @@
                     avatarUrl = string.IsNullOrEmpty(avatarId)
                         ? Url.Content("~/images/default-avatar.png")
                         : $"https://localhost:7101/api/ImageFile/Download?id={avatarId}";
-                    isAuthenticated = true;
-                }
-            }
-            else
-            {
-                // redirectToLogin = true; Token không hợp lệ
+                    
+                
             }
         }
         catch (Exception ex)
@@ -51,13 +33,6 @@
         }
     }
 
-    // Chuyển hướng về trang đăng nhập nếu không xác thực được
-    // if (redirectToLogin)
-    // {
-    //     Context.Response.Redirect("/Commonweb/Login");
-    //     return;
-    // }
-}
 
 <!DOCTYPE html>
 <html lang="vi" class="h-100">

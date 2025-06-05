@@ -1,8 +1,22 @@
 ﻿@model IEnumerable<KEB.Application.DTOs.QuestionTypeDTO.QuestionTypeDisplayDto>
 @using KEB.Domain.Enums
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
 @{
     ViewData["Title"] = "Danh sách loại câu hỏi";
     var skills = Enum.GetValues(typeof(Skill)).Cast<Skill>().ToList();
+
+    var token = Context.Request.Cookies["token"];
+    var userId = string.Empty;
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            if (jsonToken != null)
+            {
+                userId = jsonToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid)?.Value;
+              
+            }
+        }
 }
 
 <h2 class="mb-4">Danh sách loại câu hỏi</h2>
@@ -83,6 +97,7 @@
             <div class="modal-body">
                 <!-- Form Thêm loại câu hỏi -->
                 <form id="addQuestionTypeForm" novalidate>
+                    <input type="hidden" id="createdUserId" name="CreatedUserId" value="@userId" />
                     <div class="mb-3">
                         <label for="questionTypeName" class="form-label">Tên loại câu hỏi <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="questionTypeName" name="QuestionTypeName" required />
@@ -213,10 +228,10 @@
                 addSubmitBtn.disabled = true;
                 addSubmitBtnText.textContent = 'Đang xử lý...';
                 addSubmitBtnSpinner.classList.remove('d-none');
-
                 try {
                     // Lấy dữ liệu từ form
                     const formData = {
+                        CreatedUserId: document.getElementById('createdUserId').value.trim(),
                         QuestionTypeName: document.getElementById('questionTypeName').value.trim(),
                         QuestionTypeContent: document.getElementById('questionTypeContent').value.trim(),
                         Skill: parseInt(document.getElementById('skill').value)

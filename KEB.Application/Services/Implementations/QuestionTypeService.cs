@@ -43,7 +43,7 @@ namespace KEB.Application.Services.Implementations
             APIResponse<QuestionTypeDisplayDto> response = new();
             // CreatedUser existed or not
             var createdUser = await _unitOfWork.Users.GetUserById(request.CreatedUserId);
-            if (createdUser == null || createdUser.RoleId.ToString() != LogicString.Role.TeamLeadRoleId)
+            if (createdUser == null || createdUser.RoleId.ToString() != LogicString.Role.LecturerRoleId)
             {
                 response.IsSuccess = false;
                 response.StatusCode = System.Net.HttpStatusCode.Forbidden;
